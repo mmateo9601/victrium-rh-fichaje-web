@@ -1,0 +1,13 @@
+{
+  "name": "victrium-rh-fichaje-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Frontend Next.js para la migracion de Fichaje.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "test": "node -e \"console.log('tests pendientes')\""
+  }
+}
