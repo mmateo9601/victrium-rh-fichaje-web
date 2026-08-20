@@ -84,6 +84,39 @@ export type Vacation = {
   employeeDni: string | null;
 };
 
+export type Incident = {
+  id: number;
+  descripcion: string;
+  resumen: string;
+  dia: string;
+  resuelta: boolean;
+  explicacion: string | null;
+  companyId: number | null;
+  companyName: string | null;
+  employeeId: number | null;
+  employeeNumero: string | null;
+  employeeNombre: string | null;
+  employeeEmail: string | null;
+  employeeDni: string | null;
+};
+
+export type IncidentMonthlyStat = {
+  month: string;
+  total: number;
+};
+
+export type IncidentUserStat = {
+  employeeId: number | null;
+  employeeNumero: string | null;
+  employeeNombre: string | null;
+  total: number;
+};
+
+export type IncidentTopSummary = {
+  resumen: string;
+  total: number;
+};
+
 export type LoginRequest = {
   numero: string;
   password: string;
@@ -132,6 +165,25 @@ export type VacationListQuery = ListQuery & {
   inicioHasta?: string;
   finDesde?: string;
   finHasta?: string;
+  employeeId?: number;
+};
+
+export type CreateIncidentRequest = {
+  descripcion: string;
+  resumen: string;
+  dia: string;
+  explicacion?: string;
+  employeeId?: number;
+};
+
+export type UpdateIncidentRequest = Partial<CreateIncidentRequest> & {
+  resuelta?: boolean;
+};
+
+export type IncidentListQuery = ListQuery & {
+  resuelta?: string;
+  diaDesde?: string;
+  diaHasta?: string;
   employeeId?: number;
 };
 
@@ -273,6 +325,22 @@ export const api = {
       requestJsonWithMethod<Vacation>(`/api/v1/vacations/${id}/approve`, 'PATCH', { token }),
     deny: (token: string, id: number) =>
       requestJsonWithMethod<Vacation>(`/api/v1/vacations/${id}/deny`, 'PATCH', { token })
+  },
+  incidents: {
+    list: (token: string, query: IncidentListQuery = {}) =>
+      requestJson<PaginatedResult<Incident>>('/api/v1/incidents', { token, query }),
+    mine: (token: string, query: IncidentListQuery = {}) =>
+      requestJson<PaginatedResult<Incident>>('/api/v1/incidents/me', { token, query }),
+    byId: (token: string, id: number) => requestJson<Incident>(`/api/v1/incidents/${id}`, { token }),
+    create: (token: string, body: CreateIncidentRequest) =>
+      requestJsonWithMethod<Incident>('/api/v1/incidents', 'POST', { token, body }),
+    update: (token: string, id: number, body: UpdateIncidentRequest) =>
+      requestJsonWithMethod<Incident>(`/api/v1/incidents/${id}`, 'PATCH', { token, body }),
+    resolve: (token: string, id: number) =>
+      requestJsonWithMethod<Incident>(`/api/v1/incidents/${id}/resolve`, 'PATCH', { token }),
+    statsMonths: (token: string) => requestJson<IncidentMonthlyStat[]>('/api/v1/incidents/stats/months', { token }),
+    statsUsers: (token: string) => requestJson<IncidentUserStat[]>('/api/v1/incidents/stats/users', { token }),
+    statsTop: (token: string) => requestJson<IncidentTopSummary[]>('/api/v1/incidents/stats/top', { token })
   }
 } as const;
 

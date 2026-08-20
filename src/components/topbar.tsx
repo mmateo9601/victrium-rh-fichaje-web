@@ -24,6 +24,7 @@ export function Topbar() {
         {canSeeAdmin ? <Link href="/users">Users</Link> : null}
         {canSeeAdmin ? <Link href="/employees">Employees</Link> : null}
         {session ? <Link href="/vacations">Vacations</Link> : null}
+        {session ? <Link href="/incidents">Incidents</Link> : null}
         {session ? null : <Link href="/login">Login</Link>}
       </nav>
     </header>
