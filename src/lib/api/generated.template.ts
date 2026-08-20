@@ -68,6 +68,8 @@ export type Employee = {
 
 export type VacationStatus = 'PENDIENTE' | 'APROBADO' | 'DENEGADO';
 
+export type PermissionStatus = 'PENDIENTE' | 'APROBADO' | 'DENEGADO';
+
 export type Vacation = {
   id: number;
   inicio: string;
@@ -115,6 +117,35 @@ export type IncidentUserStat = {
 export type IncidentTopSummary = {
   resumen: string;
   total: number;
+};
+
+export type Permission = {
+  id: number;
+  dia: string;
+  horaInicio: string;
+  horaFin: string;
+  descripcion: string;
+  estado: PermissionStatus;
+  aprobado: boolean;
+  companyId: number | null;
+  companyName: string | null;
+  employeeId: number | null;
+  employeeNumero: string | null;
+  employeeNombre: string | null;
+  employeeEmail: string | null;
+  employeeDni: string | null;
+};
+
+export type PermissionMonthlyStat = {
+  month: string;
+  totalMinutes: number;
+};
+
+export type PermissionUserStat = {
+  employeeId: number | null;
+  employeeNumero: string | null;
+  employeeNombre: string | null;
+  totalMinutes: number;
 };
 
 export type CalendarDay = {
@@ -184,6 +215,14 @@ export type CreateVacationRequest = {
   employeeId?: number;
 };
 
+export type CreatePermissionRequest = {
+  dia: string;
+  horaInicio: string;
+  horaFin: string;
+  descripcion: string;
+  employeeId?: number;
+};
+
 export type VacationListQuery = ListQuery & {
   estado?: string;
   consumidas?: string;
@@ -212,6 +251,22 @@ export type IncidentListQuery = ListQuery & {
   diaDesde?: string;
   diaHasta?: string;
   employeeId?: number;
+};
+
+export type PermissionListQuery = ListQuery & {
+  estado?: string;
+  aprobado?: string;
+  diaDesde?: string;
+  diaHasta?: string;
+  horaInicioDesde?: string;
+  horaInicioHasta?: string;
+  horaFinDesde?: string;
+  horaFinHasta?: string;
+  employeeId?: number;
+  employeeNumero?: string;
+  employeeNombre?: string;
+  employeeDni?: string;
+  employeeEmail?: string;
 };
 
 export type CreateCalendarDayRequest = {
@@ -415,6 +470,22 @@ export const api = {
     statsMonths: (token: string) => requestJson<IncidentMonthlyStat[]>('/api/v1/incidents/stats/months', { token }),
     statsUsers: (token: string) => requestJson<IncidentUserStat[]>('/api/v1/incidents/stats/users', { token }),
     statsTop: (token: string) => requestJson<IncidentTopSummary[]>('/api/v1/incidents/stats/top', { token })
+  },
+  permissions: {
+    list: (token: string, query: PermissionListQuery = {}) =>
+      requestJson<PaginatedResult<Permission>>('/api/v1/permissions', { token, query }),
+    mine: (token: string, query: PermissionListQuery = {}) =>
+      requestJson<PaginatedResult<Permission>>('/api/v1/permissions/me', { token, query }),
+    byId: (token: string, id: number) => requestJson<Permission>(`/api/v1/permissions/${id}`, { token }),
+    create: (token: string, body: CreatePermissionRequest) =>
+      requestJsonWithMethod<Permission>('/api/v1/permissions', 'POST', { token, body }),
+    approve: (token: string, id: number) =>
+      requestJsonWithMethod<Permission>(`/api/v1/permissions/${id}/approve`, 'PATCH', { token }),
+    deny: (token: string, id: number) =>
+      requestJsonWithMethod<Permission>(`/api/v1/permissions/${id}/deny`, 'PATCH', { token }),
+    delete: (token: string, id: number) => requestNoContent(`/api/v1/permissions/${id}`, 'DELETE', { token }),
+    statsMonths: (token: string) => requestJson<PermissionMonthlyStat[]>('/api/v1/permissions/stats/months', { token }),
+    statsUsers: (token: string) => requestJson<PermissionUserStat[]>('/api/v1/permissions/stats/users', { token })
   },
   calendars: {
     list: (token: string, query: CalendarListQuery = {}) =>

@@ -95,6 +95,7 @@ export default function DashboardPage() {
           { href: '/companies', title: 'Companies', text: 'Gestiona el tenant y consulta tu empresa activa.' },
           { href: '/users', title: 'Users', text: 'Explora identidades, roles y estado de acceso.' },
           { href: '/employees', title: 'Employees', text: 'Listados, detalle, alta y activación.' },
+          { href: '/permissions', title: 'Permissions', text: 'Solicitudes de permisos, estados y métricas.' },
           { href: '/vacations', title: 'Vacations', text: 'Solicitudes, aprobación y seguimiento de ausencias.' },
           { href: '/incidents', title: 'Incidents', text: 'Incidencias, métricas y resolución de casos.' },
           { href: '/calendars', title: 'Calendars', text: 'Calendarios laborales y días configurados.' }
