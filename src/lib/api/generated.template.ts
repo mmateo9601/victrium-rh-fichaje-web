@@ -66,6 +66,21 @@ export type Employee = {
   active: boolean;
 };
 
+export type TimeEntryType = 'ENTRADA' | 'SALIDA';
+
+export type TimeEntry = {
+  id: number;
+  hora: string;
+  dia: string;
+  tipo: TimeEntryType;
+  origen: string;
+  usuarioId: number;
+  usuarioNumero: string;
+  usuarioNombre: string;
+  companyId: number | null;
+  companyName: string | null;
+};
+
 export type VacationStatus = 'PENDIENTE' | 'APROBADO' | 'DENEGADO';
 
 export type PermissionStatus = 'PENDIENTE' | 'APROBADO' | 'DENEGADO';
@@ -215,6 +230,10 @@ export type CreateVacationRequest = {
   employeeId?: number;
 };
 
+export type ClockTimeEntryRequest = {
+  origen?: string;
+};
+
 export type CreatePermissionRequest = {
   dia: string;
   horaInicio: string;
@@ -251,6 +270,15 @@ export type IncidentListQuery = ListQuery & {
   diaDesde?: string;
   diaHasta?: string;
   employeeId?: number;
+};
+
+export type TimeEntryListQuery = ListQuery & {
+  search?: string;
+  numeroUsuario?: string;
+  nombreUsuario?: string;
+  tipo?: string;
+  from?: string;
+  to?: string;
 };
 
 export type PermissionListQuery = ListQuery & {
@@ -470,6 +498,15 @@ export const api = {
     statsMonths: (token: string) => requestJson<IncidentMonthlyStat[]>('/api/v1/incidents/stats/months', { token }),
     statsUsers: (token: string) => requestJson<IncidentUserStat[]>('/api/v1/incidents/stats/users', { token }),
     statsTop: (token: string) => requestJson<IncidentTopSummary[]>('/api/v1/incidents/stats/top', { token })
+  },
+  timeEntries: {
+    clock: (token: string, body: ClockTimeEntryRequest = {}) =>
+      requestJsonWithMethod<TimeEntry>('/api/v1/time-entries/clock', 'POST', { token, body }),
+    list: (token: string, query: TimeEntryListQuery = {}) =>
+      requestJson<PaginatedResult<TimeEntry>>('/api/v1/time-entries', { token, query }),
+    mine: (token: string, query: TimeEntryListQuery = {}) =>
+      requestJson<PaginatedResult<TimeEntry>>('/api/v1/time-entries/me', { token, query }),
+    byId: (token: string, id: number) => requestJson<TimeEntry>(`/api/v1/time-entries/${id}`, { token })
   },
   permissions: {
     list: (token: string, query: PermissionListQuery = {}) =>

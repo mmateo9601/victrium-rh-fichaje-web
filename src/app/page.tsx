@@ -21,6 +21,9 @@ export default function Page() {
         <Link className="button button-secondary" href="/vacations">
           Vacations
         </Link>
+        <Link className="button button-secondary" href="/time-entries">
+          Fichajes
+        </Link>
         <Link className="button button-secondary" href="/permissions">
           Permissions
         </Link>
