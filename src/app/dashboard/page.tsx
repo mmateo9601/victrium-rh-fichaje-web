@@ -96,7 +96,8 @@ export default function DashboardPage() {
           { href: '/users', title: 'Users', text: 'Explora identidades, roles y estado de acceso.' },
           { href: '/employees', title: 'Employees', text: 'Listados, detalle, alta y activación.' },
           { href: '/vacations', title: 'Vacations', text: 'Solicitudes, aprobación y seguimiento de ausencias.' },
-          { href: '/incidents', title: 'Incidents', text: 'Incidencias, métricas y resolución de casos.' }
+          { href: '/incidents', title: 'Incidents', text: 'Incidencias, métricas y resolución de casos.' },
+          { href: '/calendars', title: 'Calendars', text: 'Calendarios laborales y días configurados.' }
         ].map((item) => (
           <Link className="card stack" href={item.href} key={item.href}>
             <h2 className="card-title">{item.title}</h2>

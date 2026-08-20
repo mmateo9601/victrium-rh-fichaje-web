@@ -24,6 +24,9 @@ export default function Page() {
         <Link className="button button-secondary" href="/incidents">
           Incidents
         </Link>
+        <Link className="button button-secondary" href="/calendars">
+          Calendars
+        </Link>
       </div>
       <div className="grid-3" style={{ marginTop: '2rem' }}>
         <article className="stat">

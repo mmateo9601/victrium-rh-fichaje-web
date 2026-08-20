@@ -117,6 +117,33 @@ export type IncidentTopSummary = {
   total: number;
 };
 
+export type CalendarDay = {
+  id: number;
+  dia: string;
+  horaInicio: string;
+  horaFin: string;
+};
+
+export type Calendar = {
+  id: number;
+  nombre: string;
+  year: number;
+  minutosMasEntrada: number;
+  minutosMenosEntrada: number;
+  active: boolean;
+  days: CalendarDay[];
+};
+
+export type CalendarListItem = {
+  id: number;
+  nombre: string;
+  year: number;
+  minutosMasEntrada: number;
+  minutosMenosEntrada: number;
+  active: boolean;
+  daysCount: number;
+};
+
 export type LoginRequest = {
   numero: string;
   password: string;
@@ -185,6 +212,29 @@ export type IncidentListQuery = ListQuery & {
   diaDesde?: string;
   diaHasta?: string;
   employeeId?: number;
+};
+
+export type CreateCalendarDayRequest = {
+  dia: string;
+  horaInicio: string;
+  horaFin: string;
+};
+
+export type CreateCalendarRequest = {
+  nombre: string;
+  year: number;
+  minutosMasEntrada: number;
+  minutosMenosEntrada: number;
+  active?: boolean;
+  days: CreateCalendarDayRequest[];
+};
+
+export type UpdateCalendarRequest = Partial<CreateCalendarRequest>;
+
+export type CalendarListQuery = {
+  search?: string;
+  active?: string;
+  year?: string;
 };
 
 export type ListQuery = {
@@ -278,6 +328,30 @@ async function requestJsonWithMethod<T>(path: string, method: 'GET' | 'POST' | '
   return (await response.json()) as T;
 }
 
+async function requestNoContent(path: string, method: 'DELETE', options: RequestOptions = {}) {
+  const response = await fetch(buildUrl(path, options.query), {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.token ? { Authorization: `Bearer ${options.token}` } : {})
+    },
+    body: options.body ? JSON.stringify(options.body) : undefined,
+    cache: 'no-store'
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as ApiError | null;
+    throw new ApiClientError(
+      payload ?? {
+        statusCode: response.status,
+        code: 'HTTP_ERROR',
+        message: response.statusText
+      },
+      response.status
+    );
+  }
+}
+
 export const api = {
   auth: {
     login: (body: LoginRequest) => requestJsonWithMethod<AuthSession>('/api/v1/auth/login', 'POST', { body }),
@@ -341,6 +415,18 @@ export const api = {
     statsMonths: (token: string) => requestJson<IncidentMonthlyStat[]>('/api/v1/incidents/stats/months', { token }),
     statsUsers: (token: string) => requestJson<IncidentUserStat[]>('/api/v1/incidents/stats/users', { token }),
     statsTop: (token: string) => requestJson<IncidentTopSummary[]>('/api/v1/incidents/stats/top', { token })
+  },
+  calendars: {
+    list: (token: string, query: CalendarListQuery = {}) =>
+      requestJson<CalendarListItem[]>('/api/v1/calendars', { token, query }),
+    listDto: (token: string, query: CalendarListQuery = {}) =>
+      requestJson<CalendarListItem[]>('/api/v1/calendars/list/dto', { token, query }),
+    byId: (token: string, id: number) => requestJson<Calendar>(`/api/v1/calendars/${id}`, { token }),
+    create: (token: string, body: CreateCalendarRequest) =>
+      requestJsonWithMethod<Calendar>('/api/v1/calendars', 'POST', { token, body }),
+    update: (token: string, id: number, body: UpdateCalendarRequest) =>
+      requestJsonWithMethod<Calendar>(`/api/v1/calendars/${id}`, 'PATCH', { token, body }),
+    delete: (token: string, id: number) => requestNoContent(`/api/v1/calendars/${id}`, 'DELETE', { token })
   }
 } as const;
 
