@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { api, type TimeEntry } from '../../lib/api/generated';
@@ -180,32 +181,40 @@ export default function TimeEntriesPage() {
 
         <div className="table-wrap">
           <table className="table">
-            <thead>
-              <tr>
-                <th>Día</th>
-                <th>Hora</th>
-                <th>Tipo</th>
-                <th>Origen</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mine.map((entry) => (
-                <tr key={entry.id}>
-                  <td>{entry.dia}</td>
-                  <td>{entry.hora}</td>
-                  <td>
-                    <span className={`badge ${typeColors[entry.tipo]}`}>{entry.tipo}</span>
-                  </td>
-                  <td>{entry.origen}</td>
-                </tr>
-              ))}
-              {!mine.length ? (
+              <thead>
                 <tr>
-                  <td colSpan={4} className="muted">
-                    Sin resultados.
-                  </td>
+                  <th>ID</th>
+                  <th>Día</th>
+                  <th>Hora</th>
+                  <th>Tipo</th>
+                  <th>Origen</th>
+                  <th>Detalle</th>
                 </tr>
-              ) : null}
+              </thead>
+              <tbody>
+                {mine.map((entry) => (
+                  <tr key={entry.id}>
+                    <td>{entry.id}</td>
+                    <td>{entry.dia}</td>
+                    <td>{entry.hora}</td>
+                    <td>
+                      <span className={`badge ${typeColors[entry.tipo]}`}>{entry.tipo}</span>
+                    </td>
+                    <td>{entry.origen}</td>
+                    <td>
+                      <Link className="button button-secondary" href={`/time-entries/${entry.id}`}>
+                        Ver detalle
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+                {!mine.length ? (
+                  <tr>
+                    <td colSpan={6} className="muted">
+                      Sin resultados.
+                    </td>
+                  </tr>
+                ) : null}
             </tbody>
           </table>
         </div>
@@ -240,6 +249,7 @@ export default function TimeEntriesPage() {
             <table className="table">
               <thead>
                 <tr>
+                  <th>ID</th>
                   <th>Día</th>
                   <th>Hora</th>
                   <th>Tipo</th>
@@ -247,11 +257,13 @@ export default function TimeEntriesPage() {
                   <th>Número</th>
                   <th>Empresa</th>
                   <th>Origen</th>
+                  <th>Detalle</th>
                 </tr>
               </thead>
               <tbody>
                 {all.map((entry) => (
                   <tr key={entry.id}>
+                    <td>{entry.id}</td>
                     <td>{entry.dia}</td>
                     <td>{entry.hora}</td>
                     <td>
@@ -261,11 +273,16 @@ export default function TimeEntriesPage() {
                     <td>{entry.usuarioNumero}</td>
                     <td>{entry.companyName ?? 'Global'}</td>
                     <td>{entry.origen}</td>
+                    <td>
+                      <Link className="button button-secondary" href={`/time-entries/${entry.id}`}>
+                        Ver detalle
+                      </Link>
+                    </td>
                   </tr>
                 ))}
                 {!all.length ? (
                   <tr>
-                    <td colSpan={7} className="muted">
+                    <td colSpan={9} className="muted">
                       Sin fichajes para gestionar.
                     </td>
                   </tr>

@@ -74,11 +74,31 @@ export type TimeEntry = {
   dia: string;
   tipo: TimeEntryType;
   origen: string;
+  version: number;
+  updatedAt: string | null;
   usuarioId: number;
   usuarioNumero: string;
   usuarioNombre: string;
   companyId: number | null;
   companyName: string | null;
+};
+
+export type TimeEntryAudit = {
+  id: number;
+  timeEntryId: number;
+  previousDia: string;
+  previousHora: string;
+  previousTipo: TimeEntryType;
+  newDia: string;
+  newHora: string;
+  newTipo: TimeEntryType;
+  previousVersion: number;
+  newVersion: number;
+  reason: string;
+  createdAt: string;
+  correctedById: number;
+  correctedByNumero: string;
+  correctedByNombre: string;
 };
 
 export type VacationStatus = 'PENDIENTE' | 'APROBADO' | 'DENEGADO';
@@ -232,6 +252,14 @@ export type CreateVacationRequest = {
 
 export type ClockTimeEntryRequest = {
   origen?: string;
+};
+
+export type CorrectTimeEntryRequest = {
+  dia: string;
+  hora: string;
+  tipo: TimeEntryType;
+  motivo: string;
+  version: number;
 };
 
 export type CreatePermissionRequest = {
@@ -506,7 +534,10 @@ export const api = {
       requestJson<PaginatedResult<TimeEntry>>('/api/v1/time-entries', { token, query }),
     mine: (token: string, query: TimeEntryListQuery = {}) =>
       requestJson<PaginatedResult<TimeEntry>>('/api/v1/time-entries/me', { token, query }),
-    byId: (token: string, id: number) => requestJson<TimeEntry>(`/api/v1/time-entries/${id}`, { token })
+    byId: (token: string, id: number) => requestJson<TimeEntry>(`/api/v1/time-entries/${id}`, { token }),
+    audits: (token: string, id: number) => requestJson<TimeEntryAudit[]>(`/api/v1/time-entries/${id}/audits`, { token }),
+    correct: (token: string, id: number, body: CorrectTimeEntryRequest) =>
+      requestJsonWithMethod<TimeEntry>(`/api/v1/time-entries/${id}/correction`, 'POST', { token, body })
   },
   permissions: {
     list: (token: string, query: PermissionListQuery = {}) =>
