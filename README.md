@@ -9,9 +9,11 @@ Frontend Next.js para consumir `victrium-rh-fichaje-api` de forma independiente.
 
 ## Variables de entorno
 
-Usa `.env.example` como referencia.
+Usa `.env.example` como referencia y cópialo a `.env.local` para desarrollo local.
 
 - `NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1`
+
+La configuración tipada vive en [`src/lib/config/env.ts`](src/lib/config/env.ts).
 
 ## Desarrollo
 

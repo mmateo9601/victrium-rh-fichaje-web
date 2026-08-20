@@ -1,6 +1,10 @@
-node_modules
-.next
-coverage
+node_modules/
+.next/
+out/
+coverage/
 .env
+.env.*
+!.env.example
 .DS_Store
 *.log
+npm-debug.log*
