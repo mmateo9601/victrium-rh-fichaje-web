@@ -7,7 +7,7 @@ const tsconfigRootDir = fileURLToPath(new URL('.', import.meta.url));
 
 export default [
   {
-    ignores: ['.next/**', 'node_modules/**', 'coverage/**', 'out/**', 'eslint.config.mjs', 'next.config.mjs', 'next-env.d.ts']
+    ignores: ['.next/**', 'node_modules/**', 'coverage/**', 'out/**', 'scripts/**', 'eslint.config.mjs', 'next.config.mjs', 'next-env.d.ts']
   },
   js.configs.recommended,
   {
@@ -24,6 +24,9 @@ export default [
       },
       globals: {
         console: 'readonly',
+        fetch: 'readonly',
+        window: 'readonly',
+        localStorage: 'readonly',
         process: 'readonly',
         URL: 'readonly'
       }

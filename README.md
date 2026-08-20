@@ -2,6 +2,16 @@
 
 Frontend Next.js para consumir `victrium-rh-fichaje-api` de forma independiente.
 
+## Estado actual
+
+- Next.js + React + TypeScript
+- App Router
+- Cliente tipado para la API
+- Login, dashboard, companies, users y employees
+- Soporte de detalle y edición de empleados
+- Responsive
+- Sin Docker
+
 ## Requisitos
 
 - Node.js 20 o superior
@@ -14,6 +24,16 @@ Usa `.env.example` como referencia y cópialo a `.env.local` para desarrollo loc
 - `NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1`
 
 La configuración tipada vive en [`src/lib/config/env.ts`](src/lib/config/env.ts).
+
+## Cliente API
+
+El cliente tipado se genera localmente con:
+
+```bash
+npm run api:generate
+```
+
+El script escribe [`src/lib/api/generated.ts`](src/lib/api/generated.ts) a partir del template incluido en el repositorio.
 
 ## Desarrollo
 
@@ -30,6 +50,20 @@ npm run build
 npm run start
 ```
 
-## Estado
+## Verificacion
 
-Base inicial sin infraestructura Docker. La migracion funcional de pantallas y autenticacion continuara a partir de esta estructura.
+```bash
+npm run lint
+npm test
+npm run build
+```
+
+## Rutas principales
+
+- `/`
+- `/login`
+- `/dashboard`
+- `/companies`
+- `/users`
+- `/employees`
+- `/employees/[id]`
