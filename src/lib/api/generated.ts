@@ -66,6 +66,24 @@ export type Employee = {
   active: boolean;
 };
 
+export type VacationStatus = 'PENDIENTE' | 'APROBADO' | 'DENEGADO';
+
+export type Vacation = {
+  id: number;
+  inicio: string;
+  fin: string;
+  consumidas: boolean;
+  estado: VacationStatus;
+  aprobado: boolean;
+  companyId: number | null;
+  companyName: string | null;
+  employeeId: number | null;
+  employeeNumero: string | null;
+  employeeNombre: string | null;
+  employeeEmail: string | null;
+  employeeDni: string | null;
+};
+
 export type LoginRequest = {
   numero: string;
   password: string;
@@ -99,6 +117,23 @@ export type CreateEmployeeRequest = {
 };
 
 export type UpdateEmployeeRequest = Partial<CreateEmployeeRequest>;
+
+export type CreateVacationRequest = {
+  inicio: string;
+  fin: string;
+  employeeId?: number;
+};
+
+export type VacationListQuery = ListQuery & {
+  estado?: string;
+  consumidas?: string;
+  aprobado?: string;
+  inicioDesde?: string;
+  inicioHasta?: string;
+  finDesde?: string;
+  finHasta?: string;
+  employeeId?: number;
+};
 
 export type ListQuery = {
   page?: number;
@@ -225,6 +260,19 @@ export const api = {
       requestJsonWithMethod<Employee>(`/api/v1/employees/${id}/activate`, 'PATCH', { token }),
     deactivate: (token: string, id: number) =>
       requestJsonWithMethod<Employee>(`/api/v1/employees/${id}/deactivate`, 'PATCH', { token })
+  },
+  vacations: {
+    list: (token: string, query: VacationListQuery = {}) =>
+      requestJson<PaginatedResult<Vacation>>('/api/v1/vacations', { token, query }),
+    mine: (token: string, query: VacationListQuery = {}) =>
+      requestJson<PaginatedResult<Vacation>>('/api/v1/vacations/me', { token, query }),
+    byId: (token: string, id: number) => requestJson<Vacation>(`/api/v1/vacations/${id}`, { token }),
+    create: (token: string, body: CreateVacationRequest) =>
+      requestJsonWithMethod<Vacation>('/api/v1/vacations', 'POST', { token, body }),
+    approve: (token: string, id: number) =>
+      requestJsonWithMethod<Vacation>(`/api/v1/vacations/${id}/approve`, 'PATCH', { token }),
+    deny: (token: string, id: number) =>
+      requestJsonWithMethod<Vacation>(`/api/v1/vacations/${id}/deny`, 'PATCH', { token })
   }
 } as const;
 

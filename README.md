@@ -7,7 +7,7 @@ Frontend Next.js para consumir `victrium-rh-fichaje-api` de forma independiente.
 - Next.js + React + TypeScript
 - App Router
 - Cliente tipado para la API
-- Login, dashboard, companies, users y employees
+- Login, dashboard, companies, users, employees y vacations
 - Soporte de detalle y edición de empleados
 - Responsive
 - Sin Docker
@@ -67,3 +67,4 @@ npm run build
 - `/users`
 - `/employees`
 - `/employees/[id]`
+- `/vacations`

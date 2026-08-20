@@ -18,6 +18,9 @@ export default function Page() {
         <Link className="button button-secondary" href="/dashboard">
           Ver dashboard
         </Link>
+        <Link className="button button-secondary" href="/vacations">
+          Vacations
+        </Link>
       </div>
       <div className="grid-3" style={{ marginTop: '2rem' }}>
         <article className="stat">

@@ -94,7 +94,8 @@ export default function DashboardPage() {
         {[
           { href: '/companies', title: 'Companies', text: 'Gestiona el tenant y consulta tu empresa activa.' },
           { href: '/users', title: 'Users', text: 'Explora identidades, roles y estado de acceso.' },
-          { href: '/employees', title: 'Employees', text: 'Listados, detalle, alta y activación.' }
+          { href: '/employees', title: 'Employees', text: 'Listados, detalle, alta y activación.' },
+          { href: '/vacations', title: 'Vacations', text: 'Solicitudes, aprobación y seguimiento de ausencias.' }
         ].map((item) => (
           <Link className="card stack" href={item.href} key={item.href}>
             <h2 className="card-title">{item.title}</h2>
