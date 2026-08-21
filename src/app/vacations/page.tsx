@@ -3,7 +3,9 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { WorkforceCalendar } from '../../components/workforce-calendar';
 import { api, type Vacation } from '../../lib/api/generated';
+import { buildVacationEvents } from '../../lib/calendar';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
 
@@ -30,6 +32,7 @@ export default function VacationsPage() {
   const [exportingMine, setExportingMine] = useState(false);
   const [exportingAll, setExportingAll] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const calendarVacations = useMemo(() => buildVacationEvents(canManage ? all : mine), [all, canManage, mine]);
 
   useEffect(() => {
     const token = getAccessToken();
@@ -257,6 +260,19 @@ export default function VacationsPage() {
           {creating ? 'Enviando...' : 'Solicitar vacaciones'}
         </button>
       </form>
+
+      <WorkforceCalendar
+        title="Calendario de vacaciones"
+        description="Vista visual de tus ausencias y, con permisos de gestión, también las de la empresa."
+        events={calendarVacations}
+        loading={loading}
+        emptyLabel="No hay vacaciones para mostrar con los filtros actuales."
+        initialView="dayGridMonth"
+        legend={[
+          { label: 'Vacaciones', tone: 'info' }
+        ]}
+        compact
+      />
 
       <section className="panel stack">
         <div className="toolbar">

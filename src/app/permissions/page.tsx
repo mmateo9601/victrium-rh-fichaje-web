@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { WorkforceCalendar } from '../../components/workforce-calendar';
 import { api, type Permission, type PermissionMonthlyStat, type PermissionUserStat } from '../../lib/api/generated';
+import { buildPermissionEvents } from '../../lib/calendar';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
 
@@ -36,6 +38,7 @@ export default function PermissionsPage() {
   const [exportingAll, setExportingAll] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const calendarPermissions = useMemo(() => buildPermissionEvents(canManage ? all : mine), [all, canManage, mine]);
 
   useEffect(() => {
     const token = getAccessToken();
@@ -291,6 +294,19 @@ export default function PermissionsPage() {
           {creating ? 'Enviando...' : 'Solicitar permiso'}
         </button>
       </form>
+
+      <WorkforceCalendar
+        title="Calendario de permisos"
+        description="Lectura visual de permisos por día y hora. La misma información, mejor distribuida."
+        events={calendarPermissions}
+        loading={loading}
+        emptyLabel="No hay permisos para mostrar con los filtros actuales."
+        initialView="timeGridWeek"
+        legend={[
+          { label: 'Permiso', tone: 'warning' }
+        ]}
+        compact
+      />
 
       <section className="panel stack">
         <div className="toolbar">

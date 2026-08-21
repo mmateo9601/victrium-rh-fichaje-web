@@ -8,9 +8,11 @@ import { Clock3, Download, Filter, Search, TimerReset } from 'lucide-react';
 import { AnalyticsChart } from '../../components/analytics-chart';
 import { PageHeader } from '../../components/page-header';
 import { WorkTimer } from '../../components/work-timer';
+import { WorkforceCalendar } from '../../components/workforce-calendar';
 import { api, type TimeEntry } from '../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
+import { buildTimeEntryEvents } from '../../lib/calendar';
 import { formatDurationLabel, formatInputDate, formatLongDate, getRoleLabel, getTimeEntryLabel } from '../../lib/labels';
 import { buildWorkedDays, buildWorkedSummary } from '../../lib/time-analytics';
 
@@ -42,6 +44,7 @@ export default function TimeEntriesPage() {
   }, []);
 
   const weeklySummary = useMemo(() => buildWorkedSummary(weekEntries), [weekEntries]);
+  const calendarEntries = useMemo(() => buildTimeEntryEvents(canManage ? all : mine), [all, canManage, mine]);
   const weeklyChart = useMemo(
     () =>
       buildWorkedDays(weekEntries, 7).map((item) => ({
@@ -288,6 +291,20 @@ export default function TimeEntriesPage() {
           />
         </div>
       ) : null}
+
+      <WorkforceCalendar
+        title="Calendario de fichajes"
+        description="Vista visual de entradas y salidas para leer la actividad diaria sin perder la tabla."
+        events={calendarEntries}
+        loading={loading}
+        emptyLabel="No hay fichajes para mostrar con los filtros activos."
+        initialView="listMonth"
+        legend={[
+          { label: 'Entrada', tone: 'success' },
+          { label: 'Salida', tone: 'warning' }
+        ]}
+        compact
+      />
 
       <section className="panel stack">
         <div className="toolbar">

@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
-import { api, type CalendarDay } from '../../../lib/api/generated';
+import { WorkforceCalendar } from '../../../components/workforce-calendar';
+import { api, type Calendar, type CalendarDay } from '../../../lib/api/generated';
+import { buildCalendarEvents } from '../../../lib/calendar';
 import { getAccessToken, getStoredSession } from '../../../lib/auth/session';
 
 type CalendarDayForm = Omit<CalendarDay, 'id'>;
@@ -13,6 +15,7 @@ export default function CalendarDetailPage() {
   const params = useParams<{ id: string }>();
   const session = useMemo(() => getStoredSession(), []);
   const canManage = session?.user.roles.includes('ROLE_ADMIN') || session?.user.roles.includes('ROLE_RRHH');
+  const [calendar, setCalendar] = useState<Calendar | null>(null);
   const [name, setName] = useState('');
   const [year, setYear] = useState('');
   const [minMas, setMinMas] = useState(0);
@@ -38,6 +41,7 @@ export default function CalendarDetailPage() {
           throw new Error('Identificador de calendario inválido');
         }
         const item = await api.calendars.byId(authToken, Number(calendarId));
+        setCalendar(item);
         setName(item.nombre);
         setYear(String(item.year));
         setMinMas(item.minutosMasEntrada);
@@ -73,19 +77,20 @@ export default function CalendarDetailPage() {
 
     setSaving(true);
     setError(null);
-    try {
-      await api.calendars.update(authToken, Number(calendarId), {
-        nombre: name,
+      try {
+        await api.calendars.update(authToken, Number(calendarId), {
+          nombre: name,
         year: Number(year),
         minutosMasEntrada: minMas,
         minutosMenosEntrada: minMenos,
         active,
-        days
-      });
-      const refreshed = await api.calendars.byId(authToken, Number(calendarId));
-      setName(refreshed.nombre);
-      setYear(String(refreshed.year));
-      setMinMas(refreshed.minutosMasEntrada);
+          days
+        });
+        const refreshed = await api.calendars.byId(authToken, Number(calendarId));
+        setCalendar(refreshed);
+        setName(refreshed.nombre);
+        setYear(String(refreshed.year));
+        setMinMas(refreshed.minutosMasEntrada);
       setMinMenos(refreshed.minutosMenosEntrada);
       setActive(refreshed.active);
       setDays(refreshed.days.map((day) => ({ dia: day.dia, horaInicio: day.horaInicio, horaFin: day.horaFin })));
@@ -95,6 +100,8 @@ export default function CalendarDetailPage() {
       setSaving(false);
     }
   }
+
+  const calendarEvents = useMemo(() => (calendar ? buildCalendarEvents(calendar) : []), [calendar]);
 
   async function remove() {
     const token = getAccessToken();
@@ -144,6 +151,20 @@ export default function CalendarDetailPage() {
         </p>
         {error ? <div className="notice" role="alert">{error}</div> : null}
       </section>
+
+      <WorkforceCalendar
+        title="Vista laboral"
+        description="Visualización anual del calendario para revisar festivos y días laborables."
+        events={calendarEvents}
+        loading={loading}
+        emptyLabel="Este calendario todavía no tiene días configurados."
+        initialView="multiMonthYear"
+        compact={false}
+        legend={[
+          { label: 'Laborable', tone: 'primary' },
+          { label: 'Festivo', tone: 'danger' }
+        ]}
+      />
 
       {canManage ? (
         <section className="panel stack">

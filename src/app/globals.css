@@ -671,6 +671,200 @@ textarea {
   border: 1px solid rgba(47, 111, 237, 0.16);
 }
 
+.workforce-calendar {
+  overflow: hidden;
+}
+
+.workforce-calendar__header {
+  align-items: flex-start;
+}
+
+.workforce-calendar__actions {
+  justify-content: flex-end;
+}
+
+.workforce-calendar__filters {
+  display: grid;
+  gap: 1rem;
+}
+
+.workforce-calendar__chrome {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.calendar-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(244, 247, 249, 0.95));
+}
+
+.calendar-toolbar__nav,
+.calendar-toolbar__views {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.calendar-toolbar__title {
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.workforce-calendar__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.workforce-calendar__content {
+  overflow: hidden;
+  border-radius: 1.25rem;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.workforce-calendar .fc {
+  --fc-border-color: var(--border);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: rgba(244, 246, 248, 0.72);
+  --fc-today-bg-color: rgba(15, 118, 110, 0.05);
+  --fc-list-event-hover-bg-color: rgba(15, 118, 110, 0.05);
+  color: var(--ink);
+}
+
+.workforce-calendar .fc .fc-scrollgrid,
+.workforce-calendar .fc .fc-scrollgrid-section > td,
+.workforce-calendar .fc .fc-scrollgrid-section th,
+.workforce-calendar .fc .fc-theme-standard td,
+.workforce-calendar .fc .fc-theme-standard th {
+  border-color: var(--border);
+}
+
+.workforce-calendar .fc .fc-col-header-cell-cushion,
+.workforce-calendar .fc .fc-daygrid-day-number,
+.workforce-calendar .fc .fc-timegrid-slot-label-cushion {
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.workforce-calendar .fc .fc-col-header-cell-cushion {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.workforce-calendar .fc .fc-daygrid-day.fc-day-today,
+.workforce-calendar .fc .fc-timegrid-col.fc-day-today {
+  background: rgba(15, 118, 110, 0.04);
+}
+
+.workforce-calendar .fc .fc-event {
+  border-radius: 0.85rem;
+  border-width: 0;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.workforce-calendar .fc .fc-event-main {
+  padding: 0.15rem 0.2rem;
+}
+
+.workforce-calendar .fc .fc-daygrid-event,
+.workforce-calendar .fc .fc-timegrid-event,
+.workforce-calendar .fc .fc-list-event {
+  border-radius: 0.85rem;
+}
+
+.workforce-calendar .fc .fc-more-link {
+  color: var(--primary-strong);
+  font-weight: 800;
+}
+
+.workforce-calendar .fc .fc-list-day-cushion {
+  background: rgba(15, 118, 110, 0.04);
+}
+
+.workforce-calendar .fc .fc-button {
+  border-radius: 999px;
+}
+
+.workforce-calendar .fc .fc-button-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  border-color: transparent;
+}
+
+.workforce-calendar .fc .fc-button-primary:not(:disabled):hover {
+  background: linear-gradient(135deg, var(--primary-strong), #094c46);
+}
+
+.workforce-calendar .fc .fc-button-primary:disabled {
+  opacity: 0.7;
+}
+
+.calendar-empty-state {
+  align-items: start;
+}
+
+.calendar-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.calendar-detail-card {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+}
+
+.workforce-event {
+  display: grid;
+  gap: 0.14rem;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  padding: 0.05rem 0;
+}
+
+.workforce-event__title-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.35rem;
+  align-items: flex-start;
+}
+
+.workforce-event__title {
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.workforce-event__subtitle,
+.workforce-event__summary {
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.workforce-event__status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .badge {
   display: inline-flex;
   align-items: center;
@@ -700,6 +894,11 @@ textarea {
 .badge-info {
   background: rgba(47, 111, 237, 0.1);
   color: var(--info);
+}
+
+.badge-primary {
+  background: rgba(15, 118, 110, 0.12);
+  color: var(--primary-strong);
 }
 
 .badge-neutral {

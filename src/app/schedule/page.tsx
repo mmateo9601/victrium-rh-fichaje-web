@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation';
 
 import { PageHeader } from '../../components/page-header';
 import { ScheduleGrid } from '../../components/schedule-grid';
+import { WorkforceCalendar } from '../../components/workforce-calendar';
 import { api, type Employee, type PlanningPeriod, type Schedule, type Shift } from '../../lib/api/generated';
-import { formatInputDate, formatLongDate } from '../../lib/labels';
+import { buildScheduleEvents, type WorkforceCalendarRange } from '../../lib/calendar';
+import { formatDurationLabel, formatInputDate, formatLongDate, formatNumber } from '../../lib/labels';
 import { getAccessToken } from '../../lib/auth/session';
 
 function monthRange(date: Date) {
@@ -65,6 +67,8 @@ export default function SchedulePage() {
 
     void load();
   }, [router, employeeId, from, shiftId, to]);
+
+  const scheduleEvents = useMemo(() => (schedule ? buildScheduleEvents(schedule, { showNonWorking: true }) : []), [schedule]);
 
   function selectPlanningPeriod(periodId: string) {
     setPlanningPeriodId(periodId);
@@ -200,6 +204,54 @@ export default function SchedulePage() {
           </div>
         </div>
       </section>
+
+      <WorkforceCalendar
+        title="Cuadrante visual"
+        description="Semana, mes o agenda para leer la planificación de equipo de un vistazo."
+        events={scheduleEvents}
+        loading={loading}
+        emptyLabel="No hay planificación para los filtros seleccionados."
+        initialView="timeGridWeek"
+        initialDate={from}
+        legend={[
+          { label: 'Turno', tone: 'primary' },
+          { label: 'Vacaciones', tone: 'info' },
+          { label: 'Permiso', tone: 'warning' },
+          { label: 'Festivo', tone: 'danger' }
+        ]}
+        onRangeChange={(nextRange: WorkforceCalendarRange) => {
+          setFrom(nextRange.from);
+          setTo(nextRange.to);
+        }}
+        stats={
+          <>
+            <article className="stat stat--compact">
+              <strong>{employees.length}</strong>
+              <span className="muted">Empleados</span>
+            </article>
+            <article className="stat stat--compact">
+              <strong>{shifts.length}</strong>
+              <span className="muted">Turnos</span>
+            </article>
+            <article className="stat stat--compact">
+              <strong>{schedule ? formatDurationLabel(schedule.summary.plannedMinutes) : '—'}</strong>
+              <span className="muted">Planificado</span>
+            </article>
+            <article className="stat stat--compact">
+              <strong>{schedule ? formatDurationLabel(schedule.summary.workedMinutes) : '—'}</strong>
+              <span className="muted">Realizado</span>
+            </article>
+            <article className="stat stat--compact">
+              <strong>{schedule ? formatNumber(schedule.summary.coverageRate) : 0}%</strong>
+              <span className="muted">Cobertura</span>
+            </article>
+            <article className="stat stat--compact">
+              <strong>{planningPeriods.length}</strong>
+              <span className="muted">Periodos</span>
+            </article>
+          </>
+        }
+      />
 
       {schedule ? <ScheduleGrid schedule={schedule} /> : null}
     </div>

@@ -3,11 +3,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { PageHeader } from '../../components/page-header';
 import { ScheduleGrid } from '../../components/schedule-grid';
+import { WorkforceCalendar } from '../../components/workforce-calendar';
 import { api, type Schedule } from '../../lib/api/generated';
-import { formatInputDate, formatLongDate } from '../../lib/labels';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
+import { buildScheduleEvents, type WorkforceCalendarRange } from '../../lib/calendar';
+import { formatDurationLabel, formatInputDate, formatLongDate, formatNumber } from '../../lib/labels';
 
 function monthRange(date: Date) {
   const from = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
@@ -19,8 +20,7 @@ export default function MyCalendarPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
   const initialRange = useMemo(() => monthRange(new Date()), []);
-  const [from, setFrom] = useState(initialRange.from);
-  const [to, setTo] = useState(initialRange.to);
+  const [range, setRange] = useState<WorkforceCalendarRange>(initialRange);
   const [schedule, setSchedule] = useState<Schedule | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +35,7 @@ export default function MyCalendarPage() {
 
     async function load() {
       try {
-        const result = await api.schedule.me(token, { from, to });
+        const result = await api.schedule.me(token, range);
         setSchedule(result);
       } catch (loadError) {
         setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar tu calendario');
@@ -45,23 +45,40 @@ export default function MyCalendarPage() {
     }
 
     void load();
-  }, [router, from, to]);
+  }, [range.from, range.to, router, session?.user.employeeId]);
 
-  if (loading) {
-    return (
-      <section className="hero">
-        <span className="eyebrow">Mi calendario</span>
-        <h1>Cargando calendario...</h1>
-      </section>
-    );
-  }
+  const events = useMemo(() => (schedule ? buildScheduleEvents(schedule, { showNonWorking: true }) : []), [schedule]);
 
   return (
     <div className="stack">
-      <PageHeader
-        eyebrow="Empleado"
+      {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
+
+      <WorkforceCalendar
         title="Mi calendario"
         description="Consulta tu turno previsto, tus ausencias y el estado de cada día."
+        events={events}
+        loading={loading}
+        emptyLabel="No tienes turnos planificados para este periodo."
+        initialView="timeGridWeek"
+        initialDate={range.from}
+        legend={[
+          { label: 'Turno', tone: 'primary' },
+          { label: 'Vacaciones', tone: 'info' },
+          { label: 'Permiso', tone: 'warning' },
+          { label: 'Festivo', tone: 'danger' }
+        ]}
+        filters={
+          <div className="field-grid">
+            <div className="field">
+              <label htmlFor="from">Desde</label>
+              <input id="from" type="date" value={range.from} onChange={(event) => setRange((current) => ({ ...current, from: event.target.value }))} />
+            </div>
+            <div className="field">
+              <label htmlFor="to">Hasta</label>
+              <input id="to" type="date" value={range.to} onChange={(event) => setRange((current) => ({ ...current, to: event.target.value }))} />
+            </div>
+          </div>
+        }
         stats={
           <>
             <article className="stat stat--compact">
@@ -69,31 +86,28 @@ export default function MyCalendarPage() {
               <span className="muted">Empleado</span>
             </article>
             <article className="stat stat--compact">
-              <strong>{formatLongDate(from)}</strong>
+              <strong>{formatLongDate(range.from)}</strong>
               <span className="muted">Desde</span>
             </article>
             <article className="stat stat--compact">
-              <strong>{formatLongDate(to)}</strong>
+              <strong>{formatLongDate(range.to)}</strong>
               <span className="muted">Hasta</span>
+            </article>
+            <article className="stat stat--compact">
+              <strong>{schedule ? formatDurationLabel(schedule.summary.targetMinutes ?? 0) : '—'}</strong>
+              <span className="muted">Objetivo</span>
+            </article>
+            <article className="stat stat--compact">
+              <strong>{schedule ? formatDurationLabel(schedule.summary.workedMinutes) : '—'}</strong>
+              <span className="muted">Realizado</span>
+            </article>
+            <article className="stat stat--compact">
+              <strong>{schedule ? formatNumber(schedule.summary.coverageRate) : 0}%</strong>
+              <span className="muted">Cobertura</span>
             </article>
           </>
         }
       />
-
-      {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
-
-      <section className="panel stack">
-        <div className="field-grid">
-          <div className="field">
-            <label htmlFor="from">Desde</label>
-            <input id="from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-          </div>
-          <div className="field">
-            <label htmlFor="to">Hasta</label>
-            <input id="to" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-          </div>
-        </div>
-      </section>
 
       {schedule ? <ScheduleGrid schedule={schedule} compact /> : null}
     </div>

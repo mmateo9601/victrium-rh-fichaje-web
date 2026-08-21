@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-  getStoredSession: vi.fn(),
+  useStoredSession: vi.fn(),
   signOut: vi.fn(),
   usePathname: vi.fn(() => '/dashboard')
 }));
@@ -24,7 +24,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('../lib/auth/session', () => ({
-  getStoredSession: mocks.getStoredSession,
+  useStoredSession: mocks.useStoredSession,
   signOut: mocks.signOut
 }));
 
@@ -32,12 +32,12 @@ import { Topbar } from './topbar';
 
 describe('Topbar', () => {
   beforeEach(() => {
-    mocks.getStoredSession.mockReset();
+    mocks.useStoredSession.mockReset();
     mocks.signOut.mockReset();
   });
 
   it('shows the shell navigation for authenticated users', () => {
-    mocks.getStoredSession.mockReturnValue({
+    mocks.useStoredSession.mockReturnValue({
       user: {
         nombreEmpleado: 'Ada Admin',
         roles: ['ROLE_ADMIN']
@@ -56,7 +56,7 @@ describe('Topbar', () => {
   });
 
   it('renders public routes without the app shell', () => {
-    mocks.getStoredSession.mockReturnValue(null);
+    mocks.useStoredSession.mockReturnValue(null);
     mocks.usePathname.mockReturnValue('/login');
 
     render(
