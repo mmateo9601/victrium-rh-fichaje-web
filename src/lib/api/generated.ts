@@ -409,7 +409,12 @@ class ApiClientError extends Error {
 }
 
 function buildUrl(path: string, query?: RequestOptions['query']) {
-  const url = new URL(path, `${env.apiBaseUrl}/`);
+  const baseUrl = new URL(`${env.apiBaseUrl}/`);
+  const normalizedPath =
+    baseUrl.pathname.replace(/\/+$/, '') === '/api/v1' && path.startsWith('/api/v1')
+      ? path.slice('/api/v1'.length) || '/'
+      : path;
+  const url = new URL(normalizedPath, baseUrl);
   if (query) {
     for (const [key, value] of Object.entries(query)) {
       if (value === undefined || value === null || value === '') {
