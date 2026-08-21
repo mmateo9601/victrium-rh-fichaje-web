@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -230,14 +231,19 @@ export default function PlanningPeriodsPage() {
                   <td>{period.version}</td>
                   <td>{period.publishedAt ? formatLongDate(period.publishedAt) : 'Sin publicar'}</td>
                   <td>
-                    <button
-                      className="button button-secondary"
-                      type="button"
-                      onClick={() => void toggleStatus(period)}
-                      disabled={workingId === period.id}
-                    >
-                      {workingId === period.id ? 'Procesando...' : period.status === 'PUBLISHED' ? 'Volver a borrador' : 'Publicar'}
-                    </button>
+                    <div className="stack" style={{ gap: '0.35rem' }}>
+                      <button
+                        className="button button-secondary"
+                        type="button"
+                        onClick={() => void toggleStatus(period)}
+                        disabled={workingId === period.id}
+                      >
+                        {workingId === period.id ? 'Procesando...' : period.status === 'PUBLISHED' ? 'Volver a borrador' : 'Publicar'}
+                      </button>
+                      <Link className="button button-ghost" href={`/planning-periods/${period.id}`}>
+                        Ver detalle
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}

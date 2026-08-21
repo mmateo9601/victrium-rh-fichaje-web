@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import { PageHeader } from '../../components/page-header';
 import { api, type ReportsSummary } from '../../lib/api/generated';
-import { formatNumber } from '../../lib/labels';
+import { formatDurationLabel, formatLongDate, formatNumber } from '../../lib/labels';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 
 export default function ReportsPage() {
@@ -95,6 +95,43 @@ export default function ReportsPage() {
             <span className="muted">{item.label}</span>
           </article>
         ))}
+      </section>
+
+      <section className="panel stack">
+        <div className="toolbar">
+          <div>
+            <h2 className="section-title">Cobertura mensual</h2>
+            <p className="meta">
+              {summary ? `${formatLongDate(summary.currentMonthFrom)} - ${formatLongDate(summary.currentMonthTo)}` : 'Periodo actual'}
+            </p>
+          </div>
+        </div>
+        <div className="grid-3">
+          <article className="stat">
+            <strong>{formatDurationLabel(summary?.currentMonthPlannedMinutes ?? 0)}</strong>
+            <span className="muted">Planificado</span>
+          </article>
+          <article className="stat">
+            <strong>{formatDurationLabel(summary?.currentMonthWorkedMinutes ?? 0)}</strong>
+            <span className="muted">Trabajado</span>
+          </article>
+          <article className="stat">
+            <strong>{formatNumber(summary?.currentMonthCoverageRate ?? 0)}%</strong>
+            <span className="muted">Cobertura</span>
+          </article>
+          <article className="stat">
+            <strong>{formatNumber(summary?.currentMonthAbsenceDays ?? 0)}</strong>
+            <span className="muted">Ausencias</span>
+          </article>
+          <article className="stat">
+            <strong>{formatNumber(summary?.currentMonthIncidentDays ?? 0)}</strong>
+            <span className="muted">Incidencias</span>
+          </article>
+          <article className="stat">
+            <strong>{formatNumber(summary?.currentMonthUnplannedDays ?? 0)}</strong>
+            <span className="muted">Días sin plan</span>
+          </article>
+        </div>
       </section>
 
       <section className="panel stack">

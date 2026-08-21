@@ -1,10 +1,11 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
 import { ScheduleGrid } from '../../../components/schedule-grid';
-import { api, type Company, type Employee, type Schedule, type ShiftAssignment } from '../../../lib/api/generated';
+import { api, type Company, type Employee, type EmployeeLocationAssignment, type Schedule, type ShiftAssignment } from '../../../lib/api/generated';
 import { getAccessToken } from '../../../lib/auth/session';
 
 export default function EmployeeDetailPage() {
@@ -16,6 +17,7 @@ export default function EmployeeDetailPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [schedule, setSchedule] = useState<Schedule | null>(null);
   const [assignments, setAssignments] = useState<ShiftAssignment[]>([]);
+  const [locationAssignments, setLocationAssignments] = useState<EmployeeLocationAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +50,8 @@ export default function EmployeeDetailPage() {
         ]);
         setSchedule(scheduleResult);
         setAssignments(assignmentsResult);
+        const locationAssignmentsResult = await api.workLocations.assignments(authToken, { employeeId: id, pageSize: 50, sort: 'validFrom', order: 'desc' });
+        setLocationAssignments(locationAssignmentsResult.data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'No se pudo cargar el detalle');
       } finally {
@@ -301,6 +305,50 @@ export default function EmployeeDetailPage() {
         )}
 
         {schedule ? <ScheduleGrid schedule={schedule} compact /> : null}
+      </section>
+
+      <section className="panel stack">
+        <div className="toolbar">
+          <div>
+            <h2 className="section-title">Historial de centros</h2>
+            <p className="meta">Movilidad del empleado entre ubicaciones de trabajo.</p>
+          </div>
+        </div>
+        {locationAssignments.length ? (
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Centro</th>
+                  <th>Vigencia</th>
+                  <th>Principal</th>
+                  <th>Notas</th>
+                </tr>
+              </thead>
+              <tbody>
+                {locationAssignments.map((assignment) => (
+                  <tr key={assignment.id}>
+                    <td>
+                      <Link className="button button-ghost" href={`/work-locations/${assignment.workLocationId}`}>
+                        {assignment.workLocationName}
+                      </Link>
+                    </td>
+                    <td>
+                      {assignment.validFrom} {assignment.validTo ? `- ${assignment.validTo}` : '(vigente)'}
+                    </td>
+                    <td>{assignment.primary ? 'Sí' : 'No'}</td>
+                    <td>{assignment.notes ?? '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="empty-state">
+            <strong>Sin historial de centros</strong>
+            <p className="meta">Este empleado todavía no tiene asignaciones de ubicación registradas.</p>
+          </div>
+        )}
       </section>
     </div>
   );

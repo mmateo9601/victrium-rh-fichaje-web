@@ -69,6 +69,26 @@ export type PlanningPeriod = {
   updatedAt: string;
 };
 
+export type PlanningPeriodAuditAction = 'CREATE' | 'UPDATE' | 'PUBLISH' | 'UNPUBLISH';
+
+export type PlanningPeriodAudit = {
+  id: number;
+  planningPeriodId: number;
+  planningPeriodName: string;
+  action: PlanningPeriodAuditAction;
+  previousStatus: string | null;
+  nextStatus: string;
+  previousVersion: number | null;
+  nextVersion: number;
+  previousSnapshot: Record<string, unknown> | null;
+  nextSnapshot: Record<string, unknown>;
+  reason: string | null;
+  changedById: number | null;
+  changedByNumero: string | null;
+  changedByNombre: string | null;
+  createdAt: string;
+};
+
 export type ReportsSummary = {
   companies: number;
   users: number;
@@ -82,6 +102,14 @@ export type ReportsSummary = {
   permissionsPending: number;
   incidentsOpen: number;
   activeSessions: number;
+  currentMonthFrom: string;
+  currentMonthTo: string;
+  currentMonthPlannedMinutes: number;
+  currentMonthWorkedMinutes: number;
+  currentMonthCoverageRate: number;
+  currentMonthAbsenceDays: number;
+  currentMonthIncidentDays: number;
+  currentMonthUnplannedDays: number;
 };
 
 export type WorkLocation = {
@@ -924,6 +952,7 @@ export const api = {
     list: (token: string, query: PlanningPeriodListQuery = {}) =>
       requestJson<PaginatedResult<PlanningPeriod>>('/api/v1/planning-periods', { token, query }),
     byId: (token: string, id: number) => requestJson<PlanningPeriod>(`/api/v1/planning-periods/${id}`, { token }),
+    audits: (token: string, id: number) => requestJson<PlanningPeriodAudit[]>(`/api/v1/planning-periods/${id}/audits`, { token }),
     create: (token: string, body: { companyId?: number; name: string; startDate: string; endDate: string; notes?: string | null }) =>
       requestJsonWithMethod<PlanningPeriod>('/api/v1/planning-periods', 'POST', { token, body }),
     update: (
