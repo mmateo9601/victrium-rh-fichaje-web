@@ -29,6 +29,10 @@ function dayMinutes(day: Shift['days'][number]) {
   return day.workingMinutes ?? 0;
 }
 
+function rotationMinutes(step: Shift['rotationPattern'][number]) {
+  return step.workingMinutes ?? 0;
+}
+
 export default function ShiftDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
@@ -52,6 +56,7 @@ export default function ShiftDetailPage() {
 
   const shiftDays = useMemo(() => shift?.days ?? [], [shift]);
   const totalMinutes = useMemo(() => shiftDays.reduce((acc, day) => acc + dayMinutes(day), 0), [shiftDays]);
+  const rotationMinutesTotal = useMemo(() => shift?.rotationPattern.reduce((acc, step) => acc + rotationMinutes(step), 0) ?? 0, [shift]);
 
   useEffect(() => {
     const accessToken = getAccessToken();
@@ -177,6 +182,10 @@ export default function ShiftDetailPage() {
               <strong>{shift.assignmentsCount}</strong>
               <span className="muted">Asignaciones</span>
             </article>
+            <article className="stat stat--compact">
+              <strong>{shift.rotationPattern.length ? shift.rotationPattern.length : 'Semanal'}</strong>
+              <span className="muted">Rotación</span>
+            </article>
           </>
         }
       />
@@ -235,6 +244,66 @@ export default function ShiftDetailPage() {
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section className="panel stack">
+        <div className="toolbar">
+          <div>
+            <h2 className="section-title">Rotación</h2>
+            <p className="meta">Si existe un patrón rotativo, se aplica sobre la fecha de inicio configurada.</p>
+          </div>
+        </div>
+        {shift.rotationPattern.length ? (
+          <>
+            <div className="grid-3">
+              <article className="stat">
+                <strong>{shift.rotationStartDate ?? '—'}</strong>
+                <span className="muted">Inicio</span>
+              </article>
+              <article className="stat">
+                <strong>{minutesLabel(rotationMinutesTotal)}</strong>
+                <span className="muted">Total ciclo</span>
+              </article>
+              <article className="stat">
+                <strong>{shift.rotationPattern.length}</strong>
+                <span className="muted">Pasos</span>
+              </article>
+            </div>
+            <div className="table-wrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Paso</th>
+                    <th>Trabaja</th>
+                    <th>Inicio</th>
+                    <th>Fin</th>
+                    <th>Descanso</th>
+                    <th>Medianoche</th>
+                    <th>Minutos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {shift.rotationPattern.map((step) => (
+                    <tr key={step.id}>
+                      <td>{step.id}</td>
+                      <td>{step.working ? 'Sí' : 'No'}</td>
+                      <td>{step.startTime?.slice(0, 5) ?? '—'}</td>
+                      <td>{step.endTime?.slice(0, 5) ?? '—'}</td>
+                      <td>{step.breakMinutes}</td>
+                      <td>{step.crossesMidnight ? 'Sí' : 'No'}</td>
+                      <td>{minutesLabel(step.workingMinutes)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        ) : (
+          <div className="empty-state">
+            <strong>Sin rotación</strong>
+            <p className="meta">Este turno usa exclusivamente el horario semanal.</p>
+          </div>
+        )}
       </section>
 
       <div className="grid-2">

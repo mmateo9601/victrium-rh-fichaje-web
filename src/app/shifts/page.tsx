@@ -92,6 +92,14 @@ function dayMinutes(day: ShiftDay) {
   return day.workingMinutes ?? 0;
 }
 
+function defaultRotationPattern() {
+  return [
+    { working: true, startTime: '08:00:00', endTime: '16:00:00', breakMinutes: 30, workingMinutes: 450, crossesMidnight: false },
+    { working: true, startTime: '16:00:00', endTime: '00:00:00', breakMinutes: 30, workingMinutes: 450, crossesMidnight: true },
+    { working: false, startTime: null, endTime: null, breakMinutes: 0, workingMinutes: 0, crossesMidnight: false }
+  ];
+}
+
 export default function ShiftsPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
@@ -106,6 +114,8 @@ export default function ShiftsPage() {
   const [color, setColor] = useState('#0f766e');
   const [description, setDescription] = useState('Turno base de mañana');
   const [days, setDays] = useState<Omit<ShiftDay, 'id'>[]>(defaultDays());
+  const [rotationStartDate, setRotationStartDate] = useState('');
+  const [rotationPattern, setRotationPattern] = useState(JSON.stringify(defaultRotationPattern(), null, 2));
 
   useEffect(() => {
     const accessToken = getAccessToken();
@@ -144,13 +154,16 @@ export default function ShiftsPage() {
     setCreating(true);
     setError(null);
     try {
+      const parsedRotation = rotationPattern.trim() ? (JSON.parse(rotationPattern) as Array<{ working: boolean; startTime: string | null; endTime: string | null; breakMinutes: number; workingMinutes: number | null; crossesMidnight: boolean }>) : [];
       await api.shifts.create(token, {
         name,
         code,
         color,
         description,
         active: true,
-        days
+        days,
+        rotationStartDate: rotationStartDate || null,
+        rotationPattern: parsedRotation
       });
       const refreshed = await api.shifts.list(token, { search, active });
       setShifts(refreshed);
@@ -220,6 +233,21 @@ export default function ShiftsPage() {
             <label htmlFor="description">Descripción</label>
             <input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
           </div>
+          <div className="field">
+            <label htmlFor="rotationStartDate">Inicio rotación</label>
+            <input id="rotationStartDate" type="date" value={rotationStartDate} onChange={(e) => setRotationStartDate(e.target.value)} />
+          </div>
+        </div>
+
+        <div className="field">
+          <label htmlFor="rotationPattern">Patrón de rotación JSON</label>
+          <textarea
+            id="rotationPattern"
+            rows={8}
+            value={rotationPattern}
+            onChange={(e) => setRotationPattern(e.target.value)}
+            spellCheck={false}
+          />
         </div>
 
         <div className="stack">

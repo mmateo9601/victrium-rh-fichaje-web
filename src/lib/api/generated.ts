@@ -356,6 +356,16 @@ export type ShiftSegment = {
   crossesMidnight: boolean;
 };
 
+export type ShiftRotationStep = {
+  id: number;
+  working: boolean;
+  startTime: string | null;
+  endTime: string | null;
+  breakMinutes: number;
+  workingMinutes: number | null;
+  crossesMidnight: boolean;
+};
+
 export type ShiftSummary = {
   id: number;
   name: string;
@@ -366,6 +376,8 @@ export type ShiftSummary = {
 export type Shift = ShiftSummary & {
   description: string | null;
   active: boolean;
+  rotationStartDate: string | null;
+  rotationPattern: ShiftRotationStep[];
   companyId: number | null;
   companyName: string | null;
   days: ShiftDay[];
@@ -384,6 +396,8 @@ export type CreateShiftRequest = {
   color?: string | null;
   active?: boolean;
   days: CreateShiftDayRequest[];
+  rotationStartDate?: string | null;
+  rotationPattern?: Array<Omit<ShiftRotationStep, 'id'>>;
 };
 
 export type UpdateShiftRequest = Partial<CreateShiftRequest>;
