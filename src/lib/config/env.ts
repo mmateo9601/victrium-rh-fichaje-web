@@ -15,11 +15,11 @@ function validateApiBaseUrl(value: string | undefined) {
   }
 
   try {
-    const normalized = new URL(value).toString();
-    if (process.env.NODE_ENV === 'production' && isLocalhostUrl(normalized)) {
-      return productionApiBaseUrl;
+    const normalized = new URL(value);
+    if (process.env.NODE_ENV === 'production' && isLocalhostUrl(normalized.toString())) {
+      return new URL(productionApiBaseUrl).origin;
     }
-    return normalized;
+    return normalized.origin;
   } catch {
     throw new Error('Invalid NEXT_PUBLIC_API_URL in Web environment');
   }

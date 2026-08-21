@@ -11,7 +11,7 @@ describe('env config', () => {
 
     const { env } = await import('./env');
 
-    expect(env.apiBaseUrl).toBe('https://api.example.com/');
+    expect(env.apiBaseUrl).toBe('https://api.example.com');
   });
 
   it('throws when the API base URL is invalid', async () => {
@@ -26,6 +26,6 @@ describe('env config', () => {
 
     const { env } = await import('./env');
 
-    expect(env.apiBaseUrl).toBe('https://victrium-rh-fichaje-api.victriumtech.com/api/v1');
+    expect(env.apiBaseUrl).toBe('https://victrium-rh-fichaje-api.victriumtech.com');
   });
 });
