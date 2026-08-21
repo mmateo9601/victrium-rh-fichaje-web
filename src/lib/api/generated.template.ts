@@ -452,6 +452,24 @@ export type WorkPolicyEvaluation = {
   violations: string[];
 };
 
+export type ScheduleSummary = {
+  rangeDays: number;
+  plannedMinutes: number;
+  workedMinutes: number;
+  coverageRate: number;
+  plannedDays: number;
+  workedDays: number;
+  absenceDays: number;
+  incidentDays: number;
+  unplannedDays: number;
+  weeklyTargetMinutes: number | null;
+  monthlyTargetMinutes: number | null;
+  targetMinutes: number | null;
+  targetLabel: 'weekly' | 'monthly' | 'custom' | null;
+  remainingMinutes: number | null;
+  progressRate: number | null;
+};
+
 export type ShiftOverride = {
   id: number;
   companyId: number | null;
@@ -527,6 +545,7 @@ export type Schedule = {
   to: string;
   employees: ScheduleEmployee[];
   days: Array<{ date: string; dayOfWeek: number; label: string }>;
+  summary: ScheduleSummary;
   rows: ScheduleRow[];
 };
 

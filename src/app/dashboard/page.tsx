@@ -10,6 +10,7 @@ import { PageHeader } from '../../components/page-header';
 import { WorkTimer } from '../../components/work-timer';
 import {
   api,
+  type Company,
   type Incident,
   type Permission,
   type PublicUser,
@@ -44,6 +45,7 @@ export default function DashboardPage() {
   const [latestVacation, setLatestVacation] = useState<Vacation | null>(null);
   const [latestPermission, setLatestPermission] = useState<Permission | null>(null);
   const [latestIncident, setLatestIncident] = useState<Incident | null>(null);
+  const [company, setCompany] = useState<Company | null>(null);
   const [workingNow, setWorkingNow] = useState(0);
   const [activeEmployees, setActiveEmployees] = useState(0);
   const [pendingRequests, setPendingRequests] = useState(0);
@@ -82,6 +84,14 @@ export default function DashboardPage() {
         setSessionUser(me);
         const isManager = me.roles.includes('ROLE_ADMIN') || me.roles.includes('ROLE_RRHH');
         setScope(isManager ? 'manager' : 'employee');
+        if (me.companyId) {
+          try {
+            const currentCompany = await api.companies.mine(authToken);
+            setCompany(currentCompany);
+          } catch {
+            setCompany(null);
+          }
+        }
 
         const weekQuery = {
           from: weekRange.from,
@@ -156,6 +166,10 @@ export default function DashboardPage() {
 
   const roleLabel = getRoleLabel(sessionUser?.roles);
   const isManager = scope === 'manager';
+  const companyPolicy = company?.workPolicy as Record<string, unknown> | null | undefined;
+  const weeklyTargetCandidate = companyPolicy?.['weeklyTargetMinutes'];
+  const weeklyTargetMinutes = typeof weeklyTargetCandidate === 'number' ? weeklyTargetCandidate : null;
+  const weeklyRemainingMinutes = weeklyTargetMinutes !== null ? Math.max(0, weeklyTargetMinutes - weekSummary.workedMinutes) : null;
   const mainTitle = isManager ? `Buenos días, ${sessionUser?.nombreEmpleado ?? 'equipo'}` : `Buenos días, ${sessionUser?.nombreEmpleado ?? 'persona'}`;
   const mainDescription = isManager
     ? 'Resumen operativo de la jornada, ausencias y trabajo pendiente.'
@@ -167,9 +181,10 @@ export default function DashboardPage() {
         { value: String(pendingRequests), label: 'Pendientes', icon: <ShieldAlert size={16} /> }
       ]
     : [
+        { value: weeklyTargetMinutes !== null ? formatDurationLabel(weeklyTargetMinutes) : '—', label: 'Objetivo semanal', icon: <CalendarClock size={16} /> },
         { value: formatDurationLabel(weekSummary.workedMinutes), label: 'Horas esta semana', icon: <TimerReset size={16} /> },
         { value: String(weekSummary.days), label: 'Días con actividad', icon: <CalendarClock size={16} /> },
-        { value: String(weekSummary.entries), label: 'Fichajes', icon: <Clock3 size={16} /> }
+        { value: weeklyRemainingMinutes !== null ? formatDurationLabel(weeklyRemainingMinutes) : '—', label: 'Restante', icon: <Clock3 size={16} /> }
       ];
 
   return (

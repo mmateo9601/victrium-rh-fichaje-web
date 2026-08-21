@@ -1,6 +1,6 @@
 'use client';
 
-import { formatDurationLabel, formatLongDate } from '../lib/labels';
+import { formatDurationLabel, formatLongDate, formatNumber } from '../lib/labels';
 import type { Schedule } from '../lib/api/generated';
 
 type ScheduleGridProps = {
@@ -31,6 +31,13 @@ function shortTime(value: string | null) {
 }
 
 export function ScheduleGrid({ schedule, compact }: ScheduleGridProps) {
+  const targetLabel =
+    schedule.summary.targetLabel === 'weekly'
+      ? 'Objetivo semanal'
+      : schedule.summary.targetLabel === 'monthly'
+        ? 'Objetivo mensual'
+        : 'Objetivo del periodo';
+
   return (
     <div className="stack">
       <div className="toolbar">
@@ -51,6 +58,48 @@ export function ScheduleGrid({ schedule, compact }: ScheduleGridProps) {
           )}
         </div>
       </div>
+
+      <section className="grid-3">
+        <article className="stat">
+          <strong>{formatDurationLabel(schedule.summary.targetMinutes ?? 0)}</strong>
+          <span className="muted">{targetLabel}</span>
+        </article>
+        <article className="stat">
+          <strong>{formatDurationLabel(schedule.summary.workedMinutes)}</strong>
+          <span className="muted">Realizado</span>
+        </article>
+        <article className="stat">
+          <strong>{formatNumber(schedule.summary.coverageRate)}%</strong>
+          <span className="muted">Cobertura</span>
+        </article>
+        <article className="stat">
+          <strong>{formatNumber(schedule.summary.plannedDays)}</strong>
+          <span className="muted">Días planificados</span>
+        </article>
+        <article className="stat">
+          <strong>{formatNumber(schedule.summary.workedDays)}</strong>
+          <span className="muted">Días con actividad</span>
+        </article>
+        <article className="stat">
+          <strong>{formatDurationLabel(schedule.summary.remainingMinutes ?? 0)}</strong>
+          <span className="muted">{schedule.summary.remainingMinutes !== null ? 'Restante' : 'Sin objetivo'}</span>
+        </article>
+      </section>
+
+      <section className="grid-3">
+        <article className="stat stat--compact">
+          <strong>{formatDurationLabel(schedule.summary.weeklyTargetMinutes ?? 0)}</strong>
+          <span className="muted">Meta semanal</span>
+        </article>
+        <article className="stat stat--compact">
+          <strong>{formatDurationLabel(schedule.summary.monthlyTargetMinutes ?? 0)}</strong>
+          <span className="muted">Meta mensual</span>
+        </article>
+        <article className="stat stat--compact">
+          <strong>{formatNumber(schedule.summary.absenceDays)}</strong>
+          <span className="muted">Ausencias</span>
+        </article>
+      </section>
 
       <div className="table-wrap schedule-wrap">
         <table className="table schedule-table">
