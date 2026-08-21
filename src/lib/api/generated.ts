@@ -69,6 +69,21 @@ export type PlanningPeriod = {
   updatedAt: string;
 };
 
+export type ReportsSummary = {
+  companies: number;
+  users: number;
+  employees: number;
+  workLocations: number;
+  shifts: number;
+  planningPeriods: number;
+  publishedPlanningPeriods: number;
+  timeEntries: number;
+  vacationsPending: number;
+  permissionsPending: number;
+  incidentsOpen: number;
+  activeSessions: number;
+};
+
 export type WorkLocation = {
   id: number;
   companyId: number | null;
@@ -920,6 +935,9 @@ export const api = {
       requestJsonWithMethod<PlanningPeriod>(`/api/v1/planning-periods/${id}/publish`, 'POST', { token }),
     unpublish: (token: string, id: number) =>
       requestJsonWithMethod<PlanningPeriod>(`/api/v1/planning-periods/${id}/unpublish`, 'POST', { token })
+  },
+  reports: {
+    summary: (token: string) => requestJson<ReportsSummary>('/api/v1/reports/summary', { token })
   },
   shifts: {
     list: (token: string, query: ListQuery = {}) =>

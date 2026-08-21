@@ -1,0 +1,121 @@
+'use client';
+
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+import { PageHeader } from '../../components/page-header';
+import { api, type ReportsSummary } from '../../lib/api/generated';
+import { formatNumber } from '../../lib/labels';
+import { getAccessToken, getStoredSession } from '../../lib/auth/session';
+
+export default function PlatformPage() {
+  const router = useRouter();
+  const session = useMemo(() => getStoredSession(), []);
+  const canAccess = session?.user.roles.includes('ROLE_SUPER_ADMIN');
+  const [summary, setSummary] = useState<ReportsSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const accessToken = getAccessToken();
+    if (!accessToken) {
+      router.replace('/login');
+      return;
+    }
+    const authToken = accessToken;
+    if (!canAccess) {
+      router.replace('/dashboard');
+      return;
+    }
+
+    async function load() {
+      try {
+        const data = await api.reports.summary(authToken);
+        setSummary(data);
+      } catch (loadError) {
+        setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar la plataforma');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    void load();
+  }, [router, canAccess]);
+
+  if (loading) {
+    return (
+      <section className="hero">
+        <span className="eyebrow">Plataforma</span>
+        <h1>Cargando consola...</h1>
+      </section>
+    );
+  }
+
+  return (
+    <div className="stack">
+      <PageHeader
+        eyebrow="Super admin"
+        title="Consola de plataforma"
+        description="Resumen operativo global de compañías, centros, planificación y actividad."
+        stats={
+          <>
+            <article className="stat stat--compact">
+              <strong>{formatNumber(summary?.companies ?? 0)}</strong>
+              <span className="muted">Empresas</span>
+            </article>
+            <article className="stat stat--compact">
+              <strong>{formatNumber(summary?.planningPeriods ?? 0)}</strong>
+              <span className="muted">Periodos</span>
+            </article>
+            <article className="stat stat--compact">
+              <strong>{formatNumber(summary?.publishedPlanningPeriods ?? 0)}</strong>
+              <span className="muted">Publicados</span>
+            </article>
+          </>
+        }
+      />
+
+      {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
+
+      <section className="grid-3">
+        {[
+          { label: 'Usuarios', value: summary?.users ?? 0 },
+          { label: 'Empleados', value: summary?.employees ?? 0 },
+          { label: 'Centros', value: summary?.workLocations ?? 0 },
+          { label: 'Turnos', value: summary?.shifts ?? 0 },
+          { label: 'Fichajes', value: summary?.timeEntries ?? 0 },
+          { label: 'Sesiones activas', value: summary?.activeSessions ?? 0 }
+        ].map((item) => (
+          <article className="stat" key={item.label}>
+            <strong>{formatNumber(item.value)}</strong>
+            <span className="muted">{item.label}</span>
+          </article>
+        ))}
+      </section>
+
+      <section className="panel stack">
+        <div className="toolbar">
+          <div>
+            <h2 className="section-title">Accesos rápidos</h2>
+            <p className="meta">Entrada directa a las áreas principales de la plataforma.</p>
+          </div>
+        </div>
+        <div className="hero-actions" style={{ flexWrap: 'wrap' }}>
+          <Link className="button button-primary" href="/planning-periods">
+            Periodos de planificación
+          </Link>
+          <Link className="button button-secondary" href="/work-locations">
+            Centros de trabajo
+          </Link>
+          <Link className="button button-secondary" href="/companies">
+            Empresas
+          </Link>
+          <Link className="button button-secondary" href="/reports">
+            Reports
+          </Link>
+        </div>
+      </section>
+    </div>
+  );
+}

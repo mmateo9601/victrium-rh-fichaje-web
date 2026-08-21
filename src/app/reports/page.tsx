@@ -1,0 +1,124 @@
+'use client';
+
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+import { PageHeader } from '../../components/page-header';
+import { api, type ReportsSummary } from '../../lib/api/generated';
+import { formatNumber } from '../../lib/labels';
+import { getAccessToken, getStoredSession } from '../../lib/auth/session';
+
+export default function ReportsPage() {
+  const router = useRouter();
+  const session = useMemo(() => getStoredSession(), []);
+  const canAccess = Boolean(session?.user.roles.some((role) => ['ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN'].includes(role)));
+  const [summary, setSummary] = useState<ReportsSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const accessToken = getAccessToken();
+    if (!accessToken) {
+      router.replace('/login');
+      return;
+    }
+    const authToken = accessToken;
+    if (!canAccess) {
+      router.replace('/dashboard');
+      return;
+    }
+
+    async function load() {
+      try {
+        const data = await api.reports.summary(authToken);
+        setSummary(data);
+      } catch (loadError) {
+        setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar los reports');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    void load();
+  }, [router, canAccess]);
+
+  if (loading) {
+    return (
+      <section className="hero">
+        <span className="eyebrow">Reports</span>
+        <h1>Cargando reports...</h1>
+      </section>
+    );
+  }
+
+  return (
+    <div className="stack">
+      <PageHeader
+        eyebrow="Informes"
+        title="Reports"
+        description="Resumen global de actividad para dirección y administración."
+        stats={
+          <>
+            <article className="stat stat--compact">
+              <strong>{formatNumber(summary?.users ?? 0)}</strong>
+              <span className="muted">Usuarios</span>
+            </article>
+            <article className="stat stat--compact">
+              <strong>{formatNumber(summary?.employees ?? 0)}</strong>
+              <span className="muted">Empleados</span>
+            </article>
+            <article className="stat stat--compact">
+              <strong>{formatNumber(summary?.timeEntries ?? 0)}</strong>
+              <span className="muted">Fichajes</span>
+            </article>
+          </>
+        }
+      />
+
+      {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
+
+      <section className="grid-3">
+        {[
+          { label: 'Empresas', value: summary?.companies ?? 0 },
+          { label: 'Centros', value: summary?.workLocations ?? 0 },
+          { label: 'Turnos', value: summary?.shifts ?? 0 },
+          { label: 'Periodos', value: summary?.planningPeriods ?? 0 },
+          { label: 'Publicados', value: summary?.publishedPlanningPeriods ?? 0 },
+          { label: 'Sesiones activas', value: summary?.activeSessions ?? 0 },
+          { label: 'Vacaciones pendientes', value: summary?.vacationsPending ?? 0 },
+          { label: 'Permisos pendientes', value: summary?.permissionsPending ?? 0 },
+          { label: 'Incidencias abiertas', value: summary?.incidentsOpen ?? 0 }
+        ].map((item) => (
+          <article className="stat" key={item.label}>
+            <strong>{formatNumber(item.value)}</strong>
+            <span className="muted">{item.label}</span>
+          </article>
+        ))}
+      </section>
+
+      <section className="panel stack">
+        <div className="toolbar">
+          <div>
+            <h2 className="section-title">Accesos</h2>
+            <p className="meta">Navegación directa para la supervisión global.</p>
+          </div>
+        </div>
+        <div className="hero-actions" style={{ flexWrap: 'wrap' }}>
+          <Link className="button button-primary" href="/platform">
+            Plataforma
+          </Link>
+          <Link className="button button-secondary" href="/planning-periods">
+            Periodos de planificación
+          </Link>
+          <Link className="button button-secondary" href="/work-locations">
+            Centros de trabajo
+          </Link>
+          <Link className="button button-secondary" href="/companies">
+            Empresas
+          </Link>
+        </div>
+      </section>
+    </div>
+  );
+}
