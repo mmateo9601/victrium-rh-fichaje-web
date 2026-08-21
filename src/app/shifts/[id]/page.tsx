@@ -22,6 +22,13 @@ function minutesLabel(value: number | null) {
   return hours ? `${hours} h ${String(minutes).padStart(2, '0')} min` : `${minutes} min`;
 }
 
+function dayMinutes(day: Shift['days'][number]) {
+  if (day.segments.length) {
+    return day.segments.reduce((total, segment) => total + (segment.workingMinutes ?? 0), 0);
+  }
+  return day.workingMinutes ?? 0;
+}
+
 export default function ShiftDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
@@ -44,7 +51,7 @@ export default function ShiftDetailPage() {
   const [overrideNotes, setOverrideNotes] = useState('');
 
   const shiftDays = useMemo(() => shift?.days ?? [], [shift]);
-  const totalMinutes = useMemo(() => shiftDays.reduce((acc, day) => acc + (day.workingMinutes ?? 0), 0), [shiftDays]);
+  const totalMinutes = useMemo(() => shiftDays.reduce((acc, day) => acc + dayMinutes(day), 0), [shiftDays]);
 
   useEffect(() => {
     const accessToken = getAccessToken();
@@ -197,6 +204,7 @@ export default function ShiftDetailPage() {
                 <th>Descanso</th>
                 <th>Medianoche</th>
                 <th>Minutos</th>
+                <th>Segmentos</th>
               </tr>
             </thead>
             <tbody>
@@ -208,7 +216,20 @@ export default function ShiftDetailPage() {
                   <td>{day.endTime?.slice(0, 5) ?? '—'}</td>
                   <td>{day.breakMinutes}</td>
                   <td>{day.crossesMidnight ? 'Sí' : 'No'}</td>
-                  <td>{minutesLabel(day.workingMinutes)}</td>
+                  <td>{minutesLabel(dayMinutes(day))}</td>
+                  <td>
+                    {day.segments.length ? (
+                      <div className="stack" style={{ gap: '0.25rem' }}>
+                        {day.segments.map((segment, index) => (
+                          <span key={`${day.id}-${index}`} className="meta">
+                            {segment.startTime?.slice(0, 5) ?? '—'} - {segment.endTime?.slice(0, 5) ?? '—'} · {minutesLabel(segment.workingMinutes)}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -331,11 +352,11 @@ export default function ShiftDetailPage() {
           <div className="table-wrap">
             <table className="table">
               <thead>
-                <tr>
-                  <th>Empleado</th>
-                  <th>Fecha</th>
-                  <th>Tipo</th>
-                  <th>Turno</th>
+              <tr>
+                <th>Empleado</th>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Turno</th>
                 </tr>
               </thead>
               <tbody>
@@ -349,9 +370,9 @@ export default function ShiftDetailPage() {
                 ))}
                 {!overrides.length ? (
                   <tr>
-                    <td colSpan={4} className="muted">
-                      Sin excepciones.
-                    </td>
+                      <td colSpan={4} className="muted">
+                        Sin excepciones.
+                      </td>
                   </tr>
                 ) : null}
               </tbody>

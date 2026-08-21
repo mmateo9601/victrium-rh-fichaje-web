@@ -344,6 +344,16 @@ export type ShiftDay = {
   breakMinutes: number;
   workingMinutes: number | null;
   crossesMidnight: boolean;
+  segments: ShiftSegment[];
+};
+
+export type ShiftSegment = {
+  id: number;
+  startTime: string | null;
+  endTime: string | null;
+  breakMinutes: number;
+  workingMinutes: number | null;
+  crossesMidnight: boolean;
 };
 
 export type ShiftSummary = {

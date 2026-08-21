@@ -12,14 +12,84 @@ const weekLabels = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
 
 function defaultDays(): Omit<ShiftDay, 'id'>[] {
   return [
-    { dayOfWeek: 1, working: true, startTime: '08:00:00', endTime: '17:00:00', breakMinutes: 60, workingMinutes: 480, crossesMidnight: false },
-    { dayOfWeek: 2, working: true, startTime: '08:00:00', endTime: '17:00:00', breakMinutes: 60, workingMinutes: 480, crossesMidnight: false },
-    { dayOfWeek: 3, working: true, startTime: '08:00:00', endTime: '17:00:00', breakMinutes: 60, workingMinutes: 480, crossesMidnight: false },
-    { dayOfWeek: 4, working: true, startTime: '08:00:00', endTime: '17:00:00', breakMinutes: 60, workingMinutes: 480, crossesMidnight: false },
-    { dayOfWeek: 5, working: true, startTime: '08:00:00', endTime: '14:00:00', breakMinutes: 0, workingMinutes: 360, crossesMidnight: false },
-    { dayOfWeek: 6, working: false, startTime: null, endTime: null, breakMinutes: 0, workingMinutes: 0, crossesMidnight: false },
-    { dayOfWeek: 0, working: false, startTime: null, endTime: null, breakMinutes: 0, workingMinutes: 0, crossesMidnight: false }
+    {
+      dayOfWeek: 1,
+      working: true,
+      startTime: '08:00:00',
+      endTime: '17:00:00',
+      breakMinutes: 60,
+      workingMinutes: 480,
+      crossesMidnight: false,
+      segments: []
+    },
+    {
+      dayOfWeek: 2,
+      working: true,
+      startTime: '08:00:00',
+      endTime: '17:00:00',
+      breakMinutes: 60,
+      workingMinutes: 480,
+      crossesMidnight: false,
+      segments: []
+    },
+    {
+      dayOfWeek: 3,
+      working: true,
+      startTime: '08:00:00',
+      endTime: '17:00:00',
+      breakMinutes: 60,
+      workingMinutes: 480,
+      crossesMidnight: false,
+      segments: []
+    },
+    {
+      dayOfWeek: 4,
+      working: true,
+      startTime: '08:00:00',
+      endTime: '17:00:00',
+      breakMinutes: 60,
+      workingMinutes: 480,
+      crossesMidnight: false,
+      segments: []
+    },
+    {
+      dayOfWeek: 5,
+      working: true,
+      startTime: '08:00:00',
+      endTime: '14:00:00',
+      breakMinutes: 0,
+      workingMinutes: 360,
+      crossesMidnight: false,
+      segments: []
+    },
+    {
+      dayOfWeek: 6,
+      working: false,
+      startTime: null,
+      endTime: null,
+      breakMinutes: 0,
+      workingMinutes: 0,
+      crossesMidnight: false,
+      segments: []
+    },
+    {
+      dayOfWeek: 0,
+      working: false,
+      startTime: null,
+      endTime: null,
+      breakMinutes: 0,
+      workingMinutes: 0,
+      crossesMidnight: false,
+      segments: []
+    }
   ];
+}
+
+function dayMinutes(day: ShiftDay) {
+  if (day.segments.length) {
+    return day.segments.reduce((total, segment) => total + (segment.workingMinutes ?? 0), 0);
+  }
+  return day.workingMinutes ?? 0;
 }
 
 export default function ShiftsPage() {
@@ -234,7 +304,7 @@ export default function ShiftsPage() {
                       .map((day) => `${weekLabels[day.dayOfWeek]} ${day.startTime?.slice(0, 5) ?? '—'}-${day.endTime?.slice(0, 5) ?? '—'}`)
                       .join(', ')}
                   </td>
-                  <td>{shift.days.reduce((acc, day) => acc + (day.workingMinutes ?? 0), 0)} min</td>
+                  <td>{shift.days.reduce((acc, day) => acc + dayMinutes(day), 0)} min</td>
                   <td>{shift.assignmentsCount}</td>
                   <td>
                     <span className={`badge ${shift.active ? 'badge-success' : 'badge-danger'}`}>{shift.active ? 'Activo' : 'Inactivo'}</span>
