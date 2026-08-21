@@ -1,9 +1,10 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
+import { PageHeader } from '../../components/page-header';
 import {
   api,
   type Incident,
@@ -88,84 +89,90 @@ export default function DashboardPage() {
 
   return (
     <div className="stack">
-      <section className="hero">
-        <span className="eyebrow">Sesión activa</span>
-        <h1>Bienvenido{user ? `, ${user.nombreEmpleado}` : ''}.</h1>
-        <p>
-          Desde aquí puedes entrar a Companies, Users y Employees. La sesión está asociada a tu empresa
-          y el backend decide el scope real.
-        </p>
-        {error ? <div className="notice" role="alert">{error}</div> : null}
-        {user ? (
-          <div className="grid-3" style={{ marginTop: '1.5rem' }}>
-            <article className="stat">
-              <strong>{user.numero}</strong>
-              <span className="muted">Número de empleado</span>
-            </article>
-            <article className="stat">
-              <strong>{user.companyId ?? 'Global'}</strong>
-              <span className="muted">Empresa activa</span>
-            </article>
-            <article className="stat">
-              <strong>{user.roles.join(', ') || 'Sin rol'}</strong>
-              <span className="muted">Roles asignados</span>
-            </article>
-          </div>
-        ) : null}
-        {user ? (
-          <div className="grid-3" style={{ marginTop: '1.5rem' }}>
-            <article className="stat">
-              <strong>{timeEntriesCount}</strong>
-              <span className="muted">Fichajes visibles</span>
-            </article>
-            <article className="stat">
-              <strong>{vacationsCount}</strong>
-              <span className="muted">Vacaciones visibles</span>
-            </article>
-            <article className="stat">
-              <strong>{permissionsCount + incidentsCount}</strong>
-              <span className="muted">Permisos + incidencias</span>
-            </article>
-          </div>
-        ) : null}
-        <div className="hero-actions">
-          <button className="button button-secondary" onClick={logout} type="button">
-            Cerrar sesión
-          </button>
-          <Link className="button button-primary" href="/employees">
-            Ir a empleados
-          </Link>
-        </div>
-      </section>
+      <PageHeader
+        eyebrow="Sesión activa"
+        title={`Bienvenido${user ? `, ${user.nombreEmpleado}` : ''}.`}
+        description="El dashboard prioriza la jornada de hoy, los últimos movimientos y los accesos rápidos relevantes para tu rol."
+        actions={
+          <>
+            <button className="button button-secondary" onClick={logout} type="button">
+              Cerrar sesión
+            </button>
+            <Link className="button button-primary" href="/time-entries">
+              Ver fichajes
+            </Link>
+          </>
+        }
+        stats={
+          user ? (
+            <>
+              <article className="stat">
+                <strong>{user.numero}</strong>
+                <span className="muted">Número de empleado</span>
+              </article>
+              <article className="stat">
+                <strong>{user.companyId ?? 'Global'}</strong>
+                <span className="muted">Empresa activa</span>
+              </article>
+              <article className="stat">
+                <strong>{user.roles.join(', ') || 'Sin rol'}</strong>
+                <span className="muted">Roles asignados</span>
+              </article>
+            </>
+          ) : null
+        }
+      />
+
+      {error ? <div className="notice" role="alert">{error}</div> : null}
+
+      {user ? (
+        <section className="grid-3">
+          <article className="card stack">
+            <h2 className="card-title">Jornada</h2>
+            <strong>{timeEntriesCount}</strong>
+            <span className="muted">Fichajes visibles</span>
+          </article>
+          <article className="card stack">
+            <h2 className="card-title">Ausencias</h2>
+            <strong>{vacationsCount + permissionsCount}</strong>
+            <span className="muted">Vacaciones y permisos visibles</span>
+          </article>
+          <article className="card stack">
+            <h2 className="card-title">Operativa</h2>
+            <strong>{incidentsCount}</strong>
+            <span className="muted">Incidencias visibles</span>
+          </article>
+        </section>
+      ) : null}
 
       {user ? (
         <section className="grid-auto">
-          <article className="card stack">
-            <h2 className="card-title">Último fichaje</h2>
+          <article className="panel stack">
+            <h2 className="section-title">Último fichaje</h2>
             <p className="meta">
               {latestTimeEntry
                 ? `${latestTimeEntry.tipo} · ${new Date(latestTimeEntry.dia).toLocaleDateString('es-ES')} ${latestTimeEntry.hora}`
                 : 'Sin fichajes recientes'}
             </p>
           </article>
-          <article className="card stack">
-            <h2 className="card-title">Última vacaciones</h2>
+          <article className="panel stack">
+            <h2 className="section-title">Últimas vacaciones</h2>
             <p className="meta">
               {latestVacation
                 ? `${latestVacation.estado} · ${new Date(latestVacation.inicio).toLocaleDateString('es-ES')}`
                 : 'Sin vacaciones recientes'}
             </p>
           </article>
-          <article className="card stack">
-            <h2 className="card-title">Último permiso</h2>
+          <article className="panel stack">
+            <h2 className="section-title">Último permiso</h2>
             <p className="meta">
               {latestPermission
                 ? `${latestPermission.estado} · ${new Date(latestPermission.dia).toLocaleDateString('es-ES')}`
                 : 'Sin permisos recientes'}
             </p>
           </article>
-          <article className="card stack">
-            <h2 className="card-title">Última incidencia</h2>
+          <article className="panel stack">
+            <h2 className="section-title">Última incidencia</h2>
             <p className="meta">
               {latestIncident
                 ? `${latestIncident.resuelta ? 'Resuelta' : 'Abierta'} · ${new Date(latestIncident.dia).toLocaleDateString('es-ES')}`
@@ -188,7 +195,7 @@ export default function DashboardPage() {
           { href: '/calendars', title: 'Calendars', text: 'Calendarios laborales y días configurados.' }
         ].map((item) => (
           <Link className="card stack" href={item.href} key={item.href}>
-            <h2 className="card-title">{item.title}</h2>
+            <span className="eyebrow">{item.title}</span>
             <p className="meta">{item.text}</p>
             <span className="button button-secondary" style={{ width: 'fit-content' }}>
               Abrir

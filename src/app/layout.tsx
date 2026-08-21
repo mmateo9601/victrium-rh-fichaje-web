@@ -7,9 +7,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="es">
       <body>
-        <div className="page-backdrop" />
-        <Topbar />
-        <main className="app-shell">{children}</main>
+        <Topbar>{children}</Topbar>
       </body>
     </html>
   );

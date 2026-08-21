@@ -1,53 +1,172 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 
 import { getStoredSession, signOut } from '../lib/auth/session';
+import { canAccessNavigationItem, getNavigationTitle, navigationGroups, type RoleName } from '../lib/navigation';
 
-export function Topbar() {
+type TopbarProps = {
+  children: ReactNode;
+};
+
+function routeIsPublic(pathname: string) {
+  return pathname === '/' || pathname.startsWith('/login');
+}
+
+function isActive(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+export function Topbar({ children }: TopbarProps) {
+  const pathname = usePathname();
   const router = useRouter();
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const session = getStoredSession();
-  const roles = session?.user.roles ?? [];
-  const canSeeAdmin = roles.includes('ROLE_ADMIN') || roles.includes('ROLE_RRHH');
+
+  const session = useMemo(() => getStoredSession(), []);
+  const roles = (session?.user.roles ?? []) as RoleName[];
+  const isPublicRoute = routeIsPublic(pathname);
+  const visibleGroups = navigationGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => canAccessNavigationItem(item, roles))
+    }))
+    .filter((group) => group.items.length > 0);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!mobileOpen) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMobileOpen(false);
+      }
+    };
+
+    window.document.body.classList.add('no-scroll');
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      window.document.body.classList.remove('no-scroll');
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [mobileOpen]);
 
   async function logout() {
     setLoggingOut(true);
-    await signOut();
-    router.push('/login');
-    setLoggingOut(false);
+    try {
+      await signOut();
+      router.push('/login');
+    } finally {
+      setLoggingOut(false);
+    }
+  }
+
+  if (isPublicRoute) {
+    return <>{children}</>;
   }
 
   return (
-    <header className="topbar">
-      <Link className="brand" href={session ? '/dashboard' : '/'}>
-        <span className="brand-mark">VR</span>
-        <span className="brand-text">
-          <strong>Victrium RH</strong>
-          <small>{session ? session.user.nombreEmpleado : 'Fichaje modular'}</small>
-        </span>
-      </Link>
-      <nav className="topnav" aria-label="Principal">
-        {session ? <Link href="/dashboard">Dashboard</Link> : null}
-        {canSeeAdmin ? <Link href="/companies">Companies</Link> : null}
-        {canSeeAdmin ? <Link href="/users">Users</Link> : null}
-        {canSeeAdmin ? <Link href="/employees">Employees</Link> : null}
-        {session ? <Link href="/time-entries">Fichajes</Link> : null}
-        {session ? <Link href="/permissions">Permissions</Link> : null}
-        {session ? <Link href="/vacations">Vacations</Link> : null}
-        {session ? <Link href="/incidents">Incidents</Link> : null}
-        {session ? <Link href="/profile">Profile</Link> : null}
-        {canSeeAdmin ? <Link href="/calendars">Calendars</Link> : null}
-        {canSeeAdmin ? <Link href="/api-keys">API Keys</Link> : null}
-        {session ? (
-          <button className="button button-secondary" type="button" onClick={logout} disabled={loggingOut}>
-            {loggingOut ? 'Saliendo...' : 'Cerrar sesión'}
-          </button>
-        ) : null}
-        {session ? null : <Link href="/login">Login</Link>}
-      </nav>
-    </header>
+    <div className="app-frame">
+      <a className="skip-link" href="#main-content">
+        Saltar al contenido
+      </a>
+
+      <div className={`shell-overlay ${mobileOpen ? 'is-open' : ''}`} onClick={() => setMobileOpen(false)} />
+
+      <aside className={`sidebar ${mobileOpen ? 'is-open' : ''}`} aria-label="Navegación principal">
+        <div className="sidebar__brand">
+          <Link className="brand brand--sidebar" href={session ? '/dashboard' : '/'}>
+            <span className="brand-mark">VR</span>
+            <span className="brand-text">
+              <strong>Victrium RH</strong>
+              <small>Gestión empresarial de personal</small>
+            </span>
+          </Link>
+        </div>
+
+        <nav className="sidebar__nav" aria-label="Secciones">
+          {visibleGroups.map((group) => (
+            <section key={group.label} className="sidebar-group">
+              <h2>{group.label}</h2>
+              <ul>
+                {group.items.map((item) => {
+                  const active = isActive(pathname, item.href);
+                  return (
+                    <li key={item.href}>
+                      <Link className={active ? 'sidebar-link is-active' : 'sidebar-link'} href={item.href}>
+                        <span>
+                          <strong>{item.label}</strong>
+                          <small>{item.description}</small>
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
+        </nav>
+
+        <div className="sidebar__footer">
+          <div className="profile-chip">
+            <span className="profile-chip__avatar">{session?.user.nombreEmpleado?.charAt(0) ?? 'V'}</span>
+            <div>
+              <strong>{session?.user.nombreEmpleado ?? 'Sesión activa'}</strong>
+              <small>{session?.user.roles.join(' · ') || 'Sin rol'}</small>
+            </div>
+          </div>
+          <div className="sidebar__actions">
+            <Link className="button button-secondary button-full" href="/profile">
+              Perfil
+            </Link>
+            <button className="button button-ghost button-full" type="button" onClick={() => void logout()} disabled={loggingOut}>
+              {loggingOut ? 'Saliendo...' : 'Cerrar sesión'}
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <div className="app-main">
+        <header className="app-topbar">
+          <div className="app-topbar__left">
+            <button className="icon-button" type="button" onClick={() => setMobileOpen(true)} aria-label="Abrir navegación">
+              <span />
+              <span />
+              <span />
+            </button>
+            <div className="stack">
+              <span className="app-topbar__eyebrow">Victrium RH</span>
+              <strong className="app-topbar__title">{getNavigationTitle(pathname)}</strong>
+            </div>
+          </div>
+
+          <div className="app-topbar__right">
+            {session ? <span className="session-pill">Conectado</span> : null}
+            {session ? (
+              <button className="button button-secondary" type="button" onClick={() => void logout()} disabled={loggingOut}>
+                {loggingOut ? 'Saliendo...' : 'Cerrar sesión'}
+              </button>
+            ) : (
+              <Link className="button button-secondary" href="/login">
+                Entrar
+              </Link>
+            )}
+          </div>
+        </header>
+
+        <main id="main-content" className="content-area">
+          {children}
+        </main>
+      </div>
+    </div>
   );
 }

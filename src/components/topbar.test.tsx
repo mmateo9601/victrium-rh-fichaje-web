@@ -4,7 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   getStoredSession: vi.fn(),
-  signOut: vi.fn()
+  signOut: vi.fn(),
+  usePathname: vi.fn(() => '/dashboard')
 }));
 
 vi.mock('next/link', () => ({
@@ -16,6 +17,7 @@ vi.mock('next/link', () => ({
 }));
 
 vi.mock('next/navigation', () => ({
+  usePathname: mocks.usePathname,
   useRouter: () => ({
     push: vi.fn()
   })
@@ -34,16 +36,7 @@ describe('Topbar', () => {
     mocks.signOut.mockReset();
   });
 
-  it('shows the login entry when there is no session', () => {
-    mocks.getStoredSession.mockReturnValue(null);
-
-    render(<Topbar />);
-
-    expect(screen.getByRole('link', { name: /login/i })).toHaveAttribute('href', '/login');
-    expect(screen.queryByRole('link', { name: /dashboard/i })).not.toBeInTheDocument();
-  });
-
-  it('shows admin navigation when the user has admin roles', () => {
+  it('shows the shell navigation for authenticated users', () => {
     mocks.getStoredSession.mockReturnValue({
       user: {
         nombreEmpleado: 'Ada Admin',
@@ -51,14 +44,28 @@ describe('Topbar', () => {
       }
     });
 
-    render(<Topbar />);
+    render(
+      <Topbar>
+        <div>content</div>
+      </Topbar>
+    );
 
     expect(screen.getByRole('link', { name: /dashboard/i })).toHaveAttribute('href', '/dashboard');
-    expect(screen.getByRole('link', { name: /companies/i })).toHaveAttribute('href', '/companies');
-    expect(screen.getByRole('link', { name: /users/i })).toHaveAttribute('href', '/users');
-    expect(screen.getByRole('link', { name: /employees/i })).toHaveAttribute('href', '/employees');
-    expect(screen.getByRole('link', { name: /profile/i })).toHaveAttribute('href', '/profile');
-    expect(screen.getByRole('link', { name: /api keys/i })).toHaveAttribute('href', '/api-keys');
-    expect(screen.getByRole('button', { name: /cerrar sesión/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /empleados/i })).toHaveAttribute('href', '/employees');
+    expect(screen.getAllByRole('button', { name: /cerrar sesión/i })).toHaveLength(2);
+  });
+
+  it('renders public routes without the app shell', () => {
+    mocks.getStoredSession.mockReturnValue(null);
+    mocks.usePathname.mockReturnValue('/login');
+
+    render(
+      <Topbar>
+        <div>public content</div>
+      </Topbar>
+    );
+
+    expect(screen.getByText('public content')).toBeInTheDocument();
+    expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
   });
 });
