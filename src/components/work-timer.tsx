@@ -231,8 +231,8 @@ export function WorkTimer({ token }: WorkTimerProps) {
             <button
               className="button button-secondary"
               type="button"
-              onClick={() => void runAction(() => api.timeEntries.pause(token, current.sessionId ?? 0), 'Pausa registrada')}
-              disabled={actioning || !current.sessionId}
+              onClick={() => void runAction(() => api.timeEntries.pauseMine(token), 'Pausa registrada')}
+              disabled={actioning}
             >
               <Pause size={16} />
               Pausar
@@ -249,8 +249,8 @@ export function WorkTimer({ token }: WorkTimerProps) {
             <button
               className="button button-primary"
               type="button"
-              onClick={() => void runAction(() => api.timeEntries.resume(token, current.sessionId ?? 0), 'Jornada reanudada')}
-              disabled={actioning || !current.sessionId}
+              onClick={() => void runAction(() => api.timeEntries.resumeMine(token), 'Jornada reanudada')}
+              disabled={actioning}
             >
               <Play size={16} />
               Reanudar
@@ -280,14 +280,14 @@ export function WorkTimer({ token }: WorkTimerProps) {
                 Cancelar
               </button>
               <button
-                className="button button-danger"
-                type="button"
-                onClick={() => void runAction(() => api.timeEntries.finish(token, current?.sessionId ?? 0), 'Jornada finalizada')}
-                disabled={actioning || !current?.sessionId}
-              >
-                Finalizar jornada
-              </button>
-            </div>
+              className="button button-danger"
+              type="button"
+              onClick={() => void runAction(() => api.timeEntries.finishMine(token), 'Jornada finalizada')}
+              disabled={actioning}
+            >
+              Finalizar jornada
+            </button>
+          </div>
           </div>
         </div>
       ) : null}

@@ -967,10 +967,16 @@ export const api = {
     current: (token: string) => requestJson<WorkTimerCurrent>('/api/v1/time-entries/me/current', { token }),
     start: (token: string, body: ClockTimeEntryRequest = {}) =>
       requestJsonWithMethod<WorkTimerCurrent>('/api/v1/time-entries/start', 'POST', { token, body }),
+    pauseMine: (token: string) =>
+      requestJsonWithMethod<WorkTimerCurrent>('/api/v1/time-entries/me/pause', 'POST', { token }),
     pause: (token: string, sessionId: number) =>
       requestJsonWithMethod<WorkTimerCurrent>(`/api/v1/time-entries/${sessionId}/pause`, 'POST', { token }),
+    resumeMine: (token: string) =>
+      requestJsonWithMethod<WorkTimerCurrent>('/api/v1/time-entries/me/resume', 'POST', { token }),
     resume: (token: string, sessionId: number) =>
       requestJsonWithMethod<WorkTimerCurrent>(`/api/v1/time-entries/${sessionId}/resume`, 'POST', { token }),
+    finishMine: (token: string) =>
+      requestJsonWithMethod<WorkTimerCurrent>('/api/v1/time-entries/me/finish', 'POST', { token }),
     finish: (token: string, sessionId: number) =>
       requestJsonWithMethod<WorkTimerCurrent>(`/api/v1/time-entries/${sessionId}/finish`, 'POST', { token }),
     clock: (token: string, body: ClockTimeEntryRequest = {}) =>

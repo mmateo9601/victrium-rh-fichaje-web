@@ -4,8 +4,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   current: vi.fn(),
   start: vi.fn(),
+  pauseMine: vi.fn(),
   pause: vi.fn(),
+  resumeMine: vi.fn(),
   resume: vi.fn(),
+  finishMine: vi.fn(),
   finish: vi.fn()
 }));
 
@@ -14,8 +17,11 @@ vi.mock('../lib/api/generated', () => ({
     timeEntries: {
       current: mocks.current,
       start: mocks.start,
+      pauseMine: mocks.pauseMine,
       pause: mocks.pause,
+      resumeMine: mocks.resumeMine,
       resume: mocks.resume,
+      finishMine: mocks.finishMine,
       finish: mocks.finish
     },
     shifts: {
@@ -30,8 +36,11 @@ describe('WorkTimer', () => {
   beforeEach(() => {
     mocks.current.mockReset();
     mocks.start.mockReset();
+    mocks.pauseMine.mockReset();
     mocks.pause.mockReset();
+    mocks.resumeMine.mockReset();
     mocks.resume.mockReset();
+    mocks.finishMine.mockReset();
     mocks.finish.mockReset();
   });
 
