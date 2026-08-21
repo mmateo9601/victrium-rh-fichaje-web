@@ -621,6 +621,56 @@ textarea {
   background: rgba(15, 118, 110, 0.025);
 }
 
+.schedule-wrap {
+  overflow-x: auto;
+}
+
+.schedule-table {
+  min-width: 72rem;
+}
+
+.schedule-table__sticky {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: inherit;
+  box-shadow: 12px 0 16px -16px rgba(18, 32, 47, 0.18);
+}
+
+.schedule-table td {
+  min-width: 10rem;
+}
+
+.schedule-day {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.schedule-day__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+  font-weight: 800;
+}
+
+.schedule-cell {
+  display: grid;
+  gap: 0.25rem;
+  min-height: 7rem;
+}
+
+.notice--soft {
+  display: grid;
+  gap: 0.2rem;
+  background: rgba(47, 111, 237, 0.08);
+  border: 1px solid rgba(47, 111, 237, 0.16);
+}
+
 .badge {
   display: inline-flex;
   align-items: center;
@@ -650,6 +700,11 @@ textarea {
 .badge-info {
   background: rgba(47, 111, 237, 0.1);
   color: var(--info);
+}
+
+.badge-neutral {
+  background: rgba(18, 32, 47, 0.08);
+  color: var(--ink-soft);
 }
 
 .button {

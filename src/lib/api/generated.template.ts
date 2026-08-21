@@ -234,6 +234,156 @@ export type CalendarListItem = {
   daysCount: number;
 };
 
+export type ShiftDay = {
+  id: number;
+  dayOfWeek: number;
+  working: boolean;
+  startTime: string | null;
+  endTime: string | null;
+  breakMinutes: number;
+  workingMinutes: number | null;
+  crossesMidnight: boolean;
+};
+
+export type ShiftSummary = {
+  id: number;
+  name: string;
+  code: string;
+  color: string | null;
+};
+
+export type Shift = ShiftSummary & {
+  description: string | null;
+  active: boolean;
+  companyId: number | null;
+  companyName: string | null;
+  days: ShiftDay[];
+  assignmentsCount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateShiftDayRequest = Omit<ShiftDay, 'id'>;
+
+export type CreateShiftRequest = {
+  companyId?: number;
+  name: string;
+  code: string;
+  description?: string | null;
+  color?: string | null;
+  active?: boolean;
+  days: CreateShiftDayRequest[];
+};
+
+export type UpdateShiftRequest = Partial<CreateShiftRequest>;
+
+export type ShiftAssignment = {
+  id: number;
+  companyId: number | null;
+  companyName: string | null;
+  employeeId: number;
+  employeeNumero: string;
+  employeeNombre: string;
+  shift: ShiftSummary;
+  validFrom: string;
+  validTo: string | null;
+  notes: string | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateShiftAssignmentRequest = {
+  companyId?: number;
+  employeeId: number;
+  shiftId: number;
+  validFrom: string;
+  validTo?: string | null;
+  notes?: string | null;
+  active?: boolean;
+};
+
+export type UpdateShiftAssignmentRequest = Partial<CreateShiftAssignmentRequest>;
+
+export type ShiftOverrideKind = 'SHIFT' | 'OFF';
+
+export type ShiftOverride = {
+  id: number;
+  companyId: number | null;
+  companyName: string | null;
+  employeeId: number;
+  employeeNumero: string;
+  employeeNombre: string;
+  shift: ShiftSummary | null;
+  date: string;
+  kind: ShiftOverrideKind;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateShiftOverrideRequest = {
+  companyId?: number;
+  employeeId: number;
+  shiftId?: number | null;
+  date: string;
+  kind?: ShiftOverrideKind;
+  notes?: string | null;
+};
+
+export type UpdateShiftOverrideRequest = Partial<CreateShiftOverrideRequest>;
+
+export type ScheduleCell = {
+  date: string;
+  dayOfWeek: number;
+  label: string;
+  workingDay: boolean;
+  isHoliday: boolean;
+  status: 'WORKING' | 'VACATION' | 'PERMISSION' | 'HOLIDAY' | 'OFF' | 'NO_SHIFT';
+  statusLabel: string;
+  shift: ShiftSummary | null;
+  assignmentId: number | null;
+  overrideId: number | null;
+  overrideKind: ShiftOverrideKind | null;
+  expectedStart: string | null;
+  expectedEnd: string | null;
+  expectedMinutes: number;
+  breakMinutes: number;
+  workedMinutes: number;
+  differenceMinutes: number;
+  lateMinutes: number;
+  vacationId: number | null;
+  permissionId: number | null;
+  incidentId: number | null;
+  firstEntry: string | null;
+  lastExit: string | null;
+};
+
+export type ScheduleRow = {
+  employeeId: number;
+  employeeNumero: string;
+  employeeNombre: string;
+  companyId: number | null;
+  companyName: string | null;
+  days: ScheduleCell[];
+};
+
+export type ScheduleEmployee = {
+  employeeId: number;
+  employeeNumero: string;
+  employeeNombre: string;
+  companyId: number | null;
+  companyName: string | null;
+};
+
+export type Schedule = {
+  from: string;
+  to: string;
+  employees: ScheduleEmployee[];
+  days: Array<{ date: string; dayOfWeek: number; label: string }>;
+  rows: ScheduleRow[];
+};
+
 export type LoginRequest = {
   numero: string;
   password: string;
@@ -642,6 +792,46 @@ export const api = {
     update: (token: string, id: number, body: UpdateCalendarRequest) =>
       requestJsonWithMethod<Calendar>(`/api/v1/calendars/${id}`, 'PATCH', { token, body }),
     delete: (token: string, id: number) => requestNoContent(`/api/v1/calendars/${id}`, 'DELETE', { token })
+  },
+  shifts: {
+    list: (token: string, query: ListQuery = {}) =>
+      requestJson<Shift[]>('/api/v1/shifts', { token, query }),
+    byId: (token: string, id: number) => requestJson<Shift>(`/api/v1/shifts/${id}`, { token }),
+    create: (token: string, body: CreateShiftRequest) =>
+      requestJsonWithMethod<Shift>('/api/v1/shifts', 'POST', { token, body }),
+    update: (token: string, id: number, body: UpdateShiftRequest) =>
+      requestJsonWithMethod<Shift>(`/api/v1/shifts/${id}`, 'PATCH', { token, body }),
+    activate: (token: string, id: number) =>
+      requestJsonWithMethod<Shift>(`/api/v1/shifts/${id}/activate`, 'POST', { token }),
+    deactivate: (token: string, id: number) =>
+      requestJsonWithMethod<Shift>(`/api/v1/shifts/${id}/deactivate`, 'POST', { token }),
+    me: (token: string, query: { date?: string } = {}) =>
+      requestJson<ScheduleCell>(`/api/v1/shifts/me`, { token, query }),
+    assignments: (token: string, id: number) => requestJson<ShiftAssignment[]>(`/api/v1/shifts/${id}/assignments`, { token })
+  },
+  shiftAssignments: {
+    list: (token: string, query: { employeeId?: number; shiftId?: number; active?: string } = {}) =>
+      requestJson<ShiftAssignment[]>('/api/v1/shift-assignments', { token, query }),
+    create: (token: string, body: CreateShiftAssignmentRequest) =>
+      requestJsonWithMethod<ShiftAssignment>('/api/v1/shift-assignments', 'POST', { token, body }),
+    update: (token: string, id: number, body: UpdateShiftAssignmentRequest) =>
+      requestJsonWithMethod<ShiftAssignment>(`/api/v1/shift-assignments/${id}`, 'PATCH', { token, body }),
+    listOverrides: (token: string, query: { employeeId?: number; date?: string } = {}) =>
+      requestJson<ShiftOverride[]>('/api/v1/shift-assignments/overrides', { token, query }),
+    createOverride: (token: string, body: CreateShiftOverrideRequest) =>
+      requestJsonWithMethod<ShiftOverride>('/api/v1/shift-assignments/overrides', 'POST', { token, body }),
+    updateOverride: (token: string, id: number, body: UpdateShiftOverrideRequest) =>
+      requestJsonWithMethod<ShiftOverride>(`/api/v1/shift-assignments/overrides/${id}`, 'PATCH', { token, body })
+  },
+  schedule: {
+    list: (token: string, query: { from?: string; to?: string; employeeId?: number; shiftId?: number } = {}) =>
+      requestJson<Schedule>('/api/v1/schedule', { token, query }),
+    me: (token: string, query: { from?: string; to?: string; shiftId?: number } = {}) =>
+      requestJson<Schedule>('/api/v1/schedule/me', { token, query }),
+    employee: (token: string, id: number, query: { from?: string; to?: string; shiftId?: number } = {}) =>
+      requestJson<Schedule>(`/api/v1/employees/${id}/schedule`, { token, query }),
+    employeeAssignments: (token: string, id: number) =>
+      requestJson<ShiftAssignment[]>(`/api/v1/employees/${id}/shifts`, { token })
   },
   apiKeys: {
     list: (token: string, query: ApiKeyListQuery = {}) =>

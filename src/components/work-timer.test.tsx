@@ -17,6 +17,9 @@ vi.mock('../lib/api/generated', () => ({
       pause: mocks.pause,
       resume: mocks.resume,
       finish: mocks.finish
+    },
+    shifts: {
+      me: vi.fn().mockResolvedValue(null)
     }
   }
 }));

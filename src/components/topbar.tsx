@@ -9,7 +9,9 @@ import {
   CalendarRange,
   Clock3,
   Home,
+  LayoutGrid,
   ShieldCheck,
+  Sparkles,
   Users,
   BriefcaseBusiness,
   UserRound
@@ -39,7 +41,9 @@ const iconMap = {
   building: Building2,
   briefcase: BriefcaseBusiness,
   shield: ShieldCheck,
-  user: UserRound
+  user: UserRound,
+  sparkles: Sparkles,
+  'layout-grid': LayoutGrid
 } as const;
 
 export function Topbar({ children }: TopbarProps) {

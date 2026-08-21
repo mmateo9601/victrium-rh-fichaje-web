@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, Pause, Play, SquareCheckBig, TimerReset } from 'lucide-react';
 
-import { api, type WorkTimerCurrent } from '../lib/api/generated';
+import { api, type ScheduleCell, type WorkTimerCurrent } from '../lib/api/generated';
 import { formatClock, formatDateTime, formatDurationLabel } from '../lib/labels';
 
 type WorkTimerProps = {
@@ -24,12 +24,18 @@ export function WorkTimer({ token }: WorkTimerProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now());
   const [finishConfirmOpen, setFinishConfirmOpen] = useState(false);
+  const [todayShift, setTodayShift] = useState<ScheduleCell | null>(null);
   const snapshotAtRef = useRef(Date.now());
 
   async function loadCurrent() {
     try {
-      const state = await api.timeEntries.current(token);
+      const today = new Date().toISOString().slice(0, 10);
+      const [state, shift] = await Promise.all([
+        api.timeEntries.current(token),
+        api.shifts.me(token, { date: today })
+      ]);
       setCurrent(state);
+      setTodayShift(shift);
       snapshotAtRef.current = Date.now();
       setError(null);
     } catch (err) {
@@ -91,6 +97,12 @@ export function WorkTimer({ token }: WorkTimerProps) {
   }, [current, now]);
 
   const currentTimeLabel = useMemo(() => formatNowTime(now), [now]);
+  const shiftLateLabel = useMemo(() => {
+    if (!todayShift?.lateMinutes) {
+      return null;
+    }
+    return `Has iniciado ${todayShift.lateMinutes} min después del horario previsto`;
+  }, [todayShift]);
 
   async function runAction(action: () => Promise<WorkTimerCurrent>, successMessage: string) {
     setActioning(true);
@@ -171,8 +183,19 @@ export function WorkTimer({ token }: WorkTimerProps) {
               ? `Pausa actual de ${formatDurationLabel(Math.round(effectiveBreakSeconds / 60))}`
               : current?.state === 'COMPLETED'
                 ? `Jornada finalizada el ${formatDateTime(current.finishedAt)}`
-                : 'Todavía no has iniciado la jornada de hoy.'}
+              : 'Todavía no has iniciado la jornada de hoy.'}
         </p>
+
+        {todayShift ? (
+          <div className="notice notice--soft">
+            <strong>{todayShift.statusLabel}</strong>
+            <span>
+              {todayShift.shift ? `${todayShift.shift.name} · ` : ''}
+              {todayShift.expectedStart && todayShift.expectedEnd ? `${todayShift.expectedStart.slice(0, 5)} - ${todayShift.expectedEnd.slice(0, 5)}` : 'Sin horario previsto'}
+            </span>
+            {shiftLateLabel ? <span>{shiftLateLabel}</span> : null}
+          </div>
+        ) : null}
 
         <div className="work-timer__status-grid">
           <article className="work-timer__status">

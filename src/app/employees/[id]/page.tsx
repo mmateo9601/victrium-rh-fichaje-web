@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
-import { api, type Company, type Employee } from '../../../lib/api/generated';
+import { ScheduleGrid } from '../../../components/schedule-grid';
+import { api, type Company, type Employee, type Schedule, type ShiftAssignment } from '../../../lib/api/generated';
 import { getAccessToken } from '../../../lib/auth/session';
 
 export default function EmployeeDetailPage() {
@@ -13,9 +14,17 @@ export default function EmployeeDetailPage() {
 
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [schedule, setSchedule] = useState<Schedule | null>(null);
+  const [assignments, setAssignments] = useState<ShiftAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const monthRange = useMemo(() => {
+    const today = new Date();
+    const from = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
+    const to = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 0));
+    return { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10) };
+  }, []);
 
   useEffect(() => {
     const token = getAccessToken();
@@ -33,6 +42,12 @@ export default function EmployeeDetailPage() {
         ]);
         setEmployee(detail);
         setCompanies(companyList.data);
+        const [scheduleResult, assignmentsResult] = await Promise.all([
+          api.schedule.employee(authToken, id, monthRange),
+          api.schedule.employeeAssignments(authToken, id)
+        ]);
+        setSchedule(scheduleResult);
+        setAssignments(assignmentsResult);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'No se pudo cargar el detalle');
       } finally {
@@ -41,7 +56,7 @@ export default function EmployeeDetailPage() {
     }
 
     void load();
-  }, [id, router]);
+  }, [id, router, monthRange]);
 
   async function save() {
     const token = getAccessToken();
@@ -242,6 +257,50 @@ export default function EmployeeDetailPage() {
             <div className="meta">{employee.userId ?? 'Sin usuario'}</div>
           </div>
         </aside>
+      </section>
+
+      <section className="panel stack">
+        <div className="toolbar">
+          <div>
+            <h2 className="section-title">Horario y turnos</h2>
+            <p className="meta">Vigencia actual, histórico y planificación del mes en curso.</p>
+          </div>
+          <button className="button button-secondary" type="button" onClick={() => router.push(`/employees/${employee.id}/schedule`)}>
+            Abrir calendario
+          </button>
+        </div>
+
+        {assignments.length ? (
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Turno</th>
+                  <th>Vigencia</th>
+                  <th>Notas</th>
+                </tr>
+              </thead>
+              <tbody>
+                {assignments.map((assignment) => (
+                  <tr key={assignment.id}>
+                    <td>{assignment.shift.name}</td>
+                    <td>
+                      {assignment.validFrom} {assignment.validTo ? `- ${assignment.validTo}` : '(vigente)'}
+                    </td>
+                    <td>{assignment.notes ?? '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="empty-state">
+            <strong>Sin turnos asignados</strong>
+            <p className="meta">Todavía no hay una planificación histórica asociada a este empleado.</p>
+          </div>
+        )}
+
+        {schedule ? <ScheduleGrid schedule={schedule} compact /> : null}
       </section>
     </div>
   );
