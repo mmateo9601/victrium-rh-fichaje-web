@@ -20,8 +20,11 @@ Frontend Next.js para consumir `victrium-rh-fichaje-api` de forma independiente.
 ## Variables de entorno
 
 Usa `.env.example` como referencia y cópialo a `.env.local` para desarrollo local.
+En producción, el sitio usa la variable de entorno publicada por Hostinger/Sites.
 
 - `NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1`
+  - Desarrollo local: `http://localhost:3001/api/v1`
+  - Producción: `https://victrium-rh-fichaje-api.victriumtech.com/api/v1`
 
 La configuración tipada vive en [`src/lib/config/env.ts`](src/lib/config/env.ts).
 
