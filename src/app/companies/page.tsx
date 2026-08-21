@@ -24,7 +24,7 @@ export default function CompaniesPage() {
   const [error, setError] = useState<string | null>(null);
 
   const session = useMemo(() => getStoredSession(), []);
-  const isAdmin = session?.user.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_SUPER_ADMIN') ?? false;
+  const canManage = session?.user.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_SUPER_ADMIN') ?? false;
 
   function beginEdit(company: Company) {
     setSelectedCompany(company);
@@ -167,7 +167,7 @@ export default function CompaniesPage() {
         {error ? <div className="notice" role="alert">{error}</div> : null}
       </section>
 
-      {isAdmin ? (
+      {canManage ? (
         <form className="panel stack" onSubmit={onCreate}>
           <h2 className="section-title">Crear empresa</h2>
           <div className="field-grid">
@@ -197,7 +197,7 @@ export default function CompaniesPage() {
         </form>
       ) : null}
 
-      {isAdmin && selectedCompany ? (
+      {canManage && selectedCompany ? (
         <form className="panel stack" onSubmit={onUpdate}>
           <div className="toolbar">
             <div>
@@ -262,7 +262,7 @@ export default function CompaniesPage() {
                 <th>Nombre</th>
                 <th>Código</th>
                 <th>Estado</th>
-                {isAdmin ? <th>Acciones</th> : null}
+                {canManage ? <th>Acciones</th> : null}
               </tr>
             </thead>
             <tbody>
@@ -275,7 +275,7 @@ export default function CompaniesPage() {
                       {company.active ? 'Activa' : 'Inactiva'}
                     </span>
                   </td>
-                  {isAdmin ? (
+                  {canManage ? (
                     <td>
                       <button className="button button-secondary" type="button" onClick={() => beginEdit(company)}>
                         Editar
@@ -286,7 +286,7 @@ export default function CompaniesPage() {
               ))}
               {!companies.length ? (
                 <tr>
-                  <td colSpan={isAdmin ? 4 : 3} className="muted">
+                  <td colSpan={canManage ? 4 : 3} className="muted">
                     Sin resultados.
                   </td>
                 </tr>

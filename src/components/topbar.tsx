@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   Building2,
@@ -17,7 +17,7 @@ import {
   UserRound
 } from 'lucide-react';
 
-import { getStoredSession, signOut } from '../lib/auth/session';
+import { signOut, useStoredSession } from '../lib/auth/session';
 import { getRoleLabel } from '../lib/labels';
 import { canAccessNavigationItem, getNavigationTitle, navigationGroups, type RoleName } from '../lib/navigation';
 
@@ -52,7 +52,7 @@ export function Topbar({ children }: TopbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
-  const session = useMemo(() => getStoredSession(), []);
+  const session = useStoredSession();
   const roles = (session?.user.roles ?? []) as RoleName[];
   const isPublicRoute = routeIsPublic(pathname);
   const visibleGroups = navigationGroups

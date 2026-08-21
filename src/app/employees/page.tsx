@@ -35,7 +35,7 @@ export default function EmployeesPage() {
   const [error, setError] = useState<string | null>(null);
 
   const session = useMemo(() => getStoredSession(), []);
-  const isAdmin = session?.user.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_SUPER_ADMIN') ?? false;
+  const canManage = session?.user.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN') ?? false;
   const isManager = session?.user.roles.includes('ROLE_RRHH') ?? false;
 
   useEffect(() => {
@@ -179,7 +179,7 @@ export default function EmployeesPage() {
         </div>
       </section>
 
-      {(isAdmin || isManager) ? (
+      {canManage ? (
         <form className="panel stack" onSubmit={createEmployee}>
           <h2 className="section-title">Crear empleado</h2>
           <div className="field-grid">

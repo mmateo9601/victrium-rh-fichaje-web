@@ -1,6 +1,19 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
 import type { AuthSession } from '../api/generated';
 
 const SESSION_KEY = 'victrium-rh-fichaje.session';
+const SESSION_EVENT = 'victrium-rh-fichaje.session-changed';
+
+function notifySessionChange() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.dispatchEvent(new Event(SESSION_EVENT));
+}
 
 export function getStoredSession(): AuthSession | null {
   if (typeof window === 'undefined') {
@@ -25,6 +38,7 @@ export function saveSession(session: AuthSession) {
   }
 
   window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  notifySessionChange();
 }
 
 export function clearSession() {
@@ -33,6 +47,7 @@ export function clearSession() {
   }
 
   window.localStorage.removeItem(SESSION_KEY);
+  notifySessionChange();
 }
 
 export function getAccessToken() {
@@ -51,4 +66,29 @@ export async function signOut() {
   } finally {
     clearSession();
   }
+}
+
+export function useStoredSession() {
+  const [session, setSession] = useState<AuthSession | null>(() => getStoredSession());
+
+  useEffect(() => {
+    const syncSession = () => setSession(getStoredSession());
+
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === SESSION_KEY || event.key === null) {
+        syncSession();
+      }
+    };
+
+    window.addEventListener('storage', onStorage);
+    window.addEventListener(SESSION_EVENT, syncSession);
+    syncSession();
+
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener(SESSION_EVENT, syncSession);
+    };
+  }, []);
+
+  return session;
 }
