@@ -1,11 +1,13 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { getStoredSession, signOut } from '../lib/auth/session';
 
 export function Topbar() {
+  const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
   const session = getStoredSession();
   const roles = session?.user.roles ?? [];
@@ -14,7 +16,7 @@ export function Topbar() {
   async function logout() {
     setLoggingOut(true);
     await signOut();
-    window.location.assign('/login');
+    router.push('/login');
     setLoggingOut(false);
   }
 

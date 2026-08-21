@@ -15,6 +15,12 @@ vi.mock('next/link', () => ({
   )
 }));
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn()
+  })
+}));
+
 vi.mock('../lib/auth/session', () => ({
   getStoredSession: mocks.getStoredSession,
   signOut: mocks.signOut
