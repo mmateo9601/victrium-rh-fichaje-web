@@ -22,7 +22,7 @@ function minutesLabel(value: number | null) {
   return hours ? `${hours} h ${String(minutes).padStart(2, '0')} min` : `${minutes} min`;
 }
 
-function dayMinutes(day: Shift['days'][number]) {
+function dayMinutes(day: Omit<Shift['days'][number], 'id'>) {
   if (day.segments.length) {
     return day.segments.reduce((total, segment) => total + (segment.workingMinutes ?? 0), 0);
   }
@@ -38,10 +38,19 @@ export default function ShiftDetailPage() {
   const params = useParams<{ id: string }>();
   const shiftId = Number(params.id);
   const [shift, setShift] = useState<Shift | null>(null);
+  const [name, setName] = useState('');
+  const [code, setCode] = useState('');
+  const [description, setDescription] = useState('');
+  const [color, setColor] = useState('#0f766e');
+  const [active, setActive] = useState(true);
+  const [rotationStartDate, setRotationStartDate] = useState('');
+  const [days, setDays] = useState<Omit<Shift['days'][number], 'id'>[]>([]);
+  const [rotationPattern, setRotationPattern] = useState('');
   const [assignments, setAssignments] = useState<ShiftAssignment[]>([]);
   const [overrides, setOverrides] = useState<ShiftOverride[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [actioning, setActioning] = useState(false);
   const [employeeId, setEmployeeId] = useState('');
@@ -54,8 +63,7 @@ export default function ShiftDetailPage() {
   const [overrideShiftId, setOverrideShiftId] = useState('');
   const [overrideNotes, setOverrideNotes] = useState('');
 
-  const shiftDays = useMemo(() => shift?.days ?? [], [shift]);
-  const totalMinutes = useMemo(() => shiftDays.reduce((acc, day) => acc + dayMinutes(day), 0), [shiftDays]);
+  const totalMinutes = useMemo(() => days.reduce((acc, day) => acc + dayMinutes(day), 0), [days]);
   const rotationMinutesTotal = useMemo(() => shift?.rotationPattern.reduce((acc, step) => acc + rotationMinutes(step), 0) ?? 0, [shift]);
 
   useEffect(() => {
@@ -75,6 +83,14 @@ export default function ShiftDetailPage() {
           api.employees.list(token, { pageSize: 100 })
         ]);
         setShift(shiftResult);
+        setName(shiftResult.name);
+        setCode(shiftResult.code);
+        setDescription(shiftResult.description ?? '');
+        setColor(shiftResult.color ?? '#0f766e');
+        setActive(shiftResult.active);
+        setRotationStartDate(shiftResult.rotationStartDate ?? '');
+        setDays(shiftResult.days.map(({ id: _id, ...day }) => day));
+        setRotationPattern(JSON.stringify(shiftResult.rotationPattern.map(({ id: _id, ...step }) => step), null, 2));
         setAssignments(assignmentsResult);
         setOverrides(overridesResult.filter((item) => item.shift?.id === shiftId || item.kind === 'OFF'));
         setEmployees(employeesResult.data);
@@ -103,6 +119,66 @@ export default function ShiftDetailPage() {
     setShift(shiftResult);
     setAssignments(assignmentsResult);
     setOverrides(overridesResult.filter((item) => item.shift?.id === shiftId || item.kind === 'OFF'));
+  }
+
+  async function saveShift() {
+    const token = getAccessToken();
+    if (!token || !shift) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    try {
+      const parsedRotation = rotationPattern.trim()
+        ? (JSON.parse(rotationPattern) as Array<{
+            working: boolean;
+            startTime: string | null;
+            endTime: string | null;
+            breakMinutes: number;
+            workingMinutes: number | null;
+            crossesMidnight: boolean;
+          }>)
+        : [];
+      const updated = await api.shifts.update(token, shift.id, {
+        name,
+        code,
+        description: description || null,
+        color: color || null,
+        active,
+        rotationStartDate: rotationStartDate || null,
+        days,
+        rotationPattern: parsedRotation
+      });
+      setShift(updated);
+      setDays(updated.days.map(({ id: _id, ...day }) => day));
+      setRotationPattern(JSON.stringify(updated.rotationPattern.map(({ id: _id, ...step }) => step), null, 2));
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'No se pudo actualizar el turno');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function setShiftStatus(nextActive: boolean) {
+    const token = getAccessToken();
+    if (!token || !shift) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    try {
+      const updated = nextActive
+        ? await api.shifts.activate(token, shift.id)
+        : await api.shifts.deactivate(token, shift.id);
+      setShift(updated);
+      setActive(updated.active);
+    } catch (statusError) {
+      setError(statusError instanceof Error ? statusError.message : 'No se pudo cambiar el estado');
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function createAssignment() {
@@ -192,6 +268,109 @@ export default function ShiftDetailPage() {
 
       {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
 
+      <form className="panel stack" onSubmit={(event) => { event.preventDefault(); void saveShift(); }}>
+        <div className="toolbar">
+          <div>
+            <h2 className="section-title">Editar turno</h2>
+            <p className="meta">Ajusta nombre, color, estado y horario semanal del turno.</p>
+          </div>
+          <div className="hero-actions" style={{ marginTop: 0 }}>
+            <button className="button button-secondary" type="button" onClick={() => void setShiftStatus(true)} disabled={saving}>
+              Activar
+            </button>
+            <button className="button button-secondary" type="button" onClick={() => void setShiftStatus(false)} disabled={saving}>
+              Desactivar
+            </button>
+          </div>
+        </div>
+
+        <div className="field-grid">
+          <div className="field">
+            <label htmlFor="shiftName">Nombre</label>
+            <input id="shiftName" value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div className="field">
+            <label htmlFor="shiftCode">Código</label>
+            <input id="shiftCode" value={code} onChange={(e) => setCode(e.target.value)} />
+          </div>
+          <div className="field">
+            <label htmlFor="shiftColor">Color</label>
+            <input id="shiftColor" type="color" value={color} onChange={(e) => setColor(e.target.value)} />
+          </div>
+          <div className="field">
+            <label htmlFor="shiftDescription">Descripción</label>
+            <input id="shiftDescription" value={description} onChange={(e) => setDescription(e.target.value)} />
+          </div>
+          <div className="field">
+            <label htmlFor="shiftRotationStartDate">Inicio rotación</label>
+            <input id="shiftRotationStartDate" type="date" value={rotationStartDate} onChange={(e) => setRotationStartDate(e.target.value)} />
+          </div>
+          <div className="field">
+            <label htmlFor="shiftActive">Estado</label>
+            <select id="shiftActive" value={String(active)} onChange={(e) => setActive(e.target.value === 'true')}>
+              <option value="true">Activo</option>
+              <option value="false">Inactivo</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="field">
+          <label htmlFor="shiftRotationPattern">Patrón de rotación JSON</label>
+          <textarea
+            id="shiftRotationPattern"
+            rows={8}
+            value={rotationPattern}
+            onChange={(e) => setRotationPattern(e.target.value)}
+            spellCheck={false}
+          />
+        </div>
+
+        <div className="stack">
+          {days.map((day, index) => (
+            <div className="field-grid" key={day.dayOfWeek}>
+              <div className="field">
+                <label>Día</label>
+                <div className="schedule-day__badge">{weekLabels[day.dayOfWeek]}</div>
+              </div>
+              <div className="field">
+                <label>Trabaja</label>
+                <select value={String(day.working)} onChange={(e) => setDays((current) => current.map((item, currentIndex) => (currentIndex === index ? { ...item, working: e.target.value === 'true' } : item)))}>
+                  <option value="true">Sí</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+              <div className="field">
+                <label>Inicio</label>
+                <input type="time" value={day.startTime ?? ''} onChange={(e) => setDays((current) => current.map((item, currentIndex) => (currentIndex === index ? { ...item, startTime: e.target.value ? `${e.target.value}:00` : null } : item)))} />
+              </div>
+              <div className="field">
+                <label>Fin</label>
+                <input type="time" value={day.endTime ?? ''} onChange={(e) => setDays((current) => current.map((item, currentIndex) => (currentIndex === index ? { ...item, endTime: e.target.value ? `${e.target.value}:00` : null } : item)))} />
+              </div>
+              <div className="field">
+                <label>Descanso</label>
+                <input type="number" value={day.breakMinutes} onChange={(e) => setDays((current) => current.map((item, currentIndex) => (currentIndex === index ? { ...item, breakMinutes: Number(e.target.value) } : item)))} />
+              </div>
+              <div className="field">
+                <label>Min. útiles</label>
+                <input type="number" value={day.workingMinutes ?? 0} onChange={(e) => setDays((current) => current.map((item, currentIndex) => (currentIndex === index ? { ...item, workingMinutes: Number(e.target.value) } : item)))} />
+              </div>
+              <div className="field">
+                <label>Medianoche</label>
+                <select value={String(day.crossesMidnight)} onChange={(e) => setDays((current) => current.map((item, currentIndex) => (currentIndex === index ? { ...item, crossesMidnight: e.target.value === 'true' } : item)))}>
+                  <option value="false">No</option>
+                  <option value="true">Sí</option>
+                </select>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <button className="button button-primary" type="submit" disabled={saving}>
+          {saving ? 'Guardando...' : 'Guardar cambios'}
+        </button>
+      </form>
+
       <section className="panel stack">
         <div className="toolbar">
           <div>
@@ -217,8 +396,8 @@ export default function ShiftDetailPage() {
               </tr>
             </thead>
             <tbody>
-              {shiftDays.map((day) => (
-                <tr key={day.id}>
+              {days.map((day) => (
+                <tr key={day.dayOfWeek}>
                   <td>{weekLabels[day.dayOfWeek]}</td>
                   <td>{day.working ? 'Sí' : 'No'}</td>
                   <td>{day.startTime?.slice(0, 5) ?? '—'}</td>
@@ -230,7 +409,7 @@ export default function ShiftDetailPage() {
                     {day.segments.length ? (
                       <div className="stack" style={{ gap: '0.25rem' }}>
                         {day.segments.map((segment, index) => (
-                          <span key={`${day.id}-${index}`} className="meta">
+                          <span key={`${day.dayOfWeek}-${index}`} className="meta">
                             {segment.startTime?.slice(0, 5) ?? '—'} - {segment.endTime?.slice(0, 5) ?? '—'} · {minutesLabel(segment.workingMinutes)}
                           </span>
                         ))}
@@ -283,7 +462,7 @@ export default function ShiftDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {shift.rotationPattern.map((step) => (
+              {shift.rotationPattern.map((step) => (
                     <tr key={step.id}>
                       <td>{step.id}</td>
                       <td>{step.working ? 'Sí' : 'No'}</td>

@@ -24,8 +24,8 @@ export const navigationGroups: NavigationGroup[] = [
   {
     label: 'Personas',
     items: [
-      { href: '/employees', label: 'Empleados', icon: 'users', roles: ['ROLE_ADMIN', 'ROLE_RRHH'] },
-      { href: '/users', label: 'Usuarios', icon: 'user', roles: ['ROLE_ADMIN', 'ROLE_RRHH'] }
+      { href: '/employees', label: 'Empleados', icon: 'users', roles: ['ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH'] },
+      { href: '/users', label: 'Usuarios', icon: 'user', roles: ['ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH'] }
     ]
   },
   {
