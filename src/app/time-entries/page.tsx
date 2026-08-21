@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import { api, type TimeEntry } from '../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
+import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
 
 const typeColors: Record<TimeEntry['tipo'], string> = {
   ENTRADA: 'badge-success',
@@ -26,6 +27,8 @@ export default function TimeEntriesPage() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [clocking, setClocking] = useState(false);
+  const [exportingMine, setExportingMine] = useState(false);
+  const [exportingAll, setExportingAll] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -112,6 +115,79 @@ export default function TimeEntriesPage() {
     }
   }
 
+  async function exportMineCsv() {
+    const token = getAccessToken();
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+
+    setExportingMine(true);
+    setError(null);
+    try {
+      const items = await collectAllPages(
+        (query) => api.timeEntries.mine(token, { search, tipo, from, to, order: 'desc', ...query }),
+        { search, tipo, from, to, order: 'desc' }
+      );
+      const csv = buildCsv(
+        ['ID', 'Día', 'Hora', 'Tipo', 'Origen', 'Empleado', 'Número', 'Empresa'],
+        items.map((entry) => [
+          entry.id,
+          entry.dia,
+          entry.hora,
+          entry.tipo,
+          entry.origen,
+          entry.usuarioNombre,
+          entry.usuarioNumero,
+          entry.companyName ?? 'Global'
+        ])
+      );
+      downloadCsv('fichajes-mios.csv', csv);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo exportar los fichajes');
+    } finally {
+      setExportingMine(false);
+    }
+  }
+
+  async function exportAllCsv() {
+    if (!canManage) {
+      return;
+    }
+    const token = getAccessToken();
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+
+    setExportingAll(true);
+    setError(null);
+    try {
+      const items = await collectAllPages(
+        (query) => api.timeEntries.list(token, { search, numeroUsuario, nombreUsuario, tipo, from, to, order: 'desc', ...query }),
+        { search, numeroUsuario, nombreUsuario, tipo, from, to, order: 'desc' }
+      );
+      const csv = buildCsv(
+        ['ID', 'Día', 'Hora', 'Tipo', 'Empleado', 'Número', 'Empresa', 'Origen'],
+        items.map((entry) => [
+          entry.id,
+          entry.dia,
+          entry.hora,
+          entry.tipo,
+          entry.usuarioNombre,
+          entry.usuarioNumero,
+          entry.companyName ?? 'Global',
+          entry.origen
+        ])
+      );
+      downloadCsv('fichajes-empresa.csv', csv);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo exportar los fichajes');
+    } finally {
+      setExportingAll(false);
+    }
+  }
+
   if (loading) {
     return (
       <section className="hero">
@@ -176,6 +252,9 @@ export default function TimeEntriesPage() {
             </select>
             <input className="field" style={{ minWidth: '140px' }} type="date" value={from} onChange={(event) => setFrom(event.target.value)} />
             <input className="field" style={{ minWidth: '140px' }} type="date" value={to} onChange={(event) => setTo(event.target.value)} />
+            <button className="button button-secondary" type="button" onClick={exportMineCsv} disabled={exportingMine}>
+              {exportingMine ? 'Exportando...' : 'Exportar CSV'}
+            </button>
           </div>
         </div>
 
@@ -242,6 +321,9 @@ export default function TimeEntriesPage() {
                 value={nombreUsuario}
                 onChange={(event) => setNombreUsuario(event.target.value)}
               />
+              <button className="button button-secondary" type="button" onClick={exportAllCsv} disabled={exportingAll}>
+                {exportingAll ? 'Exportando...' : 'Exportar empresa CSV'}
+              </button>
             </div>
           </div>
 

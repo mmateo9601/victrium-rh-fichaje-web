@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import { api, type Incident, type IncidentMonthlyStat, type IncidentTopSummary, type IncidentUserStat } from '../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
+import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
 
 const badgeForResolved = (resolved: boolean) => (resolved ? 'badge-success' : 'badge-warning');
 
@@ -27,6 +28,8 @@ export default function IncidentsPage() {
   const [createDia, setCreateDia] = useState('');
   const [createExplicacion, setCreateExplicacion] = useState('');
   const [creating, setCreating] = useState(false);
+  const [exportingMine, setExportingMine] = useState(false);
+  const [exportingAll, setExportingAll] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -127,6 +130,77 @@ export default function IncidentsPage() {
     }
   }
 
+  async function exportMineCsv() {
+    const token = getAccessToken();
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+
+    setExportingMine(true);
+    setError(null);
+    try {
+      const items = await collectAllPages(
+        (query) => api.incidents.mine(token, { search, order: 'desc', ...query }),
+        { search, order: 'desc' }
+      );
+      const csv = buildCsv(
+        ['Descripción', 'Resumen', 'Día', 'Resuelta', 'Explicación', 'Empleado', 'Empresa'],
+        items.map((incident) => [
+          incident.descripcion,
+          incident.resumen,
+          incident.dia,
+          incident.resuelta ? 'Sí' : 'No',
+          incident.explicacion ?? '',
+          incident.employeeNombre ?? incident.employeeNumero ?? '',
+          incident.companyName ?? ''
+        ])
+      );
+      downloadCsv('incidencias-mias.csv', csv);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo exportar las incidencias');
+    } finally {
+      setExportingMine(false);
+    }
+  }
+
+  async function exportAllCsv() {
+    if (!canManage) {
+      return;
+    }
+    const token = getAccessToken();
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+
+    setExportingAll(true);
+    setError(null);
+    try {
+      const items = await collectAllPages(
+        (query) => api.incidents.list(token, { search, order: 'desc', ...query }),
+        { search, order: 'desc' }
+      );
+      const csv = buildCsv(
+        ['Descripción', 'Resumen', 'Día', 'Resuelta', 'Explicación', 'Empleado', 'Empresa'],
+        items.map((incident) => [
+          incident.descripcion,
+          incident.resumen,
+          incident.dia,
+          incident.resuelta ? 'Sí' : 'No',
+          incident.explicacion ?? '',
+          incident.employeeNombre ?? incident.employeeNumero ?? '',
+          incident.companyName ?? ''
+        ])
+      );
+      downloadCsv('incidencias-empresa.csv', csv);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo exportar las incidencias');
+    } finally {
+      setExportingAll(false);
+    }
+  }
+
   if (loading) {
     return (
       <section className="hero">
@@ -197,16 +271,21 @@ export default function IncidentsPage() {
             <h2 className="section-title">Mi listado</h2>
             <p className="meta">Paginación y búsqueda gestionadas por la API.</p>
           </div>
-          <input
-            className="field"
-            style={{ minWidth: '240px' }}
-            placeholder="Buscar incidencia..."
-            value={search}
-            onChange={(event) => {
-              setPage(1);
-              setSearch(event.target.value);
-            }}
-          />
+          <div className="hero-actions" style={{ marginTop: 0 }}>
+            <input
+              className="field"
+              style={{ minWidth: '240px' }}
+              placeholder="Buscar incidencia..."
+              value={search}
+              onChange={(event) => {
+                setPage(1);
+                setSearch(event.target.value);
+              }}
+            />
+            <button className="button button-secondary" type="button" onClick={exportMineCsv} disabled={exportingMine}>
+              {exportingMine ? 'Exportando...' : 'Exportar CSV'}
+            </button>
+          </div>
         </div>
 
         <div className="table-wrap">
@@ -270,9 +349,14 @@ export default function IncidentsPage() {
       {canManage ? (
         <>
           <section className="panel stack">
-            <div>
+            <div className="toolbar">
+              <div>
               <h2 className="section-title">Gestión RRHH</h2>
               <p className="meta">Listado completo de incidencias de la empresa.</p>
+              </div>
+              <button className="button button-secondary" type="button" onClick={exportAllCsv} disabled={exportingAll}>
+                {exportingAll ? 'Exportando...' : 'Exportar empresa CSV'}
+              </button>
             </div>
             <div className="table-wrap">
               <table className="table">

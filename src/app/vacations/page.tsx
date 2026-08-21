@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import { api, type Vacation } from '../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
+import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
 
 const statusColors: Record<Vacation['estado'], string> = {
   PENDIENTE: 'badge-warning',
@@ -26,6 +27,8 @@ export default function VacationsPage() {
   const [fin, setFin] = useState('');
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [exportingMine, setExportingMine] = useState(false);
+  const [exportingAll, setExportingAll] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -134,6 +137,75 @@ export default function VacationsPage() {
     }
   }
 
+  async function exportMineCsv() {
+    const token = getAccessToken();
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+
+    setExportingMine(true);
+    setError(null);
+    try {
+      const items = await collectAllPages(
+        (query) => api.vacations.mine(token, { search, order: 'desc', ...query }),
+        { search, order: 'desc' }
+      );
+      const csv = buildCsv(
+        ['Inicio', 'Fin', 'Empleado', 'Estado', 'Aprobado', 'Empresa'],
+        items.map((vacation) => [
+          vacation.inicio,
+          vacation.fin,
+          vacation.employeeNombre ?? vacation.employeeNumero ?? '',
+          vacation.estado,
+          vacation.aprobado ? 'Sí' : 'No',
+          vacation.companyName ?? ''
+        ])
+      );
+      downloadCsv('vacaciones-mias.csv', csv);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo exportar las vacaciones');
+    } finally {
+      setExportingMine(false);
+    }
+  }
+
+  async function exportAllCsv() {
+    if (!canManage) {
+      return;
+    }
+    const token = getAccessToken();
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+
+    setExportingAll(true);
+    setError(null);
+    try {
+      const items = await collectAllPages(
+        (query) => api.vacations.list(token, { search, order: 'desc', ...query }),
+        { search, order: 'desc' }
+      );
+      const csv = buildCsv(
+        ['Inicio', 'Fin', 'Empleado', 'Estado', 'Aprobado', 'Empresa'],
+        items.map((vacation) => [
+          vacation.inicio,
+          vacation.fin,
+          vacation.employeeNombre ?? vacation.employeeNumero ?? '',
+          vacation.estado,
+          vacation.aprobado ? 'Sí' : 'No',
+          vacation.companyName ?? ''
+        ])
+      );
+      downloadCsv('vacaciones-empresa.csv', csv);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo exportar las vacaciones');
+    } finally {
+      setExportingAll(false);
+    }
+  }
+
   if (loading) {
     return (
       <section className="hero">
@@ -192,16 +264,21 @@ export default function VacationsPage() {
             <h2 className="section-title">Mis vacaciones</h2>
             <p className="meta">Histórico paginado filtrado por la API.</p>
           </div>
-          <input
-            className="field"
-            style={{ minWidth: '240px' }}
-            placeholder="Buscar por empleado..."
-            value={search}
-            onChange={(event) => {
-              setPage(1);
-              setSearch(event.target.value);
-            }}
-          />
+          <div className="hero-actions" style={{ marginTop: 0 }}>
+            <input
+              className="field"
+              style={{ minWidth: '240px' }}
+              placeholder="Buscar por empleado..."
+              value={search}
+              onChange={(event) => {
+                setPage(1);
+                setSearch(event.target.value);
+              }}
+            />
+            <button className="button button-secondary" type="button" onClick={exportMineCsv} disabled={exportingMine}>
+              {exportingMine ? 'Exportando...' : 'Exportar CSV'}
+            </button>
+          </div>
         </div>
 
         <div className="table-wrap">
@@ -262,9 +339,14 @@ export default function VacationsPage() {
 
       {canManage ? (
         <section className="panel stack">
-          <div>
+          <div className="toolbar">
+            <div>
             <h2 className="section-title">Gestión RRHH</h2>
             <p className="meta">Acciones de aprobación y denegación para tu empresa.</p>
+            </div>
+            <button className="button button-secondary" type="button" onClick={exportAllCsv} disabled={exportingAll}>
+              {exportingAll ? 'Exportando...' : 'Exportar empresa CSV'}
+            </button>
           </div>
 
           <div className="table-wrap">

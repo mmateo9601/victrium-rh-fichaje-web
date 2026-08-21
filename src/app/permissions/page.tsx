@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import { api, type Permission, type PermissionMonthlyStat, type PermissionUserStat } from '../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
+import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
 
 const statusColors: Record<Permission['estado'], string> = {
   PENDIENTE: 'badge-warning',
@@ -31,6 +32,8 @@ export default function PermissionsPage() {
   const [horaFin, setHoraFin] = useState('10:00');
   const [descripcion, setDescripcion] = useState('');
   const [creating, setCreating] = useState(false);
+  const [exportingMine, setExportingMine] = useState(false);
+  const [exportingAll, setExportingAll] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -156,6 +159,79 @@ export default function PermissionsPage() {
     }
   }
 
+  async function exportMineCsv() {
+    const token = getAccessToken();
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+
+    setExportingMine(true);
+    setError(null);
+    try {
+      const items = await collectAllPages(
+        (query) => api.permissions.mine(token, { search, estado, order: 'desc', ...query }),
+        { search, estado, order: 'desc' }
+      );
+      const csv = buildCsv(
+        ['Día', 'Hora inicio', 'Hora fin', 'Descripción', 'Estado', 'Aprobado', 'Empleado', 'Empresa'],
+        items.map((permission) => [
+          permission.dia,
+          permission.horaInicio,
+          permission.horaFin,
+          permission.descripcion,
+          permission.estado,
+          permission.aprobado ? 'Sí' : 'No',
+          permission.employeeNombre ?? permission.employeeNumero ?? '',
+          permission.companyName ?? ''
+        ])
+      );
+      downloadCsv('permisos-mios.csv', csv);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo exportar los permisos');
+    } finally {
+      setExportingMine(false);
+    }
+  }
+
+  async function exportAllCsv() {
+    if (!canManage) {
+      return;
+    }
+    const token = getAccessToken();
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+
+    setExportingAll(true);
+    setError(null);
+    try {
+      const items = await collectAllPages(
+        (query) => api.permissions.list(token, { search, estado, order: 'desc', ...query }),
+        { search, estado, order: 'desc' }
+      );
+      const csv = buildCsv(
+        ['Día', 'Hora inicio', 'Hora fin', 'Descripción', 'Estado', 'Aprobado', 'Empleado', 'Empresa'],
+        items.map((permission) => [
+          permission.dia,
+          permission.horaInicio,
+          permission.horaFin,
+          permission.descripcion,
+          permission.estado,
+          permission.aprobado ? 'Sí' : 'No',
+          permission.employeeNombre ?? permission.employeeNumero ?? '',
+          permission.companyName ?? ''
+        ])
+      );
+      downloadCsv('permisos-empresa.csv', csv);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo exportar los permisos');
+    } finally {
+      setExportingAll(false);
+    }
+  }
+
   if (loading) {
     return (
       <section className="hero">
@@ -239,6 +315,9 @@ export default function PermissionsPage() {
               <option value="APROBADO">Aprobados</option>
               <option value="DENEGADO">Denegados</option>
             </select>
+            <button className="button button-secondary" type="button" onClick={exportMineCsv} disabled={exportingMine}>
+              {exportingMine ? 'Exportando...' : 'Exportar CSV'}
+            </button>
           </div>
         </div>
 
@@ -303,9 +382,14 @@ export default function PermissionsPage() {
       {canManage ? (
         <>
           <section className="panel stack">
-            <div>
+            <div className="toolbar">
+              <div>
               <h2 className="section-title">Gestión RRHH</h2>
               <p className="meta">Listado completo de permisos de la empresa.</p>
+              </div>
+              <button className="button button-secondary" type="button" onClick={exportAllCsv} disabled={exportingAll}>
+                {exportingAll ? 'Exportando...' : 'Exportar empresa CSV'}
+              </button>
             </div>
             <div className="table-wrap">
               <table className="table">
