@@ -53,7 +53,7 @@ export default function VacationsPage() {
           setAll([]);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'No se pudo cargar Vacations');
+        setError(err instanceof Error ? err.message : 'No se pudo cargar vacaciones');
       } finally {
         setLoading(false);
       }
@@ -209,7 +209,7 @@ export default function VacationsPage() {
   if (loading) {
     return (
       <section className="hero">
-        <span className="eyebrow">Vacations</span>
+        <span className="eyebrow">Vacaciones</span>
         <h1>Cargando vacaciones...</h1>
       </section>
     );
@@ -219,10 +219,10 @@ export default function VacationsPage() {
     <div className="stack">
       <section className="hero">
         <span className="eyebrow">Ausencias</span>
-        <h1>Vacations</h1>
+        <h1>Vacaciones</h1>
         <p>
-          Las solicitudes se crean sobre tu perfil y, si tienes permisos de RRHH o admin, también
-          puedes revisar y resolver las de tu empresa.
+          Las solicitudes se crean sobre tu perfil y, si tienes permisos de RRHH o administración,
+          también puedes revisar y resolver las de tu empresa.
         </p>
         {error ? <div className="notice" role="alert">{error}</div> : null}
         <div className="grid-3" style={{ marginTop: '1.5rem' }}>
@@ -232,11 +232,11 @@ export default function VacationsPage() {
           </article>
           <article className="stat">
             <strong>{session?.user.employeeId ?? 'Sin empleado'}</strong>
-            <span className="muted">Employee del token</span>
+            <span className="muted">Empleado conectado</span>
           </article>
           <article className="stat">
-            <strong>{session?.user.roles.join(', ') || 'Sin rol'}</strong>
-            <span className="muted">Permisos de sesión</span>
+            <strong>{session?.user.roles.join(', ') || 'Empleado'}</strong>
+            <span className="muted">Acceso actual</span>
           </article>
         </div>
       </section>
@@ -262,7 +262,7 @@ export default function VacationsPage() {
         <div className="toolbar">
           <div>
             <h2 className="section-title">Mis vacaciones</h2>
-            <p className="meta">Histórico paginado filtrado por la API.</p>
+            <p className="meta">Histórico paginado filtrado por fechas y estado.</p>
           </div>
           <div className="hero-actions" style={{ marginTop: 0 }}>
             <input

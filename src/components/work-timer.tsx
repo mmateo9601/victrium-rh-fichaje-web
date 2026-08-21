@@ -1,38 +1,17 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { AlertCircle, Pause, Play, SquareCheckBig, TimerReset } from 'lucide-react';
 
 import { api, type WorkTimerCurrent } from '../lib/api/generated';
+import { formatClock, formatDateTime, formatDurationLabel } from '../lib/labels';
 
 type WorkTimerProps = {
   token: string;
 };
 
-function formatDuration(totalSeconds: number) {
-  const safeSeconds = Math.max(0, Math.floor(totalSeconds));
-  const hours = Math.floor(safeSeconds / 3600);
-  const minutes = Math.floor((safeSeconds % 3600) / 60);
-  const seconds = safeSeconds % 60;
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-}
-
-function formatShortDuration(totalSeconds: number) {
-  const safeSeconds = Math.max(0, Math.floor(totalSeconds));
-  const hours = Math.floor(safeSeconds / 3600);
-  const minutes = Math.floor((safeSeconds % 3600) / 60);
-  if (hours > 0) {
-    return `${hours} h ${String(minutes).padStart(2, '0')} min`;
-  }
-  return `${minutes} min`;
-}
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) {
-    return 'Sin registro';
-  }
-
+function formatNowTime(value: number) {
   return new Intl.DateTimeFormat('es-ES', {
-    dateStyle: 'medium',
     timeStyle: 'short'
   }).format(new Date(value));
 }
@@ -111,6 +90,8 @@ export function WorkTimer({ token }: WorkTimerProps) {
     return current.breakSeconds;
   }, [current, now]);
 
+  const currentTimeLabel = useMemo(() => formatNowTime(now), [now]);
+
   async function runAction(action: () => Promise<WorkTimerCurrent>, successMessage: string) {
     setActioning(true);
     setError(null);
@@ -138,7 +119,13 @@ export function WorkTimer({ token }: WorkTimerProps) {
           : 'No iniciada';
 
   const statusTone =
-    current?.state === 'WORKING' ? 'badge-success' : current?.state === 'PAUSED' ? 'badge-warning' : 'badge-info';
+    current?.state === 'WORKING'
+      ? 'badge-success'
+      : current?.state === 'PAUSED'
+        ? 'badge-warning'
+        : current?.state === 'COMPLETED'
+          ? 'badge-info'
+          : 'badge-info';
 
   if (loading) {
     return (
@@ -155,42 +142,51 @@ export function WorkTimer({ token }: WorkTimerProps) {
       <div className="toolbar">
         <div className="stack">
           <span className="eyebrow">Mi jornada</span>
-          <h2 className="section-title">Cronómetro de trabajo</h2>
+          <h2 className="section-title">Cronómetro principal</h2>
           <p className="meta">
-            {current?.usuarioNombre ?? 'Sin usuario'} · {current?.companyName ?? 'Empresa global'}
+            {current?.usuarioNombre ?? 'Sin usuario'} · {current?.companyName ?? 'Empresa general'}
           </p>
         </div>
         <span className={`badge ${statusTone}`}>{statusLabel}</span>
       </div>
 
-      {error ? <div className="notice" role="alert">{error}</div> : null}
+      {error ? (
+        <div className="notice notice--error" role="alert">
+          <AlertCircle size={16} />
+          <span>{error}</span>
+        </div>
+      ) : null}
       {message ? <div className="notice" role="status">{message}</div> : null}
 
-      <div className="work-timer__display">
-        <strong>{formatDuration(effectiveWorkedSeconds)}</strong>
-        <p>
+      <div className={`work-timer__hero ${current?.state === 'PAUSED' ? 'is-paused' : ''}`}>
+        <div className="work-timer__hero-head">
+          <span className="work-timer__eyebrow">{current?.state === 'PAUSED' ? 'EN PAUSA' : 'TIEMPO EFECTIVO'}</span>
+          <span className="work-timer__clock-caption">{currentTimeLabel}</span>
+        </div>
+        <strong className="work-timer__clock">{formatClock(effectiveWorkedSeconds)}</strong>
+        <p className="work-timer__hero-copy">
           {current?.state === 'WORKING'
-            ? `Trabajando desde ${formatDateTime(current.startedAt)}`
+            ? `En marcha desde ${formatDateTime(current.startedAt)}`
             : current?.state === 'PAUSED'
-              ? `En pausa · ${formatShortDuration(effectiveBreakSeconds)}`
+              ? `Pausa actual de ${formatDurationLabel(Math.round(effectiveBreakSeconds / 60))}`
               : current?.state === 'COMPLETED'
-                ? `Finalizada ${formatDateTime(current.finishedAt)}`
-                : 'No has iniciado tu jornada'}
+                ? `Jornada finalizada el ${formatDateTime(current.finishedAt)}`
+                : 'Todavía no has iniciado la jornada de hoy.'}
         </p>
-      </div>
 
-      <div className="work-timer__meta">
-        <div className="stat">
-          <strong>{formatShortDuration(effectiveBreakSeconds)}</strong>
-          <span className="muted">Tiempo pausado</span>
-        </div>
-        <div className="stat">
-          <strong>{formatDateTime(current?.startedAt)}</strong>
-          <span className="muted">Inicio</span>
-        </div>
-        <div className="stat">
-          <strong>{formatDateTime(current?.finishedAt)}</strong>
-          <span className="muted">Fin</span>
+        <div className="work-timer__status-grid">
+          <article className="work-timer__status">
+            <span className="muted">Entrada</span>
+            <strong>{formatDateTime(current?.startedAt)}</strong>
+          </article>
+          <article className="work-timer__status">
+            <span className="muted">Pausa</span>
+            <strong>{formatDurationLabel(Math.round(effectiveBreakSeconds / 60))}</strong>
+          </article>
+          <article className="work-timer__status">
+            <span className="muted">Salida</span>
+            <strong>{formatDateTime(current?.finishedAt)}</strong>
+          </article>
         </div>
       </div>
 
@@ -202,6 +198,7 @@ export function WorkTimer({ token }: WorkTimerProps) {
             onClick={() => void runAction(() => api.timeEntries.start(token, { origen: 'web' }), 'Jornada iniciada')}
             disabled={actioning}
           >
+            <Play size={16} />
             Iniciar jornada
           </button>
         ) : null}
@@ -214,9 +211,11 @@ export function WorkTimer({ token }: WorkTimerProps) {
               onClick={() => void runAction(() => api.timeEntries.pause(token, current.sessionId ?? 0), 'Pausa registrada')}
               disabled={actioning || !current.sessionId}
             >
+              <Pause size={16} />
               Pausar
             </button>
             <button className="button button-danger" type="button" onClick={() => setFinishConfirmOpen(true)} disabled={actioning}>
+              <SquareCheckBig size={16} />
               Finalizar
             </button>
           </>
@@ -230,12 +229,21 @@ export function WorkTimer({ token }: WorkTimerProps) {
               onClick={() => void runAction(() => api.timeEntries.resume(token, current.sessionId ?? 0), 'Jornada reanudada')}
               disabled={actioning || !current.sessionId}
             >
+              <Play size={16} />
               Reanudar
             </button>
             <button className="button button-danger" type="button" onClick={() => setFinishConfirmOpen(true)} disabled={actioning}>
+              <SquareCheckBig size={16} />
               Finalizar
             </button>
           </>
+        ) : null}
+
+        {current?.state === 'COMPLETED' ? (
+          <div className="work-timer__completed">
+            <TimerReset size={16} />
+            <span>Jornada cerrada</span>
+          </div>
         ) : null}
       </div>
 
@@ -243,7 +251,7 @@ export function WorkTimer({ token }: WorkTimerProps) {
         <div className="dialog-backdrop" role="presentation">
           <div className="dialog-card" role="dialog" aria-modal="true" aria-labelledby="finish-title">
             <h3 id="finish-title">Finalizar jornada</h3>
-            <p>Has trabajado {formatDuration(effectiveWorkedSeconds)}. Esta acción cerrará la jornada actual.</p>
+            <p>Has trabajado {formatClock(effectiveWorkedSeconds)}. Esta acción cerrará la jornada actual.</p>
             <div className="hero-actions">
               <button className="button button-secondary" type="button" onClick={() => setFinishConfirmOpen(false)}>
                 Cancelar

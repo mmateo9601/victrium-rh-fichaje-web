@@ -73,7 +73,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <section className="hero">
-        <span className="eyebrow">Profile</span>
+        <span className="eyebrow">Perfil</span>
         <h1>Cargando perfil...</h1>
       </section>
     );
@@ -83,8 +83,8 @@ export default function ProfilePage() {
     <div className="stack">
       <section className="hero">
         <span className="eyebrow">Cuenta</span>
-        <h1>Profile</h1>
-        <p>Datos visibles de tu usuario autenticado y cambio de contraseña con revocación de sesiones.</p>
+        <h1>Perfil</h1>
+        <p>Datos visibles de tu usuario autenticado y cambio de contraseña.</p>
         {error ? <div className="notice" role="alert">{error}</div> : null}
         {message ? <div className="notice" role="status">{message}</div> : null}
         {user ? (
@@ -98,7 +98,7 @@ export default function ProfilePage() {
               <span className="muted">Nombre</span>
             </article>
             <article className="stat">
-              <strong>{user.roles.join(', ') || 'Sin rol'}</strong>
+              <strong>{user.roles.join(', ') || 'Empleado'}</strong>
               <span className="muted">Roles</span>
             </article>
           </div>

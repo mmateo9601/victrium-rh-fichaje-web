@@ -101,7 +101,7 @@ export default function CompaniesPage() {
   if (loading) {
     return (
       <section className="hero">
-        <span className="eyebrow">Companies</span>
+        <span className="eyebrow">Empresas</span>
         <h1>Cargando empresas...</h1>
       </section>
     );
@@ -110,9 +110,9 @@ export default function CompaniesPage() {
   return (
     <div className="stack">
       <section className="hero">
-        <span className="eyebrow">Tenant</span>
-        <h1>Companies</h1>
-        <p>La empresa activa viaja en el token. La API decide qué tenant puedes ver o modificar.</p>
+        <span className="eyebrow">Organización</span>
+        <h1>Empresas</h1>
+        <p>Gestiona las empresas disponibles y su información básica para la organización.</p>
         {companyMe ? (
           <div className="notice">Empresa actual: {companyMe.name} ({companyMe.code})</div>
         ) : null}
@@ -139,10 +139,10 @@ export default function CompaniesPage() {
       ) : null}
 
       <section className="panel stack">
-        <div className="toolbar">
+          <div className="toolbar">
           <div>
             <h2 className="section-title">Listado</h2>
-            <p className="meta">Sólo muestra lo permitido por la política de tenant.</p>
+            <p className="meta">Solo muestra lo permitido por tus permisos actuales.</p>
           </div>
           <div className="hero-actions" style={{ marginTop: 0 }}>
             <input

@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { BadgeCheck, ArrowRight, LockKeyhole, Sparkles } from 'lucide-react';
 
 import { api } from '../../lib/api/generated';
 import { clearSession, getStoredSession, saveSession } from '../../lib/auth/session';
@@ -41,26 +42,29 @@ export default function LoginPage() {
     <main className="login-shell">
       <section className="login-hero">
         <div className="login-brand">
-          <span className="eyebrow">Acceso seguro</span>
-          <h1>Entrar al panel de RRHH.</h1>
+          <span className="eyebrow">Victrium RH</span>
+          <h1>Accede a tu espacio de trabajo.</h1>
           <p>
-            Una experiencia sobria para empleados, RRHH y administración. Inicia sesión con tu número de
-            empleado y la contraseña proporcionados por la API.
+            La pantalla de acceso está pensada para entrar rápido, sin ruido y con una jerarquía visual muy
+            clara.
           </p>
         </div>
 
         <div className="login-points">
           <article className="stat">
-            <strong>JWT</strong>
-            <span className="muted">Access + refresh tokens.</span>
+            <LockKeyhole size={18} />
+            <strong>Acceso privado</strong>
+            <span className="muted">Cada persona entra en su área correspondiente.</span>
           </article>
           <article className="stat">
-            <strong>Scoped</strong>
-            <span className="muted">La empresa viaja en el token.</span>
+            <BadgeCheck size={18} />
+            <strong>Rápido</strong>
+            <span className="muted">Número de empleado y contraseña en una sola vista.</span>
           </article>
           <article className="stat">
-            <strong>Seguro</strong>
-            <span className="muted">Sesión local y revocación de refresh.</span>
+            <Sparkles size={18} />
+            <strong>Ordenado</strong>
+            <span className="muted">Un inicio sobrio, sin distracciones técnicas.</span>
           </article>
         </div>
 
@@ -73,12 +77,12 @@ export default function LoginPage() {
         <form onSubmit={onSubmit}>
           <div className="stack">
             <span className="eyebrow">Inicio de sesión</span>
-            <h2 className="section-title">Accede a tu espacio de trabajo</h2>
-            <p className="meta">La app almacena la sesión localmente para navegar entre módulos.</p>
+            <h2 className="section-title">Acceso a Victrium RH</h2>
+            <p className="meta">Introduce tus credenciales para continuar.</p>
           </div>
 
           <div className="field">
-            <label htmlFor="numero">Número</label>
+            <label htmlFor="numero">Número de empleado</label>
             <input
               id="numero"
               value={numero}
@@ -108,6 +112,7 @@ export default function LoginPage() {
           <div className="login-footer">
             <button className="button button-primary" type="submit" disabled={loading}>
               {loading ? 'Validando...' : 'Entrar'}
+              {!loading ? <ArrowRight size={16} /> : null}
             </button>
             <span className="meta">¿Problemas de acceso? Contacta con RRHH.</span>
           </div>

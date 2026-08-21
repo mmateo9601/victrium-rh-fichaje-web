@@ -148,7 +148,7 @@ export default function EmployeesPage() {
   if (loading) {
     return (
       <section className="hero">
-        <span className="eyebrow">Employees</span>
+        <span className="eyebrow">Empleados</span>
         <h1>Cargando empleados...</h1>
       </section>
     );
@@ -157,10 +157,10 @@ export default function EmployeesPage() {
   return (
     <div className="stack">
       <section className="hero">
-        <span className="eyebrow">Labor profile</span>
-        <h1>Employees</h1>
+        <span className="eyebrow">Personas</span>
+        <h1>Empleados</h1>
         <p>
-          Listado, alta, detalle y activación/desactivación de empleados. El backend controla el alcance por empresa.
+          Listado, alta, detalle y activación o desactivación de empleados con alcance por empresa.
         </p>
         {error ? <div className="notice" role="alert">{error}</div> : null}
         <div className="grid-3" style={{ marginTop: '1.5rem' }}>
@@ -173,7 +173,7 @@ export default function EmployeesPage() {
             <span className="muted">Empresa activa</span>
           </article>
           <article className="stat">
-            <strong>{session?.user.roles.join(', ') || 'Sin rol'}</strong>
+            <strong>{session?.user.roles.join(', ') || 'Empleado'}</strong>
             <span className="muted">Acceso actual</span>
           </article>
         </div>
@@ -184,13 +184,13 @@ export default function EmployeesPage() {
           <h2 className="section-title">Crear empleado</h2>
           <div className="field-grid">
             <div className="field">
-              <label htmlFor="companyId">Company</label>
+              <label htmlFor="companyId">Empresa</label>
               <select
                 id="companyId"
                 value={createCompanyId}
                 onChange={(event) => setCreateCompanyId(event.target.value)}
               >
-                <option value="">Empresa del token</option>
+                <option value="">Empresa asignada</option>
                 {companies.map((company) => (
                   <option key={company.id} value={company.id}>
                     {company.name}
@@ -224,7 +224,7 @@ export default function EmployeesPage() {
               />
             </div>
             <div className="field">
-              <label htmlFor="working">Working</label>
+              <label htmlFor="working">Activo</label>
               <select id="working" value={String(createWorking)} onChange={(e) => setCreateWorking(e.target.value === 'true')}>
                 <option value="false">No</option>
                 <option value="true">Sí</option>

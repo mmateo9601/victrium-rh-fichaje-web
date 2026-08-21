@@ -93,7 +93,7 @@ export default function EmployeeDetailPage() {
   if (loading) {
     return (
       <section className="hero">
-        <span className="eyebrow">Employees</span>
+        <span className="eyebrow">Empleados</span>
         <h1>Cargando detalle...</h1>
       </section>
     );
@@ -102,7 +102,7 @@ export default function EmployeeDetailPage() {
   if (!employee) {
     return (
       <section className="hero">
-        <span className="eyebrow">Employees</span>
+        <span className="eyebrow">Empleados</span>
         <h1>Empleado no encontrado</h1>
         {error ? <div className="notice" role="alert">{error}</div> : null}
       </section>
@@ -129,7 +129,7 @@ export default function EmployeeDetailPage() {
             <span className="muted">Empresa</span>
           </article>
           <article className="stat">
-            <strong>{employee.roles.join(', ') || 'Sin roles'}</strong>
+            <strong>{employee.roles.join(', ') || 'Empleado'}</strong>
             <span className="muted">Roles</span>
           </article>
         </div>
@@ -160,7 +160,7 @@ export default function EmployeeDetailPage() {
               <input id="dni" value={employee.dni} onChange={(e) => setEmployee({ ...employee, dni: e.target.value })} />
             </div>
             <div className="field">
-              <label htmlFor="companyId">Company</label>
+              <label htmlFor="companyId">Empresa</label>
               <select
                 id="companyId"
                 value={employee.companyId ?? ''}
@@ -172,7 +172,7 @@ export default function EmployeeDetailPage() {
                   })
                 }
               >
-                <option value="">Sin company</option>
+                <option value="">Sin empresa</option>
                 {companies.map((company) => (
                   <option key={company.id} value={company.id}>
                     {company.name}
@@ -181,7 +181,7 @@ export default function EmployeeDetailPage() {
               </select>
             </div>
             <div className="field">
-              <label htmlFor="working">Working</label>
+              <label htmlFor="working">Activo</label>
               <select
                 id="working"
                 value={String(Boolean(employee.working))}

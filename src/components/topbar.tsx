@@ -4,8 +4,19 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+import {
+  Building2,
+  CalendarRange,
+  Clock3,
+  Home,
+  ShieldCheck,
+  Users,
+  BriefcaseBusiness,
+  UserRound
+} from 'lucide-react';
 
 import { getStoredSession, signOut } from '../lib/auth/session';
+import { getRoleLabel } from '../lib/labels';
 import { canAccessNavigationItem, getNavigationTitle, navigationGroups, type RoleName } from '../lib/navigation';
 
 type TopbarProps = {
@@ -19,6 +30,17 @@ function routeIsPublic(pathname: string) {
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
+
+const iconMap = {
+  home: Home,
+  clock: Clock3,
+  users: Users,
+  calendar: CalendarRange,
+  building: Building2,
+  briefcase: BriefcaseBusiness,
+  shield: ShieldCheck,
+  user: UserRound
+} as const;
 
 export function Topbar({ children }: TopbarProps) {
   const pathname = usePathname();
@@ -94,7 +116,7 @@ export function Topbar({ children }: TopbarProps) {
             <span className="brand-mark">VR</span>
             <span className="brand-text">
               <strong>Victrium RH</strong>
-              <small>Gestión empresarial de personal</small>
+              <small>Gestión de personas</small>
             </span>
           </Link>
         </div>
@@ -106,13 +128,12 @@ export function Topbar({ children }: TopbarProps) {
               <ul>
                 {group.items.map((item) => {
                   const active = isActive(pathname, item.href);
+                  const Icon = iconMap[item.icon];
                   return (
                     <li key={item.href}>
                       <Link className={active ? 'sidebar-link is-active' : 'sidebar-link'} href={item.href}>
-                        <span>
-                          <strong>{item.label}</strong>
-                          <small>{item.description}</small>
-                        </span>
+                        <Icon aria-hidden="true" size={18} strokeWidth={1.9} />
+                        <strong>{item.label}</strong>
                       </Link>
                     </li>
                   );
@@ -123,20 +144,38 @@ export function Topbar({ children }: TopbarProps) {
         </nav>
 
         <div className="sidebar__footer">
-          <div className="profile-chip">
-            <span className="profile-chip__avatar">{session?.user.nombreEmpleado?.charAt(0) ?? 'V'}</span>
-            <div>
-              <strong>{session?.user.nombreEmpleado ?? 'Sesión activa'}</strong>
-              <small>{session?.user.roles.join(' · ') || 'Sin rol'}</small>
+          {session ? (
+            <div className="profile-chip">
+              <span className="profile-chip__avatar">{session.user.nombreEmpleado?.charAt(0) ?? 'V'}</span>
+              <div>
+                <strong>{session.user.nombreEmpleado}</strong>
+                <small>{getRoleLabel(session.user.roles as RoleName[])}</small>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="profile-chip profile-chip--empty">
+              <span className="profile-chip__avatar">VR</span>
+              <div>
+                <strong>Victrium RH</strong>
+                <small>Acceso restringido</small>
+              </div>
+            </div>
+          )}
           <div className="sidebar__actions">
-            <Link className="button button-secondary button-full" href="/profile">
-              Perfil
-            </Link>
-            <button className="button button-ghost button-full" type="button" onClick={() => void logout()} disabled={loggingOut}>
-              {loggingOut ? 'Saliendo...' : 'Cerrar sesión'}
-            </button>
+            {session ? (
+              <Link className="button button-secondary button-full" href="/profile">
+                Perfil
+              </Link>
+            ) : (
+              <Link className="button button-secondary button-full" href="/login">
+                Acceder
+              </Link>
+            )}
+            {session ? (
+              <button className="button button-ghost button-full" type="button" onClick={() => void logout()} disabled={loggingOut}>
+                {loggingOut ? 'Saliendo...' : 'Cerrar sesión'}
+              </button>
+            ) : null}
           </div>
         </div>
       </aside>
@@ -156,7 +195,7 @@ export function Topbar({ children }: TopbarProps) {
           </div>
 
           <div className="app-topbar__right">
-            {session ? <span className="session-pill">Conectado</span> : null}
+            {session ? <span className="session-pill">{getRoleLabel(roles)}</span> : null}
             {session ? (
               <button className="button button-secondary" type="button" onClick={() => void logout()} disabled={loggingOut}>
                 {loggingOut ? 'Saliendo...' : 'Cerrar sesión'}

@@ -128,7 +128,7 @@ export default function CalendarDetailPage() {
   if (loading) {
     return (
       <section className="hero">
-        <span className="eyebrow">Calendar detail</span>
+        <span className="eyebrow">Calendarios</span>
         <h1>Cargando detalle...</h1>
       </section>
     );
@@ -140,7 +140,7 @@ export default function CalendarDetailPage() {
         <span className="eyebrow">Detalle</span>
         <h1>{name || 'Calendario'}</h1>
         <p>
-          Edita el calendario y sus días laborables. Los cambios se guardan en la API y reemplazan el conjunto de días.
+          Edita el calendario y sus días laborables desde una vista clara y directa.
         </p>
         {error ? <div className="notice" role="alert">{error}</div> : null}
       </section>

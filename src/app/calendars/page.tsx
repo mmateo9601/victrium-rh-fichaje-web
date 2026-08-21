@@ -143,10 +143,9 @@ export default function CalendarsPage() {
     <div className="stack">
       <section className="hero">
         <span className="eyebrow">Horario laboral</span>
-        <h1>Calendars</h1>
+        <h1>Calendarios</h1>
         <p>
-          Gestiona los calendarios laborales y sus días. El módulo replica el núcleo del legado pero con una
-          UI más clara y preparada para edición directa.
+          Gestiona los calendarios laborales y sus días con una interfaz más clara y preparada para edición directa.
         </p>
         {error ? <div className="notice" role="alert">{error}</div> : null}
         <div className="grid-3" style={{ marginTop: '1.5rem' }}>
@@ -159,7 +158,7 @@ export default function CalendarsPage() {
             <span className="muted">Días en borrador</span>
           </article>
           <article className="stat">
-            <strong>{session?.user.roles.join(', ') || 'Sin rol'}</strong>
+            <strong>{session?.user.roles.join(', ') || 'Empleado'}</strong>
             <span className="muted">Acceso actual</span>
           </article>
         </div>

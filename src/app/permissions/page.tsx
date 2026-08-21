@@ -258,11 +258,11 @@ export default function PermissionsPage() {
           </article>
           <article className="stat">
             <strong>{session?.user.employeeId ?? 'Sin empleado'}</strong>
-            <span className="muted">Employee del token</span>
+            <span className="muted">Empleado conectado</span>
           </article>
           <article className="stat">
-            <strong>{session?.user.roles.join(', ') || 'Sin rol'}</strong>
-            <span className="muted">Permisos de sesión</span>
+            <strong>{session?.user.roles.join(', ') || 'Empleado'}</strong>
+            <span className="muted">Acceso actual</span>
           </article>
         </div>
       </section>
@@ -296,7 +296,7 @@ export default function PermissionsPage() {
         <div className="toolbar">
           <div>
             <h2 className="section-title">Mis permisos</h2>
-            <p className="meta">Paginación, búsqueda y filtros por estado gestionados por la API.</p>
+            <p className="meta">Paginación, búsqueda y filtros por estado para tu seguimiento diario.</p>
           </div>
           <div className="hero-actions" style={{ marginTop: 0 }}>
             <input

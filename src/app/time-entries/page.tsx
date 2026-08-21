@@ -1,17 +1,18 @@
 'use client';
 
-import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Clock3, Download, Filter, Search, TimerReset } from 'lucide-react';
 
+import { AnalyticsChart } from '../../components/analytics-chart';
+import { PageHeader } from '../../components/page-header';
+import { WorkTimer } from '../../components/work-timer';
 import { api, type TimeEntry } from '../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
-
-const typeColors: Record<TimeEntry['tipo'], string> = {
-  ENTRADA: 'badge-success',
-  SALIDA: 'badge-warning'
-};
+import { formatDurationLabel, formatInputDate, formatLongDate, getRoleLabel, getTimeEntryLabel } from '../../lib/labels';
+import { buildWorkedDays, buildWorkedSummary } from '../../lib/time-analytics';
 
 export default function TimeEntriesPage() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function TimeEntriesPage() {
 
   const [mine, setMine] = useState<TimeEntry[]>([]);
   const [all, setAll] = useState<TimeEntry[]>([]);
+  const [weekEntries, setWeekEntries] = useState<TimeEntry[]>([]);
   const [search, setSearch] = useState('');
   const [numeroUsuario, setNumeroUsuario] = useState('');
   const [nombreUsuario, setNombreUsuario] = useState('');
@@ -32,18 +34,40 @@ export default function TimeEntriesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const weekRange = useMemo(() => {
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(today.getDate() - 6);
+    return { from: formatInputDate(start), to: formatInputDate(today) };
+  }, []);
+
+  const weeklySummary = useMemo(() => buildWorkedSummary(weekEntries), [weekEntries]);
+  const weeklyChart = useMemo(
+    () =>
+      buildWorkedDays(weekEntries, 7).map((item) => ({
+        label: item.label,
+        value: Math.round(item.minutes / 60)
+      })),
+    [weekEntries]
+  );
+
   useEffect(() => {
     const token = getAccessToken();
     if (!token) {
       router.replace('/login');
       return;
     }
-    const authToken: string = token;
+    const authToken = token;
 
     async function load() {
       try {
-        const mineResult = await api.timeEntries.mine(authToken, { search, tipo, from, to, pageSize: 15, order: 'desc' as const });
+        const [mineResult, weekList] = await Promise.all([
+          api.timeEntries.mine(authToken, { search, tipo, from, to, pageSize: 15, order: 'desc' as const }),
+          collectAllPages((query) => api.timeEntries.mine(authToken, { ...weekRange, ...query, order: 'asc' }), weekRange, 100)
+        ]);
+
         setMine(mineResult.data);
+        setWeekEntries(weekList);
 
         if (canManage) {
           const allResult = await api.timeEntries.list(authToken, {
@@ -60,15 +84,15 @@ export default function TimeEntriesPage() {
         } else {
           setAll([]);
         }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'No se pudo cargar Fichajes');
+      } catch (loadError) {
+        setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar los fichajes');
       } finally {
         setLoading(false);
       }
     }
 
     void load();
-  }, [router, canManage, search, numeroUsuario, nombreUsuario, tipo, from, to]);
+  }, [router, canManage, search, numeroUsuario, nombreUsuario, tipo, from, to, weekRange]);
 
   async function refresh() {
     const token = getAccessToken();
@@ -76,7 +100,7 @@ export default function TimeEntriesPage() {
       router.replace('/login');
       return;
     }
-    const authToken: string = token;
+    const authToken = token;
 
     const mineResult = await api.timeEntries.mine(authToken, { search, tipo, from, to, pageSize: 15, order: 'desc' as const });
     setMine(mineResult.data);
@@ -93,10 +117,11 @@ export default function TimeEntriesPage() {
       });
       setAll(allResult.data);
     }
+    const weekList = await collectAllPages((query) => api.timeEntries.mine(authToken, { ...weekRange, ...query, order: 'asc' }), weekRange, 100);
+    setWeekEntries(weekList);
   }
 
-  async function clock(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function clock() {
     const token = getAccessToken();
     if (!token) {
       router.replace('/login');
@@ -108,8 +133,8 @@ export default function TimeEntriesPage() {
     try {
       await api.timeEntries.clock(token, { origen: 'web' });
       await refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo registrar el fichaje');
+    } catch (clockError) {
+      setError(clockError instanceof Error ? clockError.message : 'No se pudo registrar el fichaje');
     } finally {
       setClocking(false);
     }
@@ -139,12 +164,12 @@ export default function TimeEntriesPage() {
           entry.origen,
           entry.usuarioNombre,
           entry.usuarioNumero,
-          entry.companyName ?? 'Global'
+          entry.companyName ?? 'General'
         ])
       );
       downloadCsv('fichajes-mios.csv', csv);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo exportar los fichajes');
+    } catch (exportError) {
+      setError(exportError instanceof Error ? exportError.message : 'No se pudo exportar el histórico');
     } finally {
       setExportingMine(false);
     }
@@ -154,6 +179,7 @@ export default function TimeEntriesPage() {
     if (!canManage) {
       return;
     }
+
     const token = getAccessToken();
     if (!token) {
       router.replace('/login');
@@ -176,13 +202,13 @@ export default function TimeEntriesPage() {
           entry.tipo,
           entry.usuarioNombre,
           entry.usuarioNumero,
-          entry.companyName ?? 'Global',
+          entry.companyName ?? 'General',
           entry.origen
         ])
       );
-      downloadCsv('fichajes-empresa.csv', csv);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo exportar los fichajes');
+      downloadCsv('fichajes-equipo.csv', csv);
+    } catch (exportError) {
+      setError(exportError instanceof Error ? exportError.message : 'No se pudo exportar el histórico');
     } finally {
       setExportingAll(false);
     }
@@ -190,110 +216,165 @@ export default function TimeEntriesPage() {
 
   if (loading) {
     return (
-      <section className="hero">
-        <span className="eyebrow">Fichajes</span>
-        <h1>Cargando fichajes...</h1>
+      <section className="dashboard-skeleton stack">
+        <div className="skeleton skeleton--line" style={{ width: '8rem' }} />
+        <div className="skeleton skeleton--line" style={{ width: '18rem', height: '2.4rem' }} />
+        <div className="skeleton skeleton--block" style={{ minHeight: '24rem' }} />
       </section>
     );
   }
 
+  const roleLabel = getRoleLabel(session?.user.roles);
+
   return (
     <div className="stack">
-      <section className="hero">
-        <span className="eyebrow">Control horario</span>
-        <h1>Fichajes</h1>
-        <p>
-          Alterna entrada y salida con un clic y revisa tu histórico. Si tienes rol de gestión, también
-          puedes consultar el listado completo de la empresa.
-        </p>
-        {error ? <div className="notice" role="alert">{error}</div> : null}
-        <div className="grid-3" style={{ marginTop: '1.5rem' }}>
-          <article className="stat">
-            <strong>{mine.length}</strong>
-            <span className="muted">Mis fichajes visibles</span>
+      <PageHeader
+        eyebrow="Histórico"
+        title="Fichajes"
+        description="Consulta tu jornada, filtra por fechas y revisa la evolución semanal de horas."
+        actions={
+          <>
+            <button className="button button-secondary" type="button" onClick={exportMineCsv} disabled={exportingMine}>
+              <Download size={16} />
+              {exportingMine ? 'Exportando...' : 'Exportar míos'}
+            </button>
+            {canManage ? (
+              <button className="button button-primary" type="button" onClick={exportAllCsv} disabled={exportingAll}>
+                <Download size={16} />
+                {exportingAll ? 'Exportando...' : 'Exportar equipo'}
+              </button>
+            ) : null}
+          </>
+        }
+        stats={[
+          <article className="stat stat--compact" key="mine">
+            <div className="stat__icon">
+              <TimerReset size={16} />
+            </div>
+            <strong>{formatDurationLabel(weeklySummary.workedMinutes)}</strong>
+            <span className="muted">Horas esta semana</span>
+          </article>,
+          <article className="stat stat--compact" key="entries">
+            <div className="stat__icon">
+              <Clock3 size={16} />
+            </div>
+            <strong>{weeklySummary.entries}</strong>
+            <span className="muted">Fichajes en 7 días</span>
+          </article>,
+          <article className="stat stat--compact" key="role">
+            <div className="stat__icon">
+              <Filter size={16} />
+            </div>
+            <strong>{roleLabel}</strong>
+            <span className="muted">Acceso actual</span>
           </article>
-          <article className="stat">
-            <strong>{session?.user.employeeId ?? 'Sin empleado'}</strong>
-            <span className="muted">Employee del token</span>
-          </article>
-          <article className="stat">
-            <strong>{session?.user.roles.join(', ') || 'Sin rol'}</strong>
-            <span className="muted">Permisos de sesión</span>
-          </article>
-        </div>
-      </section>
+        ]}
+      />
 
-      <form className="panel stack" onSubmit={clock}>
-        <h2 className="section-title">Registrar fichaje</h2>
-        <p className="meta">La API alterna automáticamente entre entrada y salida según tu estado actual.</p>
-        <button className="button button-primary" type="submit" disabled={clocking}>
-          {clocking ? 'Registrando...' : 'Marcar entrada / salida'}
-        </button>
-      </form>
+      {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
+
+      {session ? (
+        <div className="time-entries-layout">
+          <section className="time-entries-layout__timer">
+            <WorkTimer token={getAccessToken() ?? ''} />
+          </section>
+
+          <AnalyticsChart
+            title="Horas de la semana"
+            description={`Del ${formatLongDate(weekRange.from)} al ${formatLongDate(weekRange.to)}.`}
+            data={weeklyChart}
+            valueLabel="Horas"
+            emptyLabel="No hay actividad suficiente para construir la evolución semanal."
+          />
+        </div>
+      ) : null}
 
       <section className="panel stack">
         <div className="toolbar">
-          <div>
-            <h2 className="section-title">Mis fichajes</h2>
-            <p className="meta">Listado filtrado por fecha, tipo y búsqueda global.</p>
+          <div className="stack" style={{ gap: '0.35rem' }}>
+            <span className="eyebrow">Filtros</span>
+            <h2 className="section-title">Búsqueda y fechas</h2>
           </div>
-          <div className="hero-actions" style={{ marginTop: 0 }}>
-            <input
-              className="field"
-              style={{ minWidth: '220px' }}
-              placeholder="Buscar..."
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-            <select className="field" style={{ minWidth: '140px' }} value={tipo} onChange={(event) => setTipo(event.target.value)}>
+          <button className="button button-ghost" type="button" onClick={clock} disabled={clocking}>
+            <TimerReset size={16} />
+            {clocking ? 'Registrando...' : 'Marcar entrada/salida'}
+          </button>
+        </div>
+
+        <div className="filters-bar">
+          <label className="field">
+            <span>Buscar</span>
+            <div className="input-with-icon">
+              <Search size={16} />
+              <input placeholder="Empleado, número o origen" value={search} onChange={(event) => setSearch(event.target.value)} />
+            </div>
+          </label>
+          <label className="field">
+            <span>Tipo</span>
+            <select value={tipo} onChange={(event) => setTipo(event.target.value)}>
               <option value="">Todos</option>
               <option value="ENTRADA">Entrada</option>
               <option value="SALIDA">Salida</option>
             </select>
-            <input className="field" style={{ minWidth: '140px' }} type="date" value={from} onChange={(event) => setFrom(event.target.value)} />
-            <input className="field" style={{ minWidth: '140px' }} type="date" value={to} onChange={(event) => setTo(event.target.value)} />
-            <button className="button button-secondary" type="button" onClick={exportMineCsv} disabled={exportingMine}>
-              {exportingMine ? 'Exportando...' : 'Exportar CSV'}
-            </button>
+          </label>
+          <label className="field">
+            <span>Desde</span>
+            <input type="date" value={from} onChange={(event) => setFrom(event.target.value)} />
+          </label>
+          <label className="field">
+            <span>Hasta</span>
+            <input type="date" value={to} onChange={(event) => setTo(event.target.value)} />
+          </label>
+        </div>
+      </section>
+
+      <section className="panel stack">
+        <div className="toolbar">
+          <div className="stack" style={{ gap: '0.35rem' }}>
+            <span className="eyebrow">Mis fichajes</span>
+            <h2 className="section-title">Histórico personal</h2>
           </div>
+          <Link className="button button-secondary" href="/dashboard">
+            Ir al inicio
+          </Link>
         </div>
 
         <div className="table-wrap">
           <table className="table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Día</th>
-                  <th>Hora</th>
-                  <th>Tipo</th>
-                  <th>Origen</th>
-                  <th>Detalle</th>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Tipo</th>
+                <th>Origen</th>
+                <th>Detalle</th>
+              </tr>
+            </thead>
+            <tbody>
+              {mine.map((entry) => (
+                <tr key={entry.id}>
+                  <td>{formatLongDate(entry.dia)}</td>
+                  <td>{entry.hora.slice(0, 5)}</td>
+                  <td>
+                    <span className={`badge ${entry.tipo === 'ENTRADA' ? 'badge-success' : 'badge-warning'}`}>
+                      {getTimeEntryLabel(entry.tipo)}
+                    </span>
+                  </td>
+                  <td>{entry.origen}</td>
+                  <td>
+                    <Link className="button button-secondary" href={`/time-entries/${entry.id}`}>
+                      Ver detalle
+                    </Link>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {mine.map((entry) => (
-                  <tr key={entry.id}>
-                    <td>{entry.id}</td>
-                    <td>{entry.dia}</td>
-                    <td>{entry.hora}</td>
-                    <td>
-                      <span className={`badge ${typeColors[entry.tipo]}`}>{entry.tipo}</span>
-                    </td>
-                    <td>{entry.origen}</td>
-                    <td>
-                      <Link className="button button-secondary" href={`/time-entries/${entry.id}`}>
-                        Ver detalle
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-                {!mine.length ? (
-                  <tr>
-                    <td colSpan={6} className="muted">
-                      Sin resultados.
-                    </td>
-                  </tr>
-                ) : null}
+              ))}
+              {!mine.length ? (
+                <tr>
+                  <td colSpan={5} className="muted">
+                    No hay fichajes para los filtros seleccionados.
+                  </td>
+                </tr>
+              ) : null}
             </tbody>
           </table>
         </div>
@@ -302,28 +383,19 @@ export default function TimeEntriesPage() {
       {canManage ? (
         <section className="panel stack">
           <div className="toolbar">
-            <div>
-              <h2 className="section-title">Listado general</h2>
-              <p className="meta">Visible para RRHH y administración.</p>
+            <div className="stack" style={{ gap: '0.35rem' }}>
+              <span className="eyebrow">Equipo</span>
+              <h2 className="section-title">Histórico general</h2>
             </div>
-            <div className="hero-actions" style={{ marginTop: 0 }}>
-              <input
-                className="field"
-                style={{ minWidth: '220px' }}
-                placeholder="Número empleado"
-                value={numeroUsuario}
-                onChange={(event) => setNumeroUsuario(event.target.value)}
-              />
-              <input
-                className="field"
-                style={{ minWidth: '220px' }}
-                placeholder="Nombre empleado"
-                value={nombreUsuario}
-                onChange={(event) => setNombreUsuario(event.target.value)}
-              />
-              <button className="button button-secondary" type="button" onClick={exportAllCsv} disabled={exportingAll}>
-                {exportingAll ? 'Exportando...' : 'Exportar empresa CSV'}
-              </button>
+            <div className="filters-bar filters-bar--inline">
+              <label className="field">
+                <span>Número</span>
+                <input value={numeroUsuario} onChange={(event) => setNumeroUsuario(event.target.value)} placeholder="EMP001" />
+              </label>
+              <label className="field">
+                <span>Nombre</span>
+                <input value={nombreUsuario} onChange={(event) => setNombreUsuario(event.target.value)} placeholder="Nombre empleado" />
+              </label>
             </div>
           </div>
 
@@ -331,8 +403,7 @@ export default function TimeEntriesPage() {
             <table className="table">
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Día</th>
+                  <th>Fecha</th>
                   <th>Hora</th>
                   <th>Tipo</th>
                   <th>Empleado</th>
@@ -345,15 +416,16 @@ export default function TimeEntriesPage() {
               <tbody>
                 {all.map((entry) => (
                   <tr key={entry.id}>
-                    <td>{entry.id}</td>
-                    <td>{entry.dia}</td>
-                    <td>{entry.hora}</td>
+                    <td>{formatLongDate(entry.dia)}</td>
+                    <td>{entry.hora.slice(0, 5)}</td>
                     <td>
-                      <span className={`badge ${typeColors[entry.tipo]}`}>{entry.tipo}</span>
+                      <span className={`badge ${entry.tipo === 'ENTRADA' ? 'badge-success' : 'badge-warning'}`}>
+                        {getTimeEntryLabel(entry.tipo)}
+                      </span>
                     </td>
                     <td>{entry.usuarioNombre}</td>
                     <td>{entry.usuarioNumero}</td>
-                    <td>{entry.companyName ?? 'Global'}</td>
+                    <td>{entry.companyName ?? 'General'}</td>
                     <td>{entry.origen}</td>
                     <td>
                       <Link className="button button-secondary" href={`/time-entries/${entry.id}`}>
@@ -364,8 +436,8 @@ export default function TimeEntriesPage() {
                 ))}
                 {!all.length ? (
                   <tr>
-                    <td colSpan={9} className="muted">
-                      Sin fichajes para gestionar.
+                    <td colSpan={8} className="muted">
+                      No hay fichajes que revisar con los filtros activos.
                     </td>
                   </tr>
                 ) : null}

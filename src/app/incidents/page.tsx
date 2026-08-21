@@ -66,7 +66,7 @@ export default function IncidentsPage() {
           setTop([]);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'No se pudo cargar Incidents');
+        setError(err instanceof Error ? err.message : 'No se pudo cargar incidencias');
       } finally {
         setLoading(false);
       }
@@ -204,7 +204,7 @@ export default function IncidentsPage() {
   if (loading) {
     return (
       <section className="hero">
-        <span className="eyebrow">Incidents</span>
+        <span className="eyebrow">Incidencias</span>
         <h1>Cargando incidencias...</h1>
       </section>
     );
@@ -214,7 +214,7 @@ export default function IncidentsPage() {
     <div className="stack">
       <section className="hero">
         <span className="eyebrow">Operativa</span>
-        <h1>Incidents</h1>
+        <h1>Incidencias</h1>
         <p>
           Las incidencias registran descripciones de soporte, resumen visible y estado de resolución. RRHH
           puede revisar el conjunto de la empresa y ver sus métricas.
@@ -227,11 +227,11 @@ export default function IncidentsPage() {
           </article>
           <article className="stat">
             <strong>{session?.user.employeeId ?? 'Sin empleado'}</strong>
-            <span className="muted">Employee del token</span>
+            <span className="muted">Empleado conectado</span>
           </article>
           <article className="stat">
-            <strong>{session?.user.roles.join(', ') || 'Sin rol'}</strong>
-            <span className="muted">Permisos de sesión</span>
+            <strong>{session?.user.roles.join(', ') || 'Empleado'}</strong>
+            <span className="muted">Acceso actual</span>
           </article>
         </div>
       </section>
@@ -269,7 +269,7 @@ export default function IncidentsPage() {
         <div className="toolbar">
           <div>
             <h2 className="section-title">Mi listado</h2>
-            <p className="meta">Paginación y búsqueda gestionadas por la API.</p>
+            <p className="meta">Paginación, búsqueda y filtros para seguir cada caso.</p>
           </div>
           <div className="hero-actions" style={{ marginTop: 0 }}>
             <input

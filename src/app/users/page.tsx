@@ -28,7 +28,7 @@ export default function UsersPage() {
         const result = await api.users.list(authToken, { search, pageSize: 50 });
         setUsers(result.data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'No se pudo cargar Users');
+        setError(err instanceof Error ? err.message : 'No se pudo cargar usuarios');
       } finally {
         setLoading(false);
       }
@@ -69,7 +69,7 @@ export default function UsersPage() {
   if (loading) {
     return (
       <section className="hero">
-        <span className="eyebrow">Users</span>
+        <span className="eyebrow">Usuarios</span>
         <h1>Cargando usuarios...</h1>
       </section>
     );
@@ -79,8 +79,8 @@ export default function UsersPage() {
     <div className="stack">
       <section className="hero">
         <span className="eyebrow">Identidad</span>
-        <h1>Users</h1>
-        <p>Listado de identidades de acceso. Nunca expone hashes, secretos ni tokens.</p>
+        <h1>Usuarios</h1>
+        <p>Listado de identidades de acceso para la organización.</p>
         {error ? <div className="notice" role="alert">{error}</div> : null}
       </section>
 

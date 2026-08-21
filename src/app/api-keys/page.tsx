@@ -129,8 +129,8 @@ export default function ApiKeysPage() {
   if (loading) {
     return (
       <section className="hero">
-        <span className="eyebrow">API Keys</span>
-        <h1>Cargando API keys...</h1>
+        <span className="eyebrow">Claves</span>
+        <h1>Cargando claves...</h1>
       </section>
     );
   }
@@ -139,8 +139,8 @@ export default function ApiKeysPage() {
     <div className="stack">
       <section className="hero">
         <span className="eyebrow">Seguridad</span>
-        <h1>API Keys</h1>
-        <p>Gestión de claves hasheadas para integraciones externas, con exposición del valor plano solo al crear.</p>
+        <h1>Claves de integración</h1>
+        <p>Gestiona las credenciales de acceso de las integraciones externas desde un único lugar.</p>
         {error ? <div className="notice" role="alert">{error}</div> : null}
         {plainApiKey ? (
           <div className="notice" role="status">
@@ -150,7 +150,7 @@ export default function ApiKeysPage() {
       </section>
 
       <form className="panel stack" onSubmit={createApiKey}>
-        <h2 className="section-title">Crear API key</h2>
+        <h2 className="section-title">Crear clave</h2>
         <div className="field-grid">
           <div className="field">
             <label htmlFor="name">Nombre</label>
@@ -183,7 +183,7 @@ export default function ApiKeysPage() {
           </div>
         </div>
         <button className="button button-primary" type="submit" disabled={saving}>
-          {saving ? 'Creando...' : 'Crear API key'}
+          {saving ? 'Creando...' : 'Crear clave'}
         </button>
       </form>
 

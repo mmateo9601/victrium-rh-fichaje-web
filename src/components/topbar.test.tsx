@@ -50,7 +50,7 @@ describe('Topbar', () => {
       </Topbar>
     );
 
-    expect(screen.getByRole('link', { name: /dashboard/i })).toHaveAttribute('href', '/dashboard');
+    expect(screen.getByRole('link', { name: /inicio/i })).toHaveAttribute('href', '/dashboard');
     expect(screen.getByRole('link', { name: /empleados/i })).toHaveAttribute('href', '/employees');
     expect(screen.getAllByRole('button', { name: /cerrar sesión/i })).toHaveLength(2);
   });
