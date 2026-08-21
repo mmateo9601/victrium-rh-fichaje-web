@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 
 import { PageHeader } from '../../components/page-header';
+import { WorkTimer } from '../../components/work-timer';
 import {
   api,
   type Incident,
@@ -17,6 +17,7 @@ import { getAccessToken, getStoredSession, signOut } from '../../lib/auth/sessio
 
 export default function DashboardPage() {
   const router = useRouter();
+  const token = getAccessToken();
   const [user, setUser] = useState<PublicUser | null>(null);
   const [latestTimeEntry, setLatestTimeEntry] = useState<TimeEntry | null>(null);
   const [latestVacation, setLatestVacation] = useState<Vacation | null>(null);
@@ -92,32 +93,29 @@ export default function DashboardPage() {
       <PageHeader
         eyebrow="Sesión activa"
         title={`Bienvenido${user ? `, ${user.nombreEmpleado}` : ''}.`}
-        description="El dashboard prioriza la jornada de hoy, los últimos movimientos y los accesos rápidos relevantes para tu rol."
+        description="La página principal pone la jornada en primer plano y deja el resto de la operativa como contexto útil."
         actions={
           <>
             <button className="button button-secondary" onClick={logout} type="button">
               Cerrar sesión
             </button>
-            <Link className="button button-primary" href="/time-entries">
-              Ver fichajes
-            </Link>
           </>
         }
         stats={
           user ? (
             <>
-              <article className="stat">
+              <div className="stat">
                 <strong>{user.numero}</strong>
-                <span className="muted">Número de empleado</span>
-              </article>
-              <article className="stat">
+                <span className="muted">Empleado</span>
+              </div>
+              <div className="stat">
                 <strong>{user.companyId ?? 'Global'}</strong>
-                <span className="muted">Empresa activa</span>
-              </article>
-              <article className="stat">
+                <span className="muted">Empresa</span>
+              </div>
+              <div className="stat">
                 <strong>{user.roles.join(', ') || 'Sin rol'}</strong>
-                <span className="muted">Roles asignados</span>
-              </article>
+                <span className="muted">Acceso</span>
+              </div>
             </>
           ) : null
         }
@@ -125,84 +123,41 @@ export default function DashboardPage() {
 
       {error ? <div className="notice" role="alert">{error}</div> : null}
 
-      {user ? (
-        <section className="grid-3">
-          <article className="card stack">
-            <h2 className="card-title">Jornada</h2>
-            <strong>{timeEntriesCount}</strong>
-            <span className="muted">Fichajes visibles</span>
-          </article>
-          <article className="card stack">
-            <h2 className="card-title">Ausencias</h2>
-            <strong>{vacationsCount + permissionsCount}</strong>
-            <span className="muted">Vacaciones y permisos visibles</span>
-          </article>
-          <article className="card stack">
-            <h2 className="card-title">Operativa</h2>
-            <strong>{incidentsCount}</strong>
-            <span className="muted">Incidencias visibles</span>
-          </article>
-        </section>
-      ) : null}
+      <div className="two-col">
+        {user && token ? <WorkTimer token={token} /> : null}
 
-      {user ? (
-        <section className="grid-auto">
-          <article className="panel stack">
-            <h2 className="section-title">Último fichaje</h2>
-            <p className="meta">
-              {latestTimeEntry
-                ? `${latestTimeEntry.tipo} · ${new Date(latestTimeEntry.dia).toLocaleDateString('es-ES')} ${latestTimeEntry.hora}`
-                : 'Sin fichajes recientes'}
-            </p>
-          </article>
-          <article className="panel stack">
-            <h2 className="section-title">Últimas vacaciones</h2>
-            <p className="meta">
-              {latestVacation
-                ? `${latestVacation.estado} · ${new Date(latestVacation.inicio).toLocaleDateString('es-ES')}`
-                : 'Sin vacaciones recientes'}
-            </p>
-          </article>
-          <article className="panel stack">
-            <h2 className="section-title">Último permiso</h2>
-            <p className="meta">
-              {latestPermission
-                ? `${latestPermission.estado} · ${new Date(latestPermission.dia).toLocaleDateString('es-ES')}`
-                : 'Sin permisos recientes'}
-            </p>
-          </article>
-          <article className="panel stack">
-            <h2 className="section-title">Última incidencia</h2>
-            <p className="meta">
-              {latestIncident
-                ? `${latestIncident.resuelta ? 'Resuelta' : 'Abierta'} · ${new Date(latestIncident.dia).toLocaleDateString('es-ES')}`
-                : 'Sin incidencias recientes'}
-            </p>
-          </article>
-        </section>
-      ) : null}
+        <section className="panel stack">
+          <div className="toolbar">
+            <div className="stack">
+              <span className="eyebrow">Actividad</span>
+              <h2 className="section-title">Últimos movimientos</h2>
+            </div>
+          </div>
 
-      <section className="grid-auto">
-        {[
-          { href: '/companies', title: 'Companies', text: 'Gestiona el tenant y consulta tu empresa activa.' },
-          { href: '/users', title: 'Users', text: 'Explora identidades, roles y estado de acceso.' },
-          { href: '/employees', title: 'Employees', text: 'Listados, detalle, alta y activación.' },
-          { href: '/time-entries', title: 'Fichajes', text: 'Registro rápido y listados de entrada/salida.' },
-          { href: '/permissions', title: 'Permissions', text: 'Solicitudes de permisos, estados y métricas.' },
-          { href: '/vacations', title: 'Vacations', text: 'Solicitudes, aprobación y seguimiento de ausencias.' },
-          { href: '/incidents', title: 'Incidents', text: 'Incidencias, métricas y resolución de casos.' },
-          { href: '/profile', title: 'Profile', text: 'Consulta tu cuenta y cambia la contraseña.' },
-          { href: '/calendars', title: 'Calendars', text: 'Calendarios laborales y días configurados.' }
-        ].map((item) => (
-          <Link className="card stack" href={item.href} key={item.href}>
-            <span className="eyebrow">{item.title}</span>
-            <p className="meta">{item.text}</p>
-            <span className="button button-secondary" style={{ width: 'fit-content' }}>
-              Abrir
-            </span>
-          </Link>
-        ))}
-      </section>
+          <div className="activity-list">
+            <article className="activity-item">
+              <span className="activity-item__label">Fichajes</span>
+              <strong>{timeEntriesCount}</strong>
+              <p>{latestTimeEntry ? `${latestTimeEntry.tipo} · ${new Date(latestTimeEntry.dia).toLocaleDateString('es-ES')} ${latestTimeEntry.hora}` : 'Sin fichajes recientes'}</p>
+            </article>
+            <article className="activity-item">
+              <span className="activity-item__label">Vacaciones</span>
+              <strong>{vacationsCount}</strong>
+              <p>{latestVacation ? `${latestVacation.estado} · ${new Date(latestVacation.inicio).toLocaleDateString('es-ES')}` : 'Sin vacaciones recientes'}</p>
+            </article>
+            <article className="activity-item">
+              <span className="activity-item__label">Permisos</span>
+              <strong>{permissionsCount}</strong>
+              <p>{latestPermission ? `${latestPermission.estado} · ${new Date(latestPermission.dia).toLocaleDateString('es-ES')}` : 'Sin permisos recientes'}</p>
+            </article>
+            <article className="activity-item">
+              <span className="activity-item__label">Incidencias</span>
+              <strong>{incidentsCount}</strong>
+              <p>{latestIncident ? `${latestIncident.resuelta ? 'Resuelta' : 'Abierta'} · ${new Date(latestIncident.dia).toLocaleDateString('es-ES')}` : 'Sin incidencias recientes'}</p>
+            </article>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

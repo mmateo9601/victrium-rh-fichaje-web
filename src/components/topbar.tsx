@@ -51,12 +51,18 @@ export function Topbar({ children }: TopbarProps) {
       }
     };
 
-    window.document.body.classList.add('no-scroll');
-    window.addEventListener('keydown', onKeyDown);
+    const win = globalThis.window;
+    const doc = globalThis.document;
+    if (!win || !doc) {
+      return undefined;
+    }
+
+    doc.body.classList.add('no-scroll');
+    win.addEventListener('keydown', onKeyDown);
 
     return () => {
-      window.document.body.classList.remove('no-scroll');
-      window.removeEventListener('keydown', onKeyDown);
+      doc.body.classList.remove('no-scroll');
+      win.removeEventListener('keydown', onKeyDown);
     };
   }, [mobileOpen]);
 

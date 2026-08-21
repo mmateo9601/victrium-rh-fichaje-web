@@ -101,6 +101,30 @@ export type TimeEntryAudit = {
   correctedByNombre: string;
 };
 
+export type WorkTimerState = 'NOT_STARTED' | 'WORKING' | 'PAUSED' | 'COMPLETED';
+
+export type WorkTimerBreak = {
+  id: number;
+  startedAt: string;
+  endedAt: string | null;
+  seconds: number;
+};
+
+export type WorkTimerCurrent = {
+  state: WorkTimerState;
+  sessionId: number | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  activeBreak: WorkTimerBreak | null;
+  workedSeconds: number;
+  breakSeconds: number;
+  usuarioId: number;
+  usuarioNumero: string;
+  usuarioNombre: string;
+  companyId: number | null;
+  companyName: string | null;
+};
+
 export type VacationStatus = 'PENDIENTE' | 'APROBADO' | 'DENEGADO';
 
 export type PermissionStatus = 'PENDIENTE' | 'APROBADO' | 'DENEGADO';
@@ -571,6 +595,15 @@ export const api = {
     statsTop: (token: string) => requestJson<IncidentTopSummary[]>('/api/v1/incidents/stats/top', { token })
   },
   timeEntries: {
+    current: (token: string) => requestJson<WorkTimerCurrent>('/api/v1/time-entries/me/current', { token }),
+    start: (token: string, body: ClockTimeEntryRequest = {}) =>
+      requestJsonWithMethod<WorkTimerCurrent>('/api/v1/time-entries/start', 'POST', { token, body }),
+    pause: (token: string, sessionId: number) =>
+      requestJsonWithMethod<WorkTimerCurrent>(`/api/v1/time-entries/${sessionId}/pause`, 'POST', { token }),
+    resume: (token: string, sessionId: number) =>
+      requestJsonWithMethod<WorkTimerCurrent>(`/api/v1/time-entries/${sessionId}/resume`, 'POST', { token }),
+    finish: (token: string, sessionId: number) =>
+      requestJsonWithMethod<WorkTimerCurrent>(`/api/v1/time-entries/${sessionId}/finish`, 'POST', { token }),
     clock: (token: string, body: ClockTimeEntryRequest = {}) =>
       requestJsonWithMethod<TimeEntry>('/api/v1/time-entries/clock', 'POST', { token, body }),
     list: (token: string, query: TimeEntryListQuery = {}) =>
