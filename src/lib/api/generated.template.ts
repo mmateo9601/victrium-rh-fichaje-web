@@ -110,6 +110,10 @@ export type ReportsSummary = {
   currentMonthAbsenceDays: number;
   currentMonthIncidentDays: number;
   currentMonthUnplannedDays: number;
+  currentMonthPolicyWarnings: number;
+  currentMonthPolicyViolations: number;
+  currentMonthOvertimeMinutes: number;
+  currentMonthNightWorkMinutes: number;
 };
 
 export type WorkLocation = {
@@ -432,6 +436,22 @@ export type UpdateShiftAssignmentRequest = Partial<CreateShiftAssignmentRequest>
 
 export type ShiftOverrideKind = 'SHIFT' | 'OFF';
 
+export type WorkPolicyEvaluation = {
+  configured: boolean;
+  maxDailyMinutes: number | null;
+  minimumBreakMinutes: number | null;
+  lateThresholdMinutes: number | null;
+  overtimeWarningMinutes: number | null;
+  nightWorkStart: string | null;
+  nightWorkEnd: string | null;
+  expectedBreakMinutes: number | null;
+  actualBreakMinutes: number;
+  overtimeMinutes: number;
+  nightWorkMinutes: number;
+  warnings: string[];
+  violations: string[];
+};
+
 export type ShiftOverride = {
   id: number;
   companyId: number | null;
@@ -482,6 +502,7 @@ export type ScheduleCell = {
   incidentId: number | null;
   firstEntry: string | null;
   lastExit: string | null;
+  policy: WorkPolicyEvaluation | null;
 };
 
 export type ScheduleRow = {

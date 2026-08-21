@@ -128,6 +128,22 @@ export default function PlatformPage() {
             <strong>{formatNumber(summary?.currentMonthUnplannedDays ?? 0)}</strong>
             <span className="muted">Días sin plan</span>
           </article>
+          <article className="stat">
+            <strong>{formatNumber(summary?.currentMonthPolicyWarnings ?? 0)}</strong>
+            <span className="muted">Avisos de política</span>
+          </article>
+          <article className="stat">
+            <strong>{formatNumber(summary?.currentMonthPolicyViolations ?? 0)}</strong>
+            <span className="muted">Incumplimientos</span>
+          </article>
+          <article className="stat">
+            <strong>{formatDurationLabel(summary?.currentMonthOvertimeMinutes ?? 0)}</strong>
+            <span className="muted">Horas extra</span>
+          </article>
+          <article className="stat">
+            <strong>{formatDurationLabel(summary?.currentMonthNightWorkMinutes ?? 0)}</strong>
+            <span className="muted">Trabajo nocturno</span>
+          </article>
         </div>
       </section>
 
