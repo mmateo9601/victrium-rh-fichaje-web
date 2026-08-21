@@ -314,7 +314,7 @@ code {
 }
 
 .icon-button {
-  display: inline-grid;
+  display: none;
   place-items: center;
   width: 2.75rem;
   height: 2.75rem;
@@ -1314,6 +1314,10 @@ textarea {
 @media (max-width: 1024px) {
   .app-frame {
     grid-template-columns: 1fr;
+  }
+
+  .icon-button {
+    display: inline-grid;
   }
 
   .sidebar {
