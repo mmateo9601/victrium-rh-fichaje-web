@@ -49,6 +49,26 @@ export type Company = {
   active: boolean;
 };
 
+export type PlanningPeriodStatus = 'DRAFT' | 'PUBLISHED';
+
+export type PlanningPeriod = {
+  id: number;
+  companyId: number | null;
+  companyName: string | null;
+  name: string;
+  startDate: string;
+  endDate: string;
+  status: PlanningPeriodStatus;
+  version: number;
+  publishedAt: string | null;
+  publishedById: number | null;
+  publishedByNumero: string | null;
+  publishedByNombre: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type WorkLocation = {
   id: number;
   companyId: number | null;
@@ -618,6 +638,11 @@ export type CalendarListQuery = {
   year?: string;
 };
 
+export type PlanningPeriodListQuery = ListQuery & {
+  status?: PlanningPeriodStatus | '';
+  companyId?: number;
+};
+
 export type ApiKeyListQuery = ListQuery & {
   active?: string;
 };
@@ -879,6 +904,22 @@ export const api = {
     update: (token: string, id: number, body: UpdateCalendarRequest) =>
       requestJsonWithMethod<Calendar>(`/api/v1/calendars/${id}`, 'PATCH', { token, body }),
     delete: (token: string, id: number) => requestNoContent(`/api/v1/calendars/${id}`, 'DELETE', { token })
+  },
+  planningPeriods: {
+    list: (token: string, query: PlanningPeriodListQuery = {}) =>
+      requestJson<PaginatedResult<PlanningPeriod>>('/api/v1/planning-periods', { token, query }),
+    byId: (token: string, id: number) => requestJson<PlanningPeriod>(`/api/v1/planning-periods/${id}`, { token }),
+    create: (token: string, body: { companyId?: number; name: string; startDate: string; endDate: string; notes?: string | null }) =>
+      requestJsonWithMethod<PlanningPeriod>('/api/v1/planning-periods', 'POST', { token, body }),
+    update: (
+      token: string,
+      id: number,
+      body: Partial<{ companyId?: number; name: string; startDate: string; endDate: string; notes?: string | null }>
+    ) => requestJsonWithMethod<PlanningPeriod>(`/api/v1/planning-periods/${id}`, 'PATCH', { token, body }),
+    publish: (token: string, id: number) =>
+      requestJsonWithMethod<PlanningPeriod>(`/api/v1/planning-periods/${id}/publish`, 'POST', { token }),
+    unpublish: (token: string, id: number) =>
+      requestJsonWithMethod<PlanningPeriod>(`/api/v1/planning-periods/${id}/unpublish`, 'POST', { token })
   },
   shifts: {
     list: (token: string, query: ListQuery = {}) =>

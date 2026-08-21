@@ -42,6 +42,7 @@ export const navigationGroups: NavigationGroup[] = [
       { href: '/work-locations', label: 'Centros', icon: 'building', roles: ['ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH'] },
       { href: '/calendars', label: 'Calendarios', icon: 'calendar', roles: ['ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH'] },
       { href: '/shifts', label: 'Turnos', icon: 'sparkles', roles: ['ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH'] },
+      { href: '/planning-periods', label: 'Periodos', icon: 'layout-grid', roles: ['ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH'] },
       { href: '/schedule', label: 'Planificación', icon: 'layout-grid', roles: ['ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH'] },
       { href: '/companies', label: 'Empresas', icon: 'building', roles: ['ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH'] },
       { href: '/api-keys', label: 'Claves', icon: 'shield', roles: ['ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH'] }
@@ -69,6 +70,7 @@ export function getNavigationTitle(pathname: string) {
   if (pathname.startsWith('/calendars')) return 'Calendarios';
   if (pathname.startsWith('/work-locations')) return 'Centros de trabajo';
   if (pathname.startsWith('/shifts')) return 'Turnos';
+  if (pathname.startsWith('/planning-periods')) return 'Periodos de planificación';
   if (pathname.startsWith('/schedule')) return 'Planificación';
   if (pathname.startsWith('/companies')) return 'Empresas';
   if (pathname.startsWith('/api-keys')) return 'Claves';

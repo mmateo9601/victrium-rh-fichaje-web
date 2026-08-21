@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import { PageHeader } from '../../components/page-header';
 import { ScheduleGrid } from '../../components/schedule-grid';
-import { api, type Employee, type Schedule, type Shift } from '../../lib/api/generated';
+import { api, type Employee, type PlanningPeriod, type Schedule, type Shift } from '../../lib/api/generated';
 import { formatInputDate, formatLongDate } from '../../lib/labels';
 import { getAccessToken } from '../../lib/auth/session';
 
@@ -20,10 +20,12 @@ export default function SchedulePage() {
   const initialRange = useMemo(() => monthRange(new Date()), []);
   const [from, setFrom] = useState(initialRange.from);
   const [to, setTo] = useState(initialRange.to);
+  const [planningPeriodId, setPlanningPeriodId] = useState('');
   const [employeeId, setEmployeeId] = useState('');
   const [shiftId, setShiftId] = useState('');
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
+  const [planningPeriods, setPlanningPeriods] = useState<PlanningPeriod[]>([]);
   const [schedule, setSchedule] = useState<Schedule | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -39,9 +41,10 @@ export default function SchedulePage() {
 
     async function load() {
       try {
-        const [employeesResult, shiftsResult, scheduleResult] = await Promise.all([
+        const [employeesResult, shiftsResult, planningPeriodsResult, scheduleResult] = await Promise.all([
           api.employees.list(token, { pageSize: 100 }),
           api.shifts.list(token, { pageSize: 100 }),
+          api.planningPeriods.list(token, { pageSize: 100, sort: 'startDate', order: 'desc' }),
           api.schedule.list(token, {
             from,
             to,
@@ -51,6 +54,7 @@ export default function SchedulePage() {
         ]);
         setEmployees(employeesResult.data);
         setShifts(shiftsResult);
+        setPlanningPeriods(planningPeriodsResult.data);
         setSchedule(scheduleResult);
       } catch (loadError) {
         setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar la planificación');
@@ -61,6 +65,16 @@ export default function SchedulePage() {
 
     void load();
   }, [router, employeeId, from, shiftId, to]);
+
+  function selectPlanningPeriod(periodId: string) {
+    setPlanningPeriodId(periodId);
+    const selected = planningPeriods.find((period) => String(period.id) === periodId) ?? null;
+    if (!selected) {
+      return;
+    }
+    setFrom(selected.startDate);
+    setTo(selected.endDate);
+  }
 
   async function refresh() {
     const token = getAccessToken();
@@ -114,6 +128,10 @@ export default function SchedulePage() {
               <strong>{schedule?.rows.length ?? 0}</strong>
               <span className="muted">Filas visibles</span>
             </article>
+            <article className="stat stat--compact">
+              <strong>{planningPeriods.length}</strong>
+              <span className="muted">Periodos</span>
+            </article>
           </>
         }
       />
@@ -127,6 +145,11 @@ export default function SchedulePage() {
             <p className="meta">
               Rango actual {formatLongDate(from)} - {formatLongDate(to)}.
             </p>
+            {planningPeriodId ? (
+              <p className="meta">
+                Periodo seleccionado: {planningPeriods.find((period) => String(period.id) === planningPeriodId)?.name ?? 'N/A'}
+              </p>
+            ) : null}
           </div>
           <button className="button button-secondary" type="button" onClick={() => void refresh()} disabled={refreshing}>
             {refreshing ? 'Actualizando...' : 'Actualizar'}
@@ -134,6 +157,17 @@ export default function SchedulePage() {
         </div>
 
         <div className="field-grid">
+          <div className="field">
+            <label htmlFor="planningPeriodId">Periodo de planificación</label>
+            <select id="planningPeriodId" value={planningPeriodId} onChange={(e) => selectPlanningPeriod(e.target.value)}>
+              <option value="">Seleccionar periodo</option>
+              {planningPeriods.map((period) => (
+                <option key={period.id} value={period.id}>
+                  {period.name} ({period.status === 'PUBLISHED' ? 'Publicado' : 'Borrador'})
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="field">
             <label htmlFor="from">Desde</label>
             <input id="from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
