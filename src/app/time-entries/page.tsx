@@ -19,7 +19,10 @@ import { buildWorkedDays, buildWorkedSummary } from '../../lib/time-analytics';
 export default function TimeEntriesPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
-  const canManage = session?.user.roles.includes('ROLE_ADMIN') || session?.user.roles.includes('ROLE_RRHH');
+  const canManage =
+    session?.user.roles.includes('ROLE_ADMIN') ||
+    session?.user.roles.includes('ROLE_RRHH') ||
+    session?.user.roles.includes('ROLE_SUPER_ADMIN');
 
   const [mine, setMine] = useState<TimeEntry[]>([]);
   const [all, setAll] = useState<TimeEntry[]>([]);

@@ -19,7 +19,10 @@ const statusColors: Record<Permission['estado'], string> = {
 export default function PermissionsPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
-  const canManage = session?.user.roles.includes('ROLE_ADMIN') || session?.user.roles.includes('ROLE_RRHH');
+  const canManage =
+    session?.user.roles.includes('ROLE_ADMIN') ||
+    session?.user.roles.includes('ROLE_RRHH') ||
+    session?.user.roles.includes('ROLE_SUPER_ADMIN');
 
   const [mine, setMine] = useState<Permission[]>([]);
   const [all, setAll] = useState<Permission[]>([]);

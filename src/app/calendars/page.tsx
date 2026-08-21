@@ -15,7 +15,10 @@ const defaultDay = (): CalendarDayForm => ({ dia: '', horaInicio: '09:00', horaF
 export default function CalendarsPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
-  const canManage = session?.user.roles.includes('ROLE_ADMIN') || session?.user.roles.includes('ROLE_RRHH');
+  const canManage =
+    session?.user.roles.includes('ROLE_ADMIN') ||
+    session?.user.roles.includes('ROLE_RRHH') ||
+    session?.user.roles.includes('ROLE_SUPER_ADMIN');
 
   const [calendars, setCalendars] = useState<CalendarListItem[]>([]);
   const [search, setSearch] = useState('');

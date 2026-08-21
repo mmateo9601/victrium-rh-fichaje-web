@@ -22,7 +22,10 @@ export default function TimeEntryDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const session = useMemo(() => getStoredSession(), []);
-  const canManage = session?.user.roles.includes('ROLE_ADMIN') || session?.user.roles.includes('ROLE_RRHH');
+  const canManage =
+    session?.user.roles.includes('ROLE_ADMIN') ||
+    session?.user.roles.includes('ROLE_RRHH') ||
+    session?.user.roles.includes('ROLE_SUPER_ADMIN');
 
   const [entry, setEntry] = useState<TimeEntry | null>(null);
   const [audits, setAudits] = useState<TimeEntryAudit[]>([]);

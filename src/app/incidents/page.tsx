@@ -13,7 +13,10 @@ const badgeForResolved = (resolved: boolean) => (resolved ? 'badge-success' : 'b
 export default function IncidentsPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
-  const canManage = session?.user.roles.includes('ROLE_ADMIN') || session?.user.roles.includes('ROLE_RRHH');
+  const canManage =
+    session?.user.roles.includes('ROLE_ADMIN') ||
+    session?.user.roles.includes('ROLE_RRHH') ||
+    session?.user.roles.includes('ROLE_SUPER_ADMIN');
 
   const [mine, setMine] = useState<Incident[]>([]);
   const [all, setAll] = useState<Incident[]>([]);

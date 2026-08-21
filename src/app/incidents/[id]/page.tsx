@@ -10,7 +10,10 @@ export default function IncidentDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const session = useMemo(() => getStoredSession(), []);
-  const canManage = session?.user.roles.includes('ROLE_ADMIN') || session?.user.roles.includes('ROLE_RRHH');
+  const canManage =
+    session?.user.roles.includes('ROLE_ADMIN') ||
+    session?.user.roles.includes('ROLE_RRHH') ||
+    session?.user.roles.includes('ROLE_SUPER_ADMIN');
   const [incident, setIncident] = useState<Incident | null>(null);
   const [description, setDescription] = useState('');
   const [summary, setSummary] = useState('');

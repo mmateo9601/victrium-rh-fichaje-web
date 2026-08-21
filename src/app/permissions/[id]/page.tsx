@@ -16,7 +16,10 @@ export default function PermissionDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const session = useMemo(() => getStoredSession(), []);
-  const canManage = session?.user.roles.includes('ROLE_ADMIN') || session?.user.roles.includes('ROLE_RRHH');
+  const canManage =
+    session?.user.roles.includes('ROLE_ADMIN') ||
+    session?.user.roles.includes('ROLE_RRHH') ||
+    session?.user.roles.includes('ROLE_SUPER_ADMIN');
   const [permission, setPermission] = useState<Permission | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

@@ -14,7 +14,10 @@ export default function CalendarDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const session = useMemo(() => getStoredSession(), []);
-  const canManage = session?.user.roles.includes('ROLE_ADMIN') || session?.user.roles.includes('ROLE_RRHH');
+  const canManage =
+    session?.user.roles.includes('ROLE_ADMIN') ||
+    session?.user.roles.includes('ROLE_RRHH') ||
+    session?.user.roles.includes('ROLE_SUPER_ADMIN');
   const [calendar, setCalendar] = useState<Calendar | null>(null);
   const [name, setName] = useState('');
   const [year, setYear] = useState('');

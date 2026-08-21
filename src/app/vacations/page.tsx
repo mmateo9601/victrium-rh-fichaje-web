@@ -18,7 +18,10 @@ const statusColors: Record<Vacation['estado'], string> = {
 export default function VacationsPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
-  const canManage = session?.user.roles.includes('ROLE_ADMIN') || session?.user.roles.includes('ROLE_RRHH');
+  const canManage =
+    session?.user.roles.includes('ROLE_ADMIN') ||
+    session?.user.roles.includes('ROLE_RRHH') ||
+    session?.user.roles.includes('ROLE_SUPER_ADMIN');
 
   const [mine, setMine] = useState<Vacation[]>([]);
   const [all, setAll] = useState<Vacation[]>([]);
