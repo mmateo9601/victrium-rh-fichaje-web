@@ -219,6 +219,12 @@ export type RefreshRequest = {
   refreshToken: string;
 };
 
+export type ChangePasswordRequest = {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+};
+
 export type CreateCompanyRequest = {
   name: string;
   code: string;
@@ -340,12 +346,40 @@ export type CreateCalendarRequest = {
   days: CreateCalendarDayRequest[];
 };
 
+export type ApiKey = {
+  id: number;
+  name: string;
+  description: string | null;
+  userId: number;
+  userNumero: string;
+  userNombreEmpleado: string;
+  companyId: number | null;
+  active: boolean;
+  expiresAt: string | null;
+  lastUsedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string | null;
+  plainApiKey?: string;
+};
+
+export type CreateApiKeyRequest = {
+  name: string;
+  description?: string;
+  userId: number;
+  expiresInDays?: number;
+};
+
 export type UpdateCalendarRequest = Partial<CreateCalendarRequest>;
 
 export type CalendarListQuery = {
   search?: string;
   active?: string;
   year?: string;
+};
+
+export type ApiKeyListQuery = ListQuery & {
+  active?: string;
 };
 
 export type ListQuery = {
@@ -467,7 +501,9 @@ export const api = {
   auth: {
     login: (body: LoginRequest) => requestJsonWithMethod<AuthSession>('/api/v1/auth/login', 'POST', { body }),
     refresh: (body: RefreshRequest) => requestJsonWithMethod<AuthSession>('/api/v1/auth/refresh', 'POST', { body }),
-    me: (token: string) => requestJson<AuthSession['user']>('/api/v1/auth/me', { token })
+    me: (token: string) => requestJson<AuthSession['user']>('/api/v1/auth/me', { token }),
+    changePassword: (token: string, body: ChangePasswordRequest) =>
+      requestJsonWithMethod<{ message: string }>('/api/v1/auth/password', 'PATCH', { token, body })
   },
   companies: {
     list: (token: string, query: ListQuery = {}) =>
@@ -566,6 +602,20 @@ export const api = {
     update: (token: string, id: number, body: UpdateCalendarRequest) =>
       requestJsonWithMethod<Calendar>(`/api/v1/calendars/${id}`, 'PATCH', { token, body }),
     delete: (token: string, id: number) => requestNoContent(`/api/v1/calendars/${id}`, 'DELETE', { token })
+  },
+  apiKeys: {
+    list: (token: string, query: ApiKeyListQuery = {}) =>
+      requestJson<PaginatedResult<ApiKey>>('/api/v1/api-keys', { token, query }),
+    byId: (token: string, id: number) => requestJson<ApiKey>(`/api/v1/api-keys/${id}`, { token }),
+    byUser: (token: string, userId: number, query: ApiKeyListQuery = {}) =>
+      requestJson<PaginatedResult<ApiKey>>(`/api/v1/api-keys/users/${userId}`, { token, query }),
+    create: (token: string, body: CreateApiKeyRequest) =>
+      requestJsonWithMethod<ApiKey>('/api/v1/api-keys', 'POST', { token, body }),
+    activate: (token: string, id: number) =>
+      requestJsonWithMethod<ApiKey>(`/api/v1/api-keys/${id}/activate`, 'PATCH', { token }),
+    deactivate: (token: string, id: number) =>
+      requestJsonWithMethod<ApiKey>(`/api/v1/api-keys/${id}/deactivate`, 'PATCH', { token }),
+    delete: (token: string, id: number) => requestNoContent(`/api/v1/api-keys/${id}`, 'DELETE', { token })
   }
 } as const;
 

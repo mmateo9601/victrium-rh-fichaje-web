@@ -48,5 +48,7 @@ describe('Topbar', () => {
     expect(screen.getByRole('link', { name: /companies/i })).toHaveAttribute('href', '/companies');
     expect(screen.getByRole('link', { name: /users/i })).toHaveAttribute('href', '/users');
     expect(screen.getByRole('link', { name: /employees/i })).toHaveAttribute('href', '/employees');
+    expect(screen.getByRole('link', { name: /profile/i })).toHaveAttribute('href', '/profile');
+    expect(screen.getByRole('link', { name: /api keys/i })).toHaveAttribute('href', '/api-keys');
   });
 });

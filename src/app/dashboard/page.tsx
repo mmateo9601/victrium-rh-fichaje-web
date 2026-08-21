@@ -4,12 +4,27 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { api, type PublicUser } from '../../lib/api/generated';
+import {
+  api,
+  type Incident,
+  type Permission,
+  type PublicUser,
+  type TimeEntry,
+  type Vacation
+} from '../../lib/api/generated';
 import { clearSession, getAccessToken, getStoredSession } from '../../lib/auth/session';
 
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<PublicUser | null>(null);
+  const [latestTimeEntry, setLatestTimeEntry] = useState<TimeEntry | null>(null);
+  const [latestVacation, setLatestVacation] = useState<Vacation | null>(null);
+  const [latestPermission, setLatestPermission] = useState<Permission | null>(null);
+  const [latestIncident, setLatestIncident] = useState<Incident | null>(null);
+  const [timeEntriesCount, setTimeEntriesCount] = useState(0);
+  const [vacationsCount, setVacationsCount] = useState(0);
+  const [permissionsCount, setPermissionsCount] = useState(0);
+  const [incidentsCount, setIncidentsCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -27,9 +42,26 @@ export default function DashboardPage() {
           router.replace('/login');
           return;
         }
-        const authToken = token;
-        const me = await api.auth.me(authToken);
+
+        const me = await api.auth.me(token);
         setUser(me);
+
+        const isAdmin = me.roles.includes('ROLE_ADMIN') || me.roles.includes('ROLE_RRHH');
+        const [timeEntries, vacations, permissions, incidents] = await Promise.all([
+          isAdmin ? api.timeEntries.list(token, { pageSize: 1, sort: 'id', order: 'desc' }) : api.timeEntries.mine(token, { pageSize: 1, sort: 'id', order: 'desc' }),
+          isAdmin ? api.vacations.list(token, { pageSize: 1, sort: 'id', order: 'desc' }) : api.vacations.mine(token, { pageSize: 1, sort: 'id', order: 'desc' }),
+          isAdmin ? api.permissions.list(token, { pageSize: 1, sort: 'id', order: 'desc' }) : api.permissions.mine(token, { pageSize: 1, sort: 'id', order: 'desc' }),
+          isAdmin ? api.incidents.list(token, { pageSize: 1, sort: 'id', order: 'desc' }) : api.incidents.mine(token, { pageSize: 1, sort: 'id', order: 'desc' })
+        ]);
+
+        setTimeEntriesCount(timeEntries.pagination.total);
+        setVacationsCount(vacations.pagination.total);
+        setPermissionsCount(permissions.pagination.total);
+        setIncidentsCount(incidents.pagination.total);
+        setLatestTimeEntry(timeEntries.data[0] ?? null);
+        setLatestVacation(vacations.data[0] ?? null);
+        setLatestPermission(permissions.data[0] ?? null);
+        setLatestIncident(incidents.data[0] ?? null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'No se pudo cargar la sesión');
       } finally {
@@ -80,6 +112,22 @@ export default function DashboardPage() {
             </article>
           </div>
         ) : null}
+        {user ? (
+          <div className="grid-3" style={{ marginTop: '1.5rem' }}>
+            <article className="stat">
+              <strong>{timeEntriesCount}</strong>
+              <span className="muted">Fichajes visibles</span>
+            </article>
+            <article className="stat">
+              <strong>{vacationsCount}</strong>
+              <span className="muted">Vacaciones visibles</span>
+            </article>
+            <article className="stat">
+              <strong>{permissionsCount + incidentsCount}</strong>
+              <span className="muted">Permisos + incidencias</span>
+            </article>
+          </div>
+        ) : null}
         <div className="hero-actions">
           <button className="button button-secondary" onClick={logout} type="button">
             Cerrar sesión
@@ -90,6 +138,43 @@ export default function DashboardPage() {
         </div>
       </section>
 
+      {user ? (
+        <section className="grid-auto">
+          <article className="card stack">
+            <h2 className="card-title">Último fichaje</h2>
+            <p className="meta">
+              {latestTimeEntry
+                ? `${latestTimeEntry.tipo} · ${new Date(latestTimeEntry.dia).toLocaleDateString('es-ES')} ${latestTimeEntry.hora}`
+                : 'Sin fichajes recientes'}
+            </p>
+          </article>
+          <article className="card stack">
+            <h2 className="card-title">Última vacaciones</h2>
+            <p className="meta">
+              {latestVacation
+                ? `${latestVacation.estado} · ${new Date(latestVacation.inicio).toLocaleDateString('es-ES')}`
+                : 'Sin vacaciones recientes'}
+            </p>
+          </article>
+          <article className="card stack">
+            <h2 className="card-title">Último permiso</h2>
+            <p className="meta">
+              {latestPermission
+                ? `${latestPermission.estado} · ${new Date(latestPermission.dia).toLocaleDateString('es-ES')}`
+                : 'Sin permisos recientes'}
+            </p>
+          </article>
+          <article className="card stack">
+            <h2 className="card-title">Última incidencia</h2>
+            <p className="meta">
+              {latestIncident
+                ? `${latestIncident.resuelta ? 'Resuelta' : 'Abierta'} · ${new Date(latestIncident.dia).toLocaleDateString('es-ES')}`
+                : 'Sin incidencias recientes'}
+            </p>
+          </article>
+        </section>
+      ) : null}
+
       <section className="grid-auto">
         {[
           { href: '/companies', title: 'Companies', text: 'Gestiona el tenant y consulta tu empresa activa.' },
@@ -99,6 +184,7 @@ export default function DashboardPage() {
           { href: '/permissions', title: 'Permissions', text: 'Solicitudes de permisos, estados y métricas.' },
           { href: '/vacations', title: 'Vacations', text: 'Solicitudes, aprobación y seguimiento de ausencias.' },
           { href: '/incidents', title: 'Incidents', text: 'Incidencias, métricas y resolución de casos.' },
+          { href: '/profile', title: 'Profile', text: 'Consulta tu cuenta y cambia la contraseña.' },
           { href: '/calendars', title: 'Calendars', text: 'Calendarios laborales y días configurados.' }
         ].map((item) => (
           <Link className="card stack" href={item.href} key={item.href}>

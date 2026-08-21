@@ -27,7 +27,9 @@ export function Topbar() {
         {session ? <Link href="/permissions">Permissions</Link> : null}
         {session ? <Link href="/vacations">Vacations</Link> : null}
         {session ? <Link href="/incidents">Incidents</Link> : null}
+        {session ? <Link href="/profile">Profile</Link> : null}
         {canSeeAdmin ? <Link href="/calendars">Calendars</Link> : null}
+        {canSeeAdmin ? <Link href="/api-keys">API Keys</Link> : null}
         {session ? null : <Link href="/login">Login</Link>}
       </nav>
     </header>
