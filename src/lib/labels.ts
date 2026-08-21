@@ -5,8 +5,12 @@ export function getRoleLabel(roles: RoleName[] | undefined | null) {
     return 'Empleado';
   }
 
-  if (roles.includes('ROLE_ADMIN')) {
-    return 'Administrador';
+  if (roles.includes('ROLE_SUPER_ADMIN')) {
+    return 'Super admin';
+  }
+
+  if (roles.includes('ROLE_ADMIN') || roles.includes('ROLE_COMPANY_ADMIN')) {
+    return 'Admin de empresa';
   }
 
   if (roles.includes('ROLE_RRHH')) {
@@ -98,4 +102,3 @@ export function formatDateTime(value: string | null | undefined) {
 export function formatInputDate(value: Date) {
   return value.toISOString().slice(0, 10);
 }
-

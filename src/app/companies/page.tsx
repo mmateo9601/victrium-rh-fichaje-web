@@ -20,7 +20,7 @@ export default function CompaniesPage() {
   const [error, setError] = useState<string | null>(null);
 
   const session = useMemo(() => getStoredSession(), []);
-  const isAdmin = session?.user.roles.includes('ROLE_ADMIN') ?? false;
+  const isAdmin = session?.user.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_SUPER_ADMIN') ?? false;
 
   useEffect(() => {
     const token = getAccessToken();

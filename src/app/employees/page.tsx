@@ -13,7 +13,7 @@ import {
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
 
-const roleOptions: RoleName[] = ['ROLE_USER', 'ROLE_RRHH', 'ROLE_ADMIN'];
+const roleOptions: RoleName[] = ['ROLE_USER', 'ROLE_RRHH', 'ROLE_COMPANY_ADMIN', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'];
 
 export default function EmployeesPage() {
   const router = useRouter();
@@ -35,7 +35,7 @@ export default function EmployeesPage() {
   const [error, setError] = useState<string | null>(null);
 
   const session = useMemo(() => getStoredSession(), []);
-  const isAdmin = session?.user.roles.includes('ROLE_ADMIN') ?? false;
+  const isAdmin = session?.user.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_SUPER_ADMIN') ?? false;
   const isManager = session?.user.roles.includes('ROLE_RRHH') ?? false;
 
   useEffect(() => {

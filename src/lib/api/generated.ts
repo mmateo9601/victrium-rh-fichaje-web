@@ -1,6 +1,6 @@
 import { env } from '../config';
 
-export type RoleName = 'ROLE_ADMIN' | 'ROLE_RRHH' | 'ROLE_USER';
+export type RoleName = 'ROLE_SUPER_ADMIN' | 'ROLE_ADMIN' | 'ROLE_COMPANY_ADMIN' | 'ROLE_RRHH' | 'ROLE_USER';
 
 export type PaginationState = {
   page: number;
@@ -44,7 +44,45 @@ export type Company = {
   id: number;
   name: string;
   code: string;
+  timezone: string | null;
+  workPolicy: Record<string, unknown> | null;
   active: boolean;
+};
+
+export type WorkLocation = {
+  id: number;
+  companyId: number | null;
+  companyName: string | null;
+  name: string;
+  code: string;
+  address: string | null;
+  city: string | null;
+  province: string | null;
+  postalCode: string | null;
+  timezone: string | null;
+  active: boolean;
+  calendarId: number | null;
+  calendarName: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type EmployeeLocationAssignment = {
+  id: number;
+  companyId: number | null;
+  companyName: string | null;
+  employeeId: number;
+  employeeNumero: string;
+  employeeNombre: string;
+  workLocationId: number;
+  workLocationName: string;
+  workLocationCode: string;
+  validFrom: string;
+  validTo: string | null;
+  primary: boolean;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type Employee = {
@@ -403,9 +441,37 @@ export type CreateCompanyRequest = {
   name: string;
   code: string;
   active?: boolean;
+  timezone?: string | null;
+  workPolicy?: Record<string, unknown> | null;
 };
 
 export type UpdateCompanyRequest = Partial<CreateCompanyRequest>;
+
+export type CreateWorkLocationRequest = {
+  companyId?: number;
+  name: string;
+  code: string;
+  address?: string | null;
+  city?: string | null;
+  province?: string | null;
+  postalCode?: string | null;
+  timezone?: string | null;
+};
+
+export type UpdateWorkLocationRequest = Partial<CreateWorkLocationRequest> & {
+  active?: boolean;
+};
+
+export type CreateEmployeeLocationAssignmentRequest = {
+  employeeId: number;
+  workLocationId: number;
+  validFrom: string;
+  validTo?: string | null;
+  primary?: boolean;
+  notes?: string | null;
+};
+
+export type UpdateEmployeeLocationAssignmentRequest = Partial<CreateEmployeeLocationAssignmentRequest>;
 
 export type CreateEmployeeRequest = {
   companyId?: number;
@@ -694,6 +760,27 @@ export const api = {
       requestJsonWithMethod<Company>('/api/v1/companies', 'POST', { token, body }),
     update: (token: string, id: number, body: UpdateCompanyRequest) =>
       requestJsonWithMethod<Company>(`/api/v1/companies/${id}`, 'PATCH', { token, body })
+  },
+  workLocations: {
+    list: (token: string, query: ListQuery & { active?: string; companyId?: number } = {}) =>
+      requestJson<PaginatedResult<WorkLocation>>('/api/v1/work-locations', { token, query }),
+    byId: (token: string, id: number) => requestJson<WorkLocation>(`/api/v1/work-locations/${id}`, { token }),
+    create: (token: string, body: CreateWorkLocationRequest) =>
+      requestJsonWithMethod<WorkLocation>('/api/v1/work-locations', 'POST', { token, body }),
+    update: (token: string, id: number, body: UpdateWorkLocationRequest) =>
+      requestJsonWithMethod<WorkLocation>(`/api/v1/work-locations/${id}`, 'PATCH', { token, body }),
+    activate: (token: string, id: number) =>
+      requestJsonWithMethod<WorkLocation>(`/api/v1/work-locations/${id}/activate`, 'POST', { token }),
+    deactivate: (token: string, id: number) =>
+      requestJsonWithMethod<WorkLocation>(`/api/v1/work-locations/${id}/deactivate`, 'POST', { token }),
+    employees: (token: string, id: number, query: ListQuery = {}) =>
+      requestJson<PaginatedResult<EmployeeLocationAssignment>>(`/api/v1/work-locations/${id}/employees`, { token, query }),
+    assignments: (token: string, query: ListQuery & { employeeId?: number; workLocationId?: number } = {}) =>
+      requestJson<PaginatedResult<EmployeeLocationAssignment>>('/api/v1/employee-location-assignments', { token, query }),
+    createAssignment: (token: string, body: CreateEmployeeLocationAssignmentRequest) =>
+      requestJsonWithMethod<EmployeeLocationAssignment>('/api/v1/employee-location-assignments', 'POST', { token, body }),
+    updateAssignment: (token: string, id: number, body: UpdateEmployeeLocationAssignmentRequest) =>
+      requestJsonWithMethod<EmployeeLocationAssignment>(`/api/v1/employee-location-assignments/${id}`, 'PATCH', { token, body })
   },
   users: {
     list: (token: string, query: ListQuery = {}) =>
