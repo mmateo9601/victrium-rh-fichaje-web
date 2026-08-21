@@ -82,12 +82,12 @@ export default function LoginPage() {
           </div>
 
           <div className="field">
-            <label htmlFor="numero">Número de empleado</label>
+            <label htmlFor="numero">Número de empleado o email</label>
             <input
               id="numero"
               value={numero}
               onChange={(event) => setNumero(event.target.value)}
-              placeholder="EMP001"
+              placeholder="VIC-ADM o admin@victrium.local"
               autoComplete="username"
               inputMode="text"
               required
