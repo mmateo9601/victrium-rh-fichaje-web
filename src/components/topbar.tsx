@@ -66,6 +66,10 @@ export function Topbar({ children }: TopbarProps) {
     setMobileOpen(false);
   }, [pathname]);
 
+  function closeMobileNavigation() {
+    setMobileOpen(false);
+  }
+
   useEffect(() => {
     if (!mobileOpen) {
       return;
@@ -112,10 +116,10 @@ export function Topbar({ children }: TopbarProps) {
         Saltar al contenido
       </a>
 
-      <div className={`shell-overlay ${mobileOpen ? 'is-open' : ''}`} onClick={() => setMobileOpen(false)} />
+      <div className={`shell-overlay ${mobileOpen ? 'is-open' : ''}`} onClick={closeMobileNavigation} />
 
-      <aside className={`sidebar ${mobileOpen ? 'is-open' : ''}`} aria-label="Navegación principal">
-        <div className="sidebar__brand">
+      <aside className={`sidebar ${mobileOpen ? 'is-open' : ''}`} aria-label="Navegación principal" id="primary-navigation">
+        <div className="sidebar__header">
           <Link className="brand brand--sidebar" href={session ? '/dashboard' : '/'}>
             <span className="brand-mark">VR</span>
             <span className="brand-text">
@@ -123,6 +127,10 @@ export function Topbar({ children }: TopbarProps) {
               <small>Gestión de personas</small>
             </span>
           </Link>
+
+          <button className="sidebar__close button button-secondary" type="button" onClick={closeMobileNavigation} aria-label="Cerrar navegación">
+            Cerrar
+          </button>
         </div>
 
         <nav className="sidebar__nav" aria-label="Secciones">
@@ -135,7 +143,11 @@ export function Topbar({ children }: TopbarProps) {
                   const Icon = iconMap[item.icon];
                   return (
                     <li key={item.href}>
-                      <Link className={active ? 'sidebar-link is-active' : 'sidebar-link'} href={item.href}>
+                      <Link
+                        className={active ? 'sidebar-link is-active' : 'sidebar-link'}
+                        href={item.href}
+                        onClick={closeMobileNavigation}
+                      >
                         <Icon aria-hidden="true" size={18} strokeWidth={1.9} />
                         <strong>{item.label}</strong>
                       </Link>
@@ -167,11 +179,11 @@ export function Topbar({ children }: TopbarProps) {
           )}
           <div className="sidebar__actions">
             {session ? (
-              <Link className="button button-secondary button-full" href="/profile">
+              <Link className="button button-secondary button-full" href="/profile" onClick={closeMobileNavigation}>
                 Perfil
               </Link>
             ) : (
-              <Link className="button button-secondary button-full" href="/login">
+              <Link className="button button-secondary button-full" href="/login" onClick={closeMobileNavigation}>
                 Acceder
               </Link>
             )}
@@ -187,7 +199,14 @@ export function Topbar({ children }: TopbarProps) {
       <div className="app-main">
         <header className="app-topbar">
           <div className="app-topbar__left">
-            <button className="icon-button" type="button" onClick={() => setMobileOpen(true)} aria-label="Abrir navegación">
+            <button
+              className="icon-button"
+              type="button"
+              onClick={() => setMobileOpen((current) => !current)}
+              aria-label={mobileOpen ? 'Cerrar navegación' : 'Abrir navegación'}
+              aria-expanded={mobileOpen}
+              aria-controls="primary-navigation"
+            >
               <span />
               <span />
               <span />
