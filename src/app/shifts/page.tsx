@@ -189,6 +189,11 @@ export default function ShiftsPage() {
         eyebrow="Organización"
         title="Turnos"
         description="Define horarios reutilizables, jornadas nocturnas y descansos planificados."
+        actions={
+          <a className="button button-primary" href="#nuevo-turno">
+            Crear turno
+          </a>
+        }
         stats={
           <>
             <article className="stat stat--compact">
@@ -205,7 +210,7 @@ export default function ShiftsPage() {
 
       {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
 
-      <form className="panel stack" onSubmit={submit}>
+      <form className="panel stack" id="nuevo-turno" onSubmit={submit}>
         <div className="toolbar">
           <div>
             <h2 className="section-title">Nuevo turno</h2>

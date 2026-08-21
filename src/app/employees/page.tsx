@@ -10,10 +10,10 @@ import {
   type Employee,
   type RoleName
 } from '../../lib/api/generated';
-import { getAccessToken, getStoredSession } from '../../lib/auth/session';
+import { getAccessToken, useStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
 
-const roleOptions: RoleName[] = ['ROLE_USER', 'ROLE_RRHH', 'ROLE_COMPANY_ADMIN', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'];
+const baseRoleOptions: RoleName[] = ['ROLE_USER', 'ROLE_RRHH', 'ROLE_COMPANY_ADMIN', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'];
 
 export default function EmployeesPage() {
   const router = useRouter();
@@ -34,9 +34,22 @@ export default function EmployeesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const session = useMemo(() => getStoredSession(), []);
+  const session = useStoredSession();
   const canManage = session?.user.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN') ?? false;
-  const isManager = session?.user.roles.includes('ROLE_RRHH') ?? false;
+  const roleOptions = useMemo(
+    () =>
+      session?.user.roles.includes('ROLE_SUPER_ADMIN')
+        ? baseRoleOptions
+        : baseRoleOptions.filter((role) => role !== 'ROLE_SUPER_ADMIN'),
+    [session]
+  );
+
+  useEffect(() => {
+    setCreateRoles((current) => {
+      const next = current.filter((role) => roleOptions.includes(role));
+      return next.length ? next : ['ROLE_USER'];
+    });
+  }, [roleOptions]);
 
   useEffect(() => {
     const token = getAccessToken();
