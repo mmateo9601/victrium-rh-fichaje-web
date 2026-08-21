@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import { api, type Company } from '../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
+import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
 
 export default function CompaniesPage() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function CompaniesPage() {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const session = useMemo(() => getStoredSession(), []);
@@ -45,6 +47,32 @@ export default function CompaniesPage() {
 
     void load();
   }, [router, search]);
+
+  async function exportCsv() {
+    const token = getAccessToken();
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+
+    setExporting(true);
+    setError(null);
+    try {
+      const items = await collectAllPages(
+        (query) => api.companies.list(token, { search: search || undefined, ...query }),
+        { search: search || undefined }
+      );
+      const csv = buildCsv(
+        ['Nombre', 'Código', 'Estado'],
+        items.map((company) => [company.name, company.code, company.active ? 'Activa' : 'Inactiva'])
+      );
+      downloadCsv('empresas.csv', csv);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo exportar las empresas');
+    } finally {
+      setExporting(false);
+    }
+  }
 
   async function onCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -116,13 +144,18 @@ export default function CompaniesPage() {
             <h2 className="section-title">Listado</h2>
             <p className="meta">Sólo muestra lo permitido por la política de tenant.</p>
           </div>
-          <input
-            className="field"
-            style={{ minWidth: '220px' }}
-            placeholder="Buscar empresa..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+          <div className="hero-actions" style={{ marginTop: 0 }}>
+            <input
+              className="field"
+              style={{ minWidth: '220px' }}
+              placeholder="Buscar empresa..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <button className="button button-secondary" type="button" onClick={exportCsv} disabled={exporting}>
+              {exporting ? 'Exportando...' : 'Exportar CSV'}
+            </button>
+          </div>
         </div>
 
         <div className="table-wrap">

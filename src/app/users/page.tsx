@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 
 import { api, type PublicUser } from '../../lib/api/generated';
 import { getAccessToken } from '../../lib/auth/session';
+import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
 
 export default function UsersPage() {
   const router = useRouter();
   const [users, setUsers] = useState<PublicUser[]>([]);
   const [search, setSearch] = useState('');
+  const [exporting, setExporting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,6 +37,35 @@ export default function UsersPage() {
     void load();
   }, [router, search]);
 
+  async function exportCsv() {
+    const token = getAccessToken();
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+
+    setExporting(true);
+    setError(null);
+    try {
+      const items = await collectAllPages((query) => api.users.list(token, { search, ...query }), { search });
+      const csv = buildCsv(
+        ['Número', 'Nombre', 'Empresa', 'Roles', 'Admin'],
+        items.map((user) => [
+          user.numero,
+          user.nombreEmpleado,
+          user.companyId ?? 'Global',
+          user.roles.join(', '),
+          user.admin ? 'Sí' : 'No'
+        ])
+      );
+      downloadCsv('usuarios.csv', csv);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo exportar los usuarios');
+    } finally {
+      setExporting(false);
+    }
+  }
+
   if (loading) {
     return (
       <section className="hero">
@@ -59,13 +90,18 @@ export default function UsersPage() {
             <h2 className="section-title">Listado</h2>
             <p className="meta">Se filtra por la empresa del usuario autenticado.</p>
           </div>
-          <input
-            className="field"
-            style={{ minWidth: '240px' }}
-            placeholder="Buscar usuario..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+          <div className="hero-actions" style={{ marginTop: 0 }}>
+            <input
+              className="field"
+              style={{ minWidth: '240px' }}
+              placeholder="Buscar usuario..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <button className="button button-secondary" type="button" onClick={exportCsv} disabled={exporting}>
+              {exporting ? 'Exportando...' : 'Exportar CSV'}
+            </button>
+          </div>
         </div>
 
         <div className="table-wrap">

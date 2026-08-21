@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import { api, type CalendarDay, type CalendarListItem } from '../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
+import { buildCsv, downloadCsv } from '../../lib/csv';
 
 type CalendarDayForm = Omit<CalendarDay, 'id'>;
 
@@ -28,6 +29,7 @@ export default function CalendarsPage() {
   const [createDays, setCreateDays] = useState<CalendarDayForm[]>([defaultDay()]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -98,6 +100,33 @@ export default function CalendarsPage() {
       setError(err instanceof Error ? err.message : 'No se pudo crear el calendario');
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function exportCsv() {
+    const token = getAccessToken();
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+
+    setExporting(true);
+    setError(null);
+    try {
+      const csv = buildCsv(
+        ['Nombre', 'Año', 'Activo', 'Días'],
+        calendars.map((calendar) => [
+          calendar.nombre,
+          calendar.year,
+          calendar.active ? 'Sí' : 'No',
+          calendar.daysCount
+        ])
+      );
+      downloadCsv('calendarios.csv', csv);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo exportar los calendarios');
+    } finally {
+      setExporting(false);
     }
   }
 
@@ -235,6 +264,9 @@ export default function CalendarsPage() {
               <option value="true">Activos</option>
               <option value="false">Inactivos</option>
             </select>
+            <button className="button button-secondary" type="button" onClick={exportCsv} disabled={exporting}>
+              {exporting ? 'Exportando...' : 'Exportar CSV'}
+            </button>
           </div>
         </div>
 

@@ -11,6 +11,7 @@ import {
   type RoleName
 } from '../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
+import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
 
 const roleOptions: RoleName[] = ['ROLE_USER', 'ROLE_RRHH', 'ROLE_ADMIN'];
 
@@ -29,6 +30,7 @@ export default function EmployeesPage() {
   const [createRoles, setCreateRoles] = useState<RoleName[]>(['ROLE_USER']);
   const [createWorking, setCreateWorking] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -106,6 +108,41 @@ export default function EmployeesPage() {
     setCreateRoles((current) =>
       current.includes(role) ? current.filter((value) => value !== role) : [...current, role]
     );
+  }
+
+  async function exportCsv() {
+    const token = getAccessToken();
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+
+    setExporting(true);
+    setError(null);
+    try {
+      const items = await collectAllPages(
+        (query) => api.employees.list(token, { search, ...query }),
+        { search }
+      );
+      const csv = buildCsv(
+        ['Número', 'Nombre', 'Email', 'DNI', 'Empresa', 'Estado', 'Roles', 'Working'],
+        items.map((employee) => [
+          employee.numero,
+          employee.nombreEmpleado,
+          employee.email,
+          employee.dni,
+          employee.companyName ?? 'Global',
+          employee.active ? 'Activo' : 'Inactivo',
+          employee.roles.join(', '),
+          employee.working === null ? '' : employee.working ? 'Sí' : 'No'
+        ])
+      );
+      downloadCsv('empleados.csv', csv);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo exportar los empleados');
+    } finally {
+      setExporting(false);
+    }
   }
 
   if (loading) {
@@ -223,16 +260,21 @@ export default function EmployeesPage() {
             <h2 className="section-title">Listado</h2>
             <p className="meta">Paginación server-side con búsqueda en backend.</p>
           </div>
-          <input
-            className="field"
-            style={{ minWidth: '240px' }}
-            placeholder="Buscar empleado..."
-            value={search}
-            onChange={(e) => {
-              setPagination((current) => ({ ...current, page: 1 }));
-              setSearch(e.target.value);
-            }}
-          />
+          <div className="hero-actions" style={{ marginTop: 0 }}>
+            <input
+              className="field"
+              style={{ minWidth: '240px' }}
+              placeholder="Buscar empleado..."
+              value={search}
+              onChange={(e) => {
+                setPagination((current) => ({ ...current, page: 1 }));
+                setSearch(e.target.value);
+              }}
+            />
+            <button className="button button-secondary" type="button" onClick={exportCsv} disabled={exporting}>
+              {exporting ? 'Exportando...' : 'Exportar CSV'}
+            </button>
+          </div>
         </div>
 
         <div className="table-wrap">
