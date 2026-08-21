@@ -3,7 +3,8 @@ import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-  getStoredSession: vi.fn()
+  getStoredSession: vi.fn(),
+  signOut: vi.fn()
 }));
 
 vi.mock('next/link', () => ({
@@ -15,7 +16,8 @@ vi.mock('next/link', () => ({
 }));
 
 vi.mock('../lib/auth/session', () => ({
-  getStoredSession: mocks.getStoredSession
+  getStoredSession: mocks.getStoredSession,
+  signOut: mocks.signOut
 }));
 
 import { Topbar } from './topbar';
@@ -23,6 +25,7 @@ import { Topbar } from './topbar';
 describe('Topbar', () => {
   beforeEach(() => {
     mocks.getStoredSession.mockReset();
+    mocks.signOut.mockReset();
   });
 
   it('shows the login entry when there is no session', () => {
@@ -50,5 +53,6 @@ describe('Topbar', () => {
     expect(screen.getByRole('link', { name: /employees/i })).toHaveAttribute('href', '/employees');
     expect(screen.getByRole('link', { name: /profile/i })).toHaveAttribute('href', '/profile');
     expect(screen.getByRole('link', { name: /api keys/i })).toHaveAttribute('href', '/api-keys');
+    expect(screen.getByRole('button', { name: /cerrar sesión/i })).toBeInTheDocument();
   });
 });

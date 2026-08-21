@@ -38,3 +38,17 @@ export function clearSession() {
 export function getAccessToken() {
   return getStoredSession()?.accessToken ?? null;
 }
+
+export async function signOut() {
+  const session = getStoredSession();
+  try {
+    if (session?.refreshToken) {
+      const { api } = await import('../api/generated');
+      await api.auth.logout({ refreshToken: session.refreshToken });
+    }
+  } catch {
+    // Best effort: local session still gets cleared even if the network call fails.
+  } finally {
+    clearSession();
+  }
+}

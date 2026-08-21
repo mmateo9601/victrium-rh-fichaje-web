@@ -514,6 +514,8 @@ export const api = {
   auth: {
     login: (body: LoginRequest) => requestJsonWithMethod<AuthSession>('/api/v1/auth/login', 'POST', { body }),
     refresh: (body: RefreshRequest) => requestJsonWithMethod<AuthSession>('/api/v1/auth/refresh', 'POST', { body }),
+    logout: (body: RefreshRequest) =>
+      requestJsonWithMethod<{ message: string }>('/api/v1/auth/logout', 'POST', { body }),
     me: (token: string) => requestJson<AuthSession['user']>('/api/v1/auth/me', { token }),
     changePassword: (token: string, body: ChangePasswordRequest) =>
       requestJsonWithMethod<{ message: string }>('/api/v1/auth/password', 'PATCH', { token, body })

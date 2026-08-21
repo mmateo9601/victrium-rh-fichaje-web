@@ -12,7 +12,7 @@ import {
   type TimeEntry,
   type Vacation
 } from '../../lib/api/generated';
-import { clearSession, getAccessToken, getStoredSession } from '../../lib/auth/session';
+import { getAccessToken, getStoredSession, signOut } from '../../lib/auth/session';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -72,8 +72,8 @@ export default function DashboardPage() {
     void load();
   }, [router]);
 
-  function logout() {
-    clearSession();
+  async function logout() {
+    await signOut();
     router.replace('/login');
   }
 
