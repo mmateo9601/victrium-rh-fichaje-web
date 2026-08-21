@@ -30,7 +30,7 @@ export default function ApiKeysPage() {
     }
 
     if (!canManage) {
-      router.replace('/dashboard');
+      router.replace('/forbidden');
       return;
     }
 

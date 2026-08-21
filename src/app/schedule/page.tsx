@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { PageHeader } from '../../components/page-header';
 import { ScheduleGrid } from '../../components/schedule-grid';
 import { WorkforceCalendar } from '../../components/workforce-calendar';
-import { api, type Employee, type PlanningPeriod, type Schedule, type Shift } from '../../lib/api/generated';
+import { api, type Employee, type PlanningPeriod, type Schedule, type Shift, type WorkLocation } from '../../lib/api/generated';
+import { getStoredSession } from '../../lib/auth/session';
 import { buildScheduleEvents, type WorkforceCalendarRange } from '../../lib/calendar';
 import { formatDurationLabel, formatInputDate, formatLongDate, formatNumber } from '../../lib/labels';
 import { getAccessToken } from '../../lib/auth/session';
@@ -19,6 +20,8 @@ function monthRange(date: Date) {
 
 export default function SchedulePage() {
   const router = useRouter();
+  const session = useMemo(() => getStoredSession(), []);
+  const canAccess = session?.user.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN') ?? false;
   const initialRange = useMemo(() => monthRange(new Date()), []);
   const [from, setFrom] = useState(initialRange.from);
   const [to, setTo] = useState(initialRange.to);
@@ -27,11 +30,27 @@ export default function SchedulePage() {
   const [shiftId, setShiftId] = useState('');
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
+  const [locations, setLocations] = useState<WorkLocation[]>([]);
   const [planningPeriods, setPlanningPeriods] = useState<PlanningPeriod[]>([]);
   const [schedule, setSchedule] = useState<Schedule | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [creatingAssignment, setCreatingAssignment] = useState(false);
+  const [creatingLocationAssignment, setCreatingLocationAssignment] = useState(false);
+  const [creatingOverride, setCreatingOverride] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [assignmentEmployeeId, setAssignmentEmployeeId] = useState('');
+  const [assignmentShiftId, setAssignmentShiftId] = useState('');
+  const [assignmentLocationId, setAssignmentLocationId] = useState('');
+  const [assignmentFrom, setAssignmentFrom] = useState(initialRange.from);
+  const [assignmentTo, setAssignmentTo] = useState('');
+  const [assignmentNotes, setAssignmentNotes] = useState('');
+  const [overrideEmployeeId, setOverrideEmployeeId] = useState('');
+  const [overrideShiftId, setOverrideShiftId] = useState('');
+  const [overrideLocationId, setOverrideLocationId] = useState('');
+  const [overrideDate, setOverrideDate] = useState(initialRange.from);
+  const [overrideKind, setOverrideKind] = useState<'SHIFT' | 'OFF'>('SHIFT');
+  const [overrideNotes, setOverrideNotes] = useState('');
 
   useEffect(() => {
     const accessToken = getAccessToken();
@@ -39,13 +58,18 @@ export default function SchedulePage() {
       router.replace('/login');
       return;
     }
+    if (!canAccess) {
+      router.replace('/forbidden');
+      return;
+    }
     const token = accessToken;
 
     async function load() {
       try {
-        const [employeesResult, shiftsResult, planningPeriodsResult, scheduleResult] = await Promise.all([
+        const [employeesResult, shiftsResult, workLocationsResult, planningPeriodsResult, scheduleResult] = await Promise.all([
           api.employees.list(token, { pageSize: 100 }),
           api.shifts.list(token, { pageSize: 100 }),
+          api.workLocations.list(token, { pageSize: 100, active: 'true' }),
           api.planningPeriods.list(token, { pageSize: 100, sort: 'startDate', order: 'desc' }),
           api.schedule.list(token, {
             from,
@@ -56,6 +80,7 @@ export default function SchedulePage() {
         ]);
         setEmployees(employeesResult.data);
         setShifts(shiftsResult);
+        setLocations(workLocationsResult.data);
         setPlanningPeriods(planningPeriodsResult.data);
         setSchedule(scheduleResult);
       } catch (loadError) {
@@ -66,7 +91,7 @@ export default function SchedulePage() {
     }
 
     void load();
-  }, [router, employeeId, from, shiftId, to]);
+  }, [router, employeeId, from, shiftId, to, canAccess]);
 
   const scheduleEvents = useMemo(() => (schedule ? buildScheduleEvents(schedule, { showNonWorking: true }) : []), [schedule]);
 
@@ -96,10 +121,100 @@ export default function SchedulePage() {
         shiftId: shiftId ? Number(shiftId) : undefined
       });
       setSchedule(scheduleResult);
+      const [employeesResult, shiftsResult, workLocationsResult, planningPeriodsResult] = await Promise.all([
+        api.employees.list(token, { pageSize: 100 }),
+        api.shifts.list(token, { pageSize: 100 }),
+        api.workLocations.list(token, { pageSize: 100, active: 'true' }),
+        api.planningPeriods.list(token, { pageSize: 100, sort: 'startDate', order: 'desc' })
+      ]);
+      setEmployees(employeesResult.data);
+      setShifts(shiftsResult);
+      setLocations(workLocationsResult.data);
+      setPlanningPeriods(planningPeriodsResult.data);
     } catch (refreshError) {
       setError(refreshError instanceof Error ? refreshError.message : 'No se pudo actualizar la planificación');
     } finally {
       setRefreshing(false);
+    }
+  }
+
+  async function createAssignment() {
+    const token = getAccessToken();
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+
+    setCreatingAssignment(true);
+    setError(null);
+    try {
+      await api.shiftAssignments.create(token, {
+        employeeId: Number(assignmentEmployeeId),
+        shiftId: Number(assignmentShiftId),
+        validFrom: assignmentFrom,
+        validTo: assignmentTo || null,
+        notes: assignmentNotes || null
+      });
+      await refresh();
+    } catch (assignmentError) {
+      setError(assignmentError instanceof Error ? assignmentError.message : 'No se pudo crear la asignación');
+    } finally {
+      setCreatingAssignment(false);
+    }
+  }
+
+  async function createLocationAssignment() {
+    const token = getAccessToken();
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+
+    if (!assignmentEmployeeId || !assignmentLocationId) {
+      setError('Selecciona empleado y centro');
+      return;
+    }
+
+    setCreatingLocationAssignment(true);
+    setError(null);
+    try {
+      await api.workLocations.createAssignment(token, {
+        employeeId: Number(assignmentEmployeeId),
+        workLocationId: Number(assignmentLocationId),
+        validFrom: assignmentFrom,
+        validTo: assignmentTo || null,
+        notes: assignmentNotes || null
+      });
+      await refresh();
+    } catch (locationError) {
+      setError(locationError instanceof Error ? locationError.message : 'No se pudo asignar el centro');
+    } finally {
+      setCreatingLocationAssignment(false);
+    }
+  }
+
+  async function createOverride() {
+    const token = getAccessToken();
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+
+    setCreatingOverride(true);
+    setError(null);
+    try {
+      await api.shiftAssignments.createOverride(token, {
+        employeeId: Number(overrideEmployeeId),
+        shiftId: overrideKind === 'OFF' ? null : Number(overrideShiftId),
+        date: overrideDate,
+        kind: overrideKind,
+        notes: overrideNotes || null
+      });
+      await refresh();
+    } catch (overrideError) {
+      setError(overrideError instanceof Error ? overrideError.message : 'No se pudo crear la excepción');
+    } finally {
+      setCreatingOverride(false);
     }
   }
 
@@ -201,6 +316,132 @@ export default function SchedulePage() {
                 </option>
               ))}
             </select>
+          </div>
+        </div>
+      </section>
+
+      <section className="panel stack">
+        <div className="toolbar">
+          <div>
+            <h2 className="section-title">Asignación rápida</h2>
+            <p className="meta">Asigna turno, periodo y centro desde una sola pantalla.</p>
+          </div>
+          <div className="hero-actions" style={{ marginTop: 0 }}>
+            <button className="button button-secondary" type="button" onClick={() => void createLocationAssignment()} disabled={creatingLocationAssignment}>
+              {creatingLocationAssignment ? 'Asignando centro...' : 'Asignar centro'}
+            </button>
+            <button className="button button-primary" type="button" onClick={() => void createAssignment()} disabled={creatingAssignment}>
+              {creatingAssignment ? 'Asignando...' : 'Asignar turno'}
+            </button>
+          </div>
+        </div>
+        <div className="field-grid">
+          <div className="field">
+            <label htmlFor="assignmentEmployeeId">Empleado</label>
+            <select id="assignmentEmployeeId" value={assignmentEmployeeId} onChange={(e) => setAssignmentEmployeeId(e.target.value)}>
+              <option value="">Seleccionar empleado</option>
+              {employees.map((employee) => (
+                <option key={employee.id} value={employee.id}>
+                  {employee.nombreEmpleado}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="assignmentShiftId">Turno</label>
+            <select id="assignmentShiftId" value={assignmentShiftId} onChange={(e) => setAssignmentShiftId(e.target.value)}>
+              <option value="">Seleccionar turno</option>
+              {shifts.map((shift) => (
+                <option key={shift.id} value={shift.id}>
+                  {shift.name} · {shift.days.find((day) => day.working)?.startTime?.slice(0, 5) ?? '—'}-{shift.days.find((day) => day.working)?.endTime?.slice(0, 5) ?? '—'}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="assignmentLocationId">Centro</label>
+            <select id="assignmentLocationId" value={assignmentLocationId} onChange={(e) => setAssignmentLocationId(e.target.value)}>
+              <option value="">Sin centro</option>
+              {locations.map((location) => (
+                <option key={location.id} value={location.id}>
+                  {location.name} · {location.city ?? location.code}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="assignmentFrom">Desde</label>
+            <input id="assignmentFrom" type="date" value={assignmentFrom} onChange={(e) => setAssignmentFrom(e.target.value)} />
+          </div>
+          <div className="field">
+            <label htmlFor="assignmentTo">Hasta</label>
+            <input id="assignmentTo" type="date" value={assignmentTo} onChange={(e) => setAssignmentTo(e.target.value)} />
+          </div>
+          <div className="field">
+            <label htmlFor="assignmentNotes">Notas</label>
+            <input id="assignmentNotes" value={assignmentNotes} onChange={(e) => setAssignmentNotes(e.target.value)} />
+          </div>
+        </div>
+      </section>
+
+      <section className="panel stack">
+        <div className="toolbar">
+          <div>
+            <h2 className="section-title">Excepción puntual</h2>
+            <p className="meta">Sobrescribe un día concreto sin destruir la asignación base.</p>
+          </div>
+          <button className="button button-secondary" type="button" onClick={() => void createOverride()} disabled={creatingOverride}>
+            {creatingOverride ? 'Guardando...' : 'Crear excepción'}
+          </button>
+        </div>
+        <div className="field-grid">
+          <div className="field">
+            <label htmlFor="overrideEmployeeId">Empleado</label>
+            <select id="overrideEmployeeId" value={overrideEmployeeId} onChange={(e) => setOverrideEmployeeId(e.target.value)}>
+              <option value="">Seleccionar empleado</option>
+              {employees.map((employee) => (
+                <option key={employee.id} value={employee.id}>
+                  {employee.nombreEmpleado}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="overrideKind">Tipo</label>
+            <select id="overrideKind" value={overrideKind} onChange={(e) => setOverrideKind(e.target.value as 'SHIFT' | 'OFF')}>
+              <option value="SHIFT">Turno</option>
+              <option value="OFF">Descanso</option>
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="overrideShiftId">Turno excepcional</label>
+            <select id="overrideShiftId" value={overrideShiftId} onChange={(e) => setOverrideShiftId(e.target.value)} disabled={overrideKind === 'OFF'}>
+              <option value="">Seleccionar turno</option>
+              {shifts.map((shift) => (
+                <option key={shift.id} value={shift.id}>
+                  {shift.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="overrideLocationId">Centro</label>
+            <select id="overrideLocationId" value={overrideLocationId} onChange={(e) => setOverrideLocationId(e.target.value)}>
+              <option value="">Sin cambio</option>
+              {locations.map((location) => (
+                <option key={location.id} value={location.id}>
+                  {location.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="overrideDate">Fecha</label>
+            <input id="overrideDate" type="date" value={overrideDate} onChange={(e) => setOverrideDate(e.target.value)} />
+          </div>
+          <div className="field">
+            <label htmlFor="overrideNotes">Notas</label>
+            <input id="overrideNotes" value={overrideNotes} onChange={(e) => setOverrideNotes(e.target.value)} />
           </div>
         </div>
       </section>

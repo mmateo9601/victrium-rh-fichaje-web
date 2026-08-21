@@ -31,6 +31,11 @@ export default function WorkLocationsPage() {
       router.replace('/login');
       return;
     }
+    const canManage = session?.user.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN') ?? false;
+    if (!canManage) {
+      router.replace('/forbidden');
+      return;
+    }
     const token = accessToken;
 
     async function load() {
@@ -45,7 +50,7 @@ export default function WorkLocationsPage() {
     }
 
     void load();
-  }, [active, router, search]);
+  }, [active, router, search, session]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

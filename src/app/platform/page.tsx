@@ -25,7 +25,7 @@ export default function PlatformPage() {
     }
     const authToken = accessToken;
     if (!canAccess) {
-      router.replace('/dashboard');
+      router.replace('/forbidden');
       return;
     }
 

@@ -32,6 +32,10 @@ export default function CalendarDetailPage() {
       router.replace('/login');
       return;
     }
+    if (!canManage) {
+      router.replace('/forbidden');
+      return;
+    }
     const authToken: string = token;
 
     async function load() {
@@ -56,7 +60,7 @@ export default function CalendarDetailPage() {
     }
 
     void load();
-  }, [params.id, router]);
+  }, [params.id, router, canManage]);
 
   function updateDay(index: number, patch: Partial<CalendarDayForm>) {
     setDays((current) => current.map((day, currentIndex) => (currentIndex === index ? { ...day, ...patch } : day)));

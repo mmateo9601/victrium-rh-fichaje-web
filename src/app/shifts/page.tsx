@@ -123,6 +123,11 @@ export default function ShiftsPage() {
       router.replace('/login');
       return;
     }
+    const canManage = session?.user.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN') ?? false;
+    if (!canManage) {
+      router.replace('/forbidden');
+      return;
+    }
     const token = accessToken;
 
     async function load() {
@@ -137,7 +142,7 @@ export default function ShiftsPage() {
     }
 
     void load();
-  }, [router, search, active]);
+  }, [router, search, active, session]);
 
   function updateDay(index: number, patch: Partial<Omit<ShiftDay, 'id'>>) {
     setDays((current) => current.map((day, currentIndex) => (currentIndex === index ? { ...day, ...patch } : day)));

@@ -25,7 +25,7 @@ export default function ReportsPage() {
     }
     const authToken = accessToken;
     if (!canAccess) {
-      router.replace('/dashboard');
+      router.replace('/forbidden');
       return;
     }
 

@@ -38,6 +38,10 @@ export default function CalendarsPage() {
       router.replace('/login');
       return;
     }
+    if (!canManage) {
+      router.replace('/forbidden');
+      return;
+    }
     const authToken: string = token;
 
     async function load() {
@@ -52,7 +56,7 @@ export default function CalendarsPage() {
     }
 
     void load();
-  }, [router, search, active, year]);
+  }, [router, search, active, year, canManage]);
 
   async function refresh() {
     const token = getAccessToken();

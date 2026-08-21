@@ -57,6 +57,10 @@ export default function EmployeesPage() {
       router.replace('/login');
       return;
     }
+    if (!canManage) {
+      router.replace('/forbidden');
+      return;
+    }
     const authToken = token;
 
     async function load() {
@@ -76,7 +80,7 @@ export default function EmployeesPage() {
     }
 
     void load();
-  }, [router, search, pagination.page, pagination.pageSize]);
+  }, [router, search, pagination.page, pagination.pageSize, canManage]);
 
   async function createEmployee(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

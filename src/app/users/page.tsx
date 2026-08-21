@@ -1,14 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { api, type PublicUser } from '../../lib/api/generated';
-import { getAccessToken } from '../../lib/auth/session';
+import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
 
 export default function UsersPage() {
   const router = useRouter();
+  const session = useMemo(() => getStoredSession(), []);
+  const canAccess = session?.user.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN') ?? false;
   const [users, setUsers] = useState<PublicUser[]>([]);
   const [search, setSearch] = useState('');
   const [exporting, setExporting] = useState(false);
@@ -19,6 +21,10 @@ export default function UsersPage() {
     const token = getAccessToken();
     if (!token) {
       router.replace('/login');
+      return;
+    }
+    if (!canAccess) {
+      router.replace('/forbidden');
       return;
     }
     const authToken = token;
@@ -35,7 +41,7 @@ export default function UsersPage() {
     }
 
     void load();
-  }, [router, search]);
+  }, [router, search, canAccess]);
 
   async function exportCsv() {
     const token = getAccessToken();

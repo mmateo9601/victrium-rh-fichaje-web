@@ -48,6 +48,10 @@ export default function CompaniesPage() {
       router.replace('/login');
       return;
     }
+    if (!canManage) {
+      router.replace('/forbidden');
+      return;
+    }
     const authToken = token;
 
     async function load() {
@@ -66,7 +70,7 @@ export default function CompaniesPage() {
     }
 
     void load();
-  }, [router, search]);
+  }, [router, search, canManage]);
 
   async function exportCsv() {
     const token = getAccessToken();

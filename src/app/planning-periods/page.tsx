@@ -32,6 +32,10 @@ export default function PlanningPeriodsPage() {
       router.replace('/login');
       return;
     }
+    if (!canManage) {
+      router.replace('/forbidden');
+      return;
+    }
     const authToken = token;
 
     async function load() {
@@ -46,7 +50,7 @@ export default function PlanningPeriodsPage() {
     }
 
     void load();
-  }, [router, search, status]);
+  }, [router, search, status, canManage]);
 
   async function refresh() {
     const token = getAccessToken();
