@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import { api, type PublicUser } from '../../lib/api/generated';
 import { clearSession, getAccessToken, getStoredSession } from '../../lib/auth/session';
+import { getRoleListLabel } from '../../lib/labels';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -98,7 +99,7 @@ export default function ProfilePage() {
               <span className="muted">Nombre</span>
             </article>
             <article className="stat">
-              <strong>{user.roles.join(', ') || 'Empleado'}</strong>
+              <strong>{getRoleListLabel(user.roles)}</strong>
               <span className="muted">Roles</span>
             </article>
           </div>

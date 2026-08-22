@@ -188,9 +188,7 @@ describe('calendar builders', () => {
         companyName: 'Victrium',
         employeeId: 1,
         employeeNumero: 'EMP001',
-        employeeNombre: 'Ada Lovelace',
-        employeeEmail: null,
-        employeeDni: null
+        employeeNombre: 'Ada Lovelace'
       } satisfies Vacation
     ];
     const permissions = [
@@ -206,9 +204,7 @@ describe('calendar builders', () => {
         companyName: 'Victrium',
         employeeId: 1,
         employeeNumero: 'EMP001',
-        employeeNombre: 'Ada Lovelace',
-        employeeEmail: null,
-        employeeDni: null
+        employeeNombre: 'Ada Lovelace'
       } satisfies Permission
     ];
 

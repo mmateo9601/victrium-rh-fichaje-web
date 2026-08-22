@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import { PageHeader } from '../../components/page-header';
 import { api, type PlanningPeriod, type PlanningPeriodStatus } from '../../lib/api/generated';
-import { formatLongDate } from '../../lib/labels';
+import { formatLongDate, getRoleListLabel } from '../../lib/labels';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 
 export default function PlanningPeriodsPage() {
@@ -138,7 +138,7 @@ export default function PlanningPeriodsPage() {
               <span className="muted">Publicados</span>
             </article>
             <article className="stat stat--compact">
-              <strong>{session?.user.roles.join(', ') || 'Empleado'}</strong>
+              <strong>{getRoleListLabel(session?.user.roles)}</strong>
               <span className="muted">Acceso actual</span>
             </article>
           </>

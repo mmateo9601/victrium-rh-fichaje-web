@@ -187,7 +187,7 @@ export default function PermissionDetailPage() {
         <div className="notice">
           <strong>Empleado vinculado</strong>
           <div className="meta">
-            {permission.employeeNombre ?? permission.employeeNumero ?? 'Sin empleado'} - {permission.employeeEmail ?? 'Sin email'}
+            {permission.employeeNombre ?? permission.employeeNumero ?? 'Sin empleado'}
           </div>
         </div>
         <div className="hero-actions">

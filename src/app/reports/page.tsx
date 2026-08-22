@@ -34,7 +34,7 @@ export default function ReportsPage() {
         const data = await api.reports.summary(authToken);
         setSummary(data);
       } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar los reports');
+        setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar los informes');
       } finally {
         setLoading(false);
       }
@@ -46,8 +46,8 @@ export default function ReportsPage() {
   if (loading) {
     return (
       <section className="hero">
-        <span className="eyebrow">Reports</span>
-        <h1>Cargando reports...</h1>
+        <span className="eyebrow">Informes</span>
+        <h1>Cargando informes...</h1>
       </section>
     );
   }
@@ -56,7 +56,7 @@ export default function ReportsPage() {
     <div className="stack">
       <PageHeader
         eyebrow="Informes"
-        title="Reports"
+        title="Informes"
         description="Resumen global de actividad para dirección y administración."
         stats={
           <>

@@ -9,7 +9,7 @@ import { api, type Permission, type PermissionMonthlyStat, type PermissionUserSt
 import { buildPermissionEvents } from '../../lib/calendar';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
-import { getPermissionStatusLabel, hasManagementAccess } from '../../lib/labels';
+import { getPermissionStatusLabel, getRoleListLabel, hasManagementAccess } from '../../lib/labels';
 
 const statusColors: Record<Permission['estado'], string> = {
   PENDIENTE: 'badge-warning',
@@ -265,7 +265,7 @@ export default function PermissionsPage() {
             <span className="muted">Empleado conectado</span>
           </article>
           <article className="stat">
-            <strong>{session?.user.roles.join(', ') || 'Empleado'}</strong>
+            <strong>{getRoleListLabel(session?.user.roles)}</strong>
             <span className="muted">Acceso actual</span>
           </article>
         </div>

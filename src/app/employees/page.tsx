@@ -12,6 +12,7 @@ import {
 } from '../../lib/api/generated';
 import { getAccessToken, useStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
+import { getRoleLabel, getRoleListLabel } from '../../lib/labels';
 
 const baseRoleOptions: RoleName[] = ['ROLE_USER', 'ROLE_RRHH', 'ROLE_COMPANY_ADMIN', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'];
 
@@ -152,7 +153,7 @@ export default function EmployeesPage() {
           employee.dni,
           employee.companyName ?? 'Global',
           employee.active ? 'Activo' : 'Inactivo',
-          employee.roles.join(', '),
+          getRoleListLabel(employee.roles),
           employee.working === null ? '' : employee.working ? 'Sí' : 'No'
         ])
       );
@@ -192,7 +193,7 @@ export default function EmployeesPage() {
             <span className="muted">Empresa activa</span>
           </article>
           <article className="stat">
-            <strong>{session?.user.roles.join(', ') || 'Empleado'}</strong>
+            <strong>{getRoleListLabel(session?.user.roles)}</strong>
             <span className="muted">Acceso actual</span>
           </article>
         </div>
@@ -234,7 +235,7 @@ export default function EmployeesPage() {
               <input id="dni" value={createDni} onChange={(e) => setCreateDni(e.target.value)} />
             </div>
             <div className="field">
-              <label htmlFor="password">Password</label>
+              <label htmlFor="password">Contraseña</label>
               <input
                 id="password"
                 type="password"
@@ -261,7 +262,7 @@ export default function EmployeesPage() {
                   className={`button ${createRoles.includes(role) ? 'button-primary' : 'button-secondary'}`}
                   onClick={() => toggleRole(role)}
                 >
-                  {role}
+                  {getRoleLabel([role])}
                 </button>
               ))}
             </div>

@@ -33,6 +33,12 @@ La configuración tipada vive en [`src/lib/config/env.ts`](src/lib/config/env.ts
 El cliente tipado se genera localmente con:
 
 ```bash
+npm run api
+```
+
+El alias `api` ejecuta:
+
+```bash
 npm run api:generate
 ```
 
@@ -75,3 +81,8 @@ npm run build
 - `/incidents/[id]`
 - `/calendars`
 - `/calendars/[id]`
+
+## Integracion
+
+- La API base debe apuntar a `/api/v1`.
+- Las pantallas de calendario, turnos y fichajes asumen que el backend ya expone Swagger y el cliente generado.

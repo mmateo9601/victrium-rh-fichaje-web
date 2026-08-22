@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { api, type CalendarDay, type CalendarListItem } from '../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, downloadCsv } from '../../lib/csv';
+import { getRoleListLabel } from '../../lib/labels';
 
 type CalendarDayForm = Omit<CalendarDay, 'id'>;
 
@@ -165,7 +166,7 @@ export default function CalendarsPage() {
             <span className="muted">Días en borrador</span>
           </article>
           <article className="stat">
-            <strong>{session?.user.roles.join(', ') || 'Empleado'}</strong>
+            <strong>{getRoleListLabel(session?.user.roles)}</strong>
             <span className="muted">Acceso actual</span>
           </article>
         </div>

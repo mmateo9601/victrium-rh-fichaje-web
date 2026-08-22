@@ -164,8 +164,8 @@ export default function PlatformPage() {
           <Link className="button button-secondary" href="/companies">
             Empresas
           </Link>
-          <Link className="button button-secondary" href="/reports">
-            Reports
+        <Link className="button button-secondary" href="/reports">
+            Informes
           </Link>
         </div>
       </section>

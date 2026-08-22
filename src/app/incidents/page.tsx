@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { api, type Incident, type IncidentMonthlyStat, type IncidentTopSummary, type IncidentUserStat } from '../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
-import { getIncidentStateLabel, hasManagementAccess } from '../../lib/labels';
+import { getIncidentStateLabel, getRoleListLabel, hasManagementAccess } from '../../lib/labels';
 
 const badgeForResolved = (resolved: boolean) => (resolved ? 'badge-success' : 'badge-warning');
 
@@ -231,7 +231,7 @@ export default function IncidentsPage() {
             <span className="muted">Empleado conectado</span>
           </article>
           <article className="stat">
-            <strong>{session?.user.roles.join(', ') || 'Empleado'}</strong>
+            <strong>{getRoleListLabel(session?.user.roles)}</strong>
             <span className="muted">Acceso actual</span>
           </article>
         </div>

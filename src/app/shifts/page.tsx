@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { PageHeader } from '../../components/page-header';
 import { api, type Shift, type ShiftDay } from '../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
+import { getRoleListLabel } from '../../lib/labels';
 
 const weekLabels = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
 
@@ -208,7 +209,7 @@ export default function ShiftsPage() {
               <span className="muted">Turnos visibles</span>
             </article>
             <article className="stat stat--compact">
-              <strong>{session?.user.roles.join(', ') || 'Empleado'}</strong>
+              <strong>{getRoleListLabel(session?.user.roles)}</strong>
               <span className="muted">Acceso actual</span>
             </article>
           </>

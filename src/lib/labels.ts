@@ -37,6 +37,15 @@ export function getRoleLabel(roles: RoleName[] | undefined | null) {
   return 'Empleado';
 }
 
+export function getRoleListLabel(roles: Array<RoleName | string> | undefined | null) {
+  if (!roles?.length) {
+    return 'Empleado';
+  }
+
+  const labels = roles.map((role) => getRoleLabel([role as RoleName]));
+  return Array.from(new Set(labels)).join(' · ');
+}
+
 export function getTimeEntryLabel(type: TimeEntryType) {
   return type === 'ENTRADA' ? 'Entrada' : 'Salida';
 }

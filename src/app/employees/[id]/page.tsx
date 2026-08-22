@@ -7,6 +7,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ScheduleGrid } from '../../../components/schedule-grid';
 import { api, type Company, type Employee, type EmployeeLocationAssignment, type Schedule, type ShiftAssignment } from '../../../lib/api/generated';
 import { getAccessToken } from '../../../lib/auth/session';
+import { getRoleListLabel } from '../../../lib/labels';
 
 export default function EmployeeDetailPage() {
   const router = useRouter();
@@ -148,7 +149,7 @@ export default function EmployeeDetailPage() {
             <span className="muted">Empresa</span>
           </article>
           <article className="stat">
-            <strong>{employee.roles.join(', ') || 'Empleado'}</strong>
+            <strong>{getRoleListLabel(employee.roles)}</strong>
             <span className="muted">Roles</span>
           </article>
         </div>

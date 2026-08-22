@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { api, type PublicUser } from '../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
+import { getRoleListLabel } from '../../lib/labels';
 
 export default function UsersPage() {
   const router = useRouter();
@@ -60,7 +61,7 @@ export default function UsersPage() {
           user.numero,
           user.nombreEmpleado,
           user.companyId ?? 'Global',
-          user.roles.join(', '),
+          getRoleListLabel(user.roles),
           user.admin ? 'Sí' : 'No'
         ])
       );
@@ -127,7 +128,7 @@ export default function UsersPage() {
                   <td>{user.numero}</td>
                   <td>{user.nombreEmpleado}</td>
                   <td>{user.companyId ?? 'Global'}</td>
-                  <td>{user.roles.join(', ')}</td>
+                  <td>{getRoleListLabel(user.roles)}</td>
                   <td>{user.admin ? 'Sí' : 'No'}</td>
                 </tr>
               ))}

@@ -8,7 +8,7 @@ import { api, type Vacation } from '../../lib/api/generated';
 import { buildVacationEvents } from '../../lib/calendar';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
-import { getVacationStatusLabel, hasManagementAccess } from '../../lib/labels';
+import { getRoleListLabel, getVacationStatusLabel, hasManagementAccess } from '../../lib/labels';
 
 const statusColors: Record<Vacation['estado'], string> = {
   PENDIENTE: 'badge-warning',
@@ -239,7 +239,7 @@ export default function VacationsPage() {
             <span className="muted">Empleado conectado</span>
           </article>
           <article className="stat">
-            <strong>{session?.user.roles.join(', ') || 'Empleado'}</strong>
+            <strong>{getRoleListLabel(session?.user.roles)}</strong>
             <span className="muted">Acceso actual</span>
           </article>
         </div>

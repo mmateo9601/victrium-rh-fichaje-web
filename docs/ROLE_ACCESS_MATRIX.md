@@ -1,28 +1,26 @@
-# ROLE_ACCESS_MATRIX
+# Role Access Matrix
 
-| Feature | SUPER_ADMIN | COMPANY_ADMIN | RRHH | MANAGER | EMPLOYEE |
-| --- | --- | --- | --- | --- | --- |
-| Dashboard personal | READ | READ | READ | READ | READ |
-| Mi jornada | READ/WRITE | READ/WRITE | READ/WRITE | READ/WRITE | READ/WRITE |
-| Mi planificación | READ | READ | READ | READ | READ |
-| Mis vacaciones | READ/WRITE | READ/WRITE | READ/WRITE | READ/WRITE | READ/WRITE |
-| Mis permisos | READ/WRITE | READ/WRITE | READ/WRITE | READ/WRITE | READ/WRITE |
-| Mis incidencias | READ/WRITE | READ/WRITE | READ/WRITE | READ/WRITE | READ/WRITE |
-| Empleados | ADMIN | NONE | ADMIN | READ | NONE |
-| Usuarios | ADMIN | NONE | ADMIN | NONE | NONE |
-| Empresas | ADMIN | READ | NONE | NONE | NONE |
-| Centros de trabajo | ADMIN | ADMIN | ADMIN | READ | NONE |
-| Turnos | ADMIN | ADMIN | ADMIN | READ | NONE |
-| Planificación | ADMIN | ADMIN | ADMIN | READ | READ |
-| Periodos de planificación | ADMIN | ADMIN | ADMIN | READ | NONE |
-| Calendarios | ADMIN | ADMIN | ADMIN | READ | NONE |
-| Reports | READ | READ | READ | NONE | NONE |
-| Platform | ADMIN | NONE | NONE | NONE | NONE |
-| API keys | ADMIN | NONE | ADMIN | NONE | NONE |
+This matrix summarizes the backend role vocabulary used by the workforce app.
 
-Notas:
+| Backend role | Scope | Main capabilities |
+| --- | --- | --- |
+| `ROLE_SUPER_ADMIN` | All tenants | Create and manage companies, users, employees, calendars, schedules, policies, and operational data across tenants |
+| `ROLE_ADMIN` | Own tenant | Manage company-wide configuration, employees, locations, schedules, and operational monitoring |
+| `ROLE_COMPANY_ADMIN` | Own tenant | Manage operational data for the company, including employees, locations, schedules, and planning |
+| `ROLE_RRHH` | Own tenant | HR operations, employee records, absences, permissions, incidents, and reporting |
+| `ROLE_USER` | Own profile | Self service, time entries, schedule view, personal absences and employee context |
 
-- `ADMIN` implica lectura, escritura y administración de la entidad.
-- `READ/WRITE` implica operación propia y lectura acotada del ámbito permitido.
-- `READ` implica consulta sin capacidad de modificación.
-- `NONE` implica acceso no permitido.
+## Guard rules already enforced
+
+- tenant scoping is always applied before data access
+- `ROLE_SUPER_ADMIN` cannot be assigned by non-super-admin actors
+- employee and company resources are resolved against the authenticated tenant
+- self-service endpoints remain available to the authenticated employee context
+
+## Frontend alignment
+
+The web navigation must be filtered by role and scope so that each user only sees:
+
+- the modules they can actually access
+- the actions they can perform in the current tenant
+- the correct mobile and desktop navigation state

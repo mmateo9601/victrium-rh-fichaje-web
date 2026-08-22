@@ -246,8 +246,6 @@ export type Vacation = {
   employeeId: number | null;
   employeeNumero: string | null;
   employeeNombre: string | null;
-  employeeEmail: string | null;
-  employeeDni: string | null;
 };
 
 export type Incident = {
@@ -262,8 +260,6 @@ export type Incident = {
   employeeId: number | null;
   employeeNumero: string | null;
   employeeNombre: string | null;
-  employeeEmail: string | null;
-  employeeDni: string | null;
 };
 
 export type IncidentMonthlyStat = {
@@ -296,8 +292,6 @@ export type Permission = {
   employeeId: number | null;
   employeeNumero: string | null;
   employeeNombre: string | null;
-  employeeEmail: string | null;
-  employeeDni: string | null;
 };
 
 export type PermissionMonthlyStat = {
