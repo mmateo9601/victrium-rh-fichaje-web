@@ -55,6 +55,27 @@ describe('Topbar', () => {
     expect(screen.getAllByRole('button', { name: /cerrar sesión/i })).toHaveLength(2);
   });
 
+  it('shows a reduced company-admin navigation without platform links', () => {
+    mocks.useStoredSession.mockReturnValue({
+      user: {
+        nombreEmpleado: 'Paula Empresa',
+        roles: ['ROLE_COMPANY_ADMIN']
+      }
+    });
+
+    render(
+      <Topbar>
+        <div>content</div>
+      </Topbar>
+    );
+
+    expect(screen.getByRole('link', { name: /empleados/i })).toHaveAttribute('href', '/employees');
+    expect(screen.getByRole('link', { name: /planificación/i })).toHaveAttribute('href', '/schedule');
+    expect(screen.queryByRole('link', { name: /usuarios/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /plataforma/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /empresas/i })).not.toBeInTheDocument();
+  });
+
   it('renders public routes without the app shell', () => {
     mocks.useStoredSession.mockReturnValue(null);
     mocks.usePathname.mockReturnValue('/login');

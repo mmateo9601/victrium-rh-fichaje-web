@@ -35,7 +35,9 @@ export default function EmployeesPage() {
   const [error, setError] = useState<string | null>(null);
 
   const session = useStoredSession();
-  const canManage = session?.user.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN') ?? false;
+  const canManage =
+    session?.user.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN') ??
+    false;
   const roleOptions = useMemo(
     () =>
       session?.user.roles.includes('ROLE_SUPER_ADMIN')

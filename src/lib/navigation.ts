@@ -24,30 +24,30 @@ export const navigationGroups: NavigationGroup[] = [
   {
     label: 'Personas',
     items: [
-      { href: '/employees', label: 'Empleados', icon: 'users', roles: ['ROLE_ADMIN', 'ROLE_RRHH'] },
-      { href: '/users', label: 'Usuarios', icon: 'user', roles: ['ROLE_ADMIN', 'ROLE_RRHH'] }
+      { href: '/employees', label: 'Empleados', icon: 'users', roles: ['ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH'] },
+      { href: '/users', label: 'Usuarios', icon: 'user', roles: ['ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN'] }
     ]
   },
   {
     label: 'Ausencias',
     items: [
-      { href: '/vacations', label: 'Vacaciones', icon: 'calendar' },
-      { href: '/permissions', label: 'Permisos', icon: 'shield' },
-      { href: '/incidents', label: 'Incidencias', icon: 'briefcase' }
+      { href: '/vacations', label: 'Vacaciones', icon: 'calendar', roles: ['ROLE_USER', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN'] },
+      { href: '/permissions', label: 'Permisos', icon: 'shield', roles: ['ROLE_USER', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN'] },
+      { href: '/incidents', label: 'Incidencias', icon: 'briefcase', roles: ['ROLE_USER', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN'] }
     ]
   },
   {
     label: 'Organización',
     items: [
-      { href: '/work-locations', label: 'Centros', icon: 'building', roles: ['ROLE_ADMIN', 'ROLE_RRHH'] },
-      { href: '/calendars', label: 'Calendarios', icon: 'calendar', roles: ['ROLE_ADMIN', 'ROLE_RRHH'] },
-      { href: '/shifts', label: 'Turnos', icon: 'sparkles', roles: ['ROLE_ADMIN', 'ROLE_RRHH'] },
-      { href: '/planning-periods', label: 'Periodos', icon: 'layout-grid', roles: ['ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH'] },
-      { href: '/reports', label: 'Reports', icon: 'layout-grid', roles: ['ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH'] },
+      { href: '/work-locations', label: 'Centros', icon: 'building', roles: ['ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN'] },
+      { href: '/calendars', label: 'Calendarios', icon: 'calendar', roles: ['ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN'] },
+      { href: '/shifts', label: 'Turnos', icon: 'sparkles', roles: ['ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN'] },
+      { href: '/planning-periods', label: 'Periodos', icon: 'layout-grid', roles: ['ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN'] },
+      { href: '/reports', label: 'Reports', icon: 'layout-grid', roles: ['ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN'] },
       { href: '/platform', label: 'Plataforma', icon: 'sparkles', roles: ['ROLE_SUPER_ADMIN'] },
       { href: '/schedule', label: 'Planificación', icon: 'layout-grid', roles: ['ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH'] },
-      { href: '/companies', label: 'Empresas', icon: 'building', roles: ['ROLE_ADMIN', 'ROLE_RRHH'] },
-      { href: '/api-keys', label: 'Claves', icon: 'shield', roles: ['ROLE_ADMIN', 'ROLE_RRHH'] }
+      { href: '/companies', label: 'Empresas', icon: 'building', roles: ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'] },
+      { href: '/api-keys', label: 'Claves', icon: 'shield', roles: ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'] }
     ]
   }
 ];

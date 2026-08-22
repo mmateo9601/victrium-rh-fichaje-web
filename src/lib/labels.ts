@@ -22,8 +22,12 @@ export function getRoleLabel(roles: RoleName[] | undefined | null) {
     return 'Super admin';
   }
 
-  if (roles.includes('ROLE_ADMIN') || roles.includes('ROLE_COMPANY_ADMIN')) {
-    return 'Admin de empresa';
+  if (roles.includes('ROLE_ADMIN')) {
+    return 'Administrador';
+  }
+
+  if (roles.includes('ROLE_COMPANY_ADMIN')) {
+    return 'Admin. empresa';
   }
 
   if (roles.includes('ROLE_RRHH')) {
