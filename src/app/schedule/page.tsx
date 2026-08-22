@@ -21,7 +21,9 @@ function monthRange(date: Date) {
 export default function SchedulePage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
-  const canAccess = session?.user.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN') ?? false;
+  const canAccess =
+    session?.user.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_SUPER_ADMIN') ??
+    false;
   const initialRange = useMemo(() => monthRange(new Date()), []);
   const [from, setFrom] = useState(initialRange.from);
   const [to, setTo] = useState(initialRange.to);
@@ -145,12 +147,18 @@ export default function SchedulePage() {
       return;
     }
 
+    if (!assignmentEmployeeId || !assignmentShiftId) {
+      setError('Selecciona empleado y turno para crear la asignación');
+      return;
+    }
+
     setCreatingAssignment(true);
     setError(null);
     try {
       await api.shiftAssignments.create(token, {
         employeeId: Number(assignmentEmployeeId),
         shiftId: Number(assignmentShiftId),
+        workLocationId: assignmentLocationId ? Number(assignmentLocationId) : null,
         validFrom: assignmentFrom,
         validTo: assignmentTo || null,
         notes: assignmentNotes || null
@@ -200,12 +208,18 @@ export default function SchedulePage() {
       return;
     }
 
+    if (!overrideEmployeeId) {
+      setError('Selecciona empleado para crear la excepción');
+      return;
+    }
+
     setCreatingOverride(true);
     setError(null);
     try {
       await api.shiftAssignments.createOverride(token, {
         employeeId: Number(overrideEmployeeId),
         shiftId: overrideKind === 'OFF' ? null : Number(overrideShiftId),
+        workLocationId: overrideLocationId ? Number(overrideLocationId) : null,
         date: overrideDate,
         kind: overrideKind,
         notes: overrideNotes || null

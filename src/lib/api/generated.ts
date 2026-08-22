@@ -446,6 +446,9 @@ export type ShiftAssignment = {
   employeeNumero: string;
   employeeNombre: string;
   shift: ShiftSummary;
+  workLocationId: number | null;
+  workLocationName: string | null;
+  workLocationCode: string | null;
   validFrom: string;
   validTo: string | null;
   notes: string | null;
@@ -458,6 +461,7 @@ export type CreateShiftAssignmentRequest = {
   companyId?: number;
   employeeId: number;
   shiftId: number;
+  workLocationId?: number | null;
   validFrom: string;
   validTo?: string | null;
   notes?: string | null;
@@ -510,6 +514,9 @@ export type ShiftOverride = {
   employeeNumero: string;
   employeeNombre: string;
   shift: ShiftSummary | null;
+  workLocationId: number | null;
+  workLocationName: string | null;
+  workLocationCode: string | null;
   date: string;
   kind: ShiftOverrideKind;
   notes: string | null;
@@ -521,6 +528,7 @@ export type CreateShiftOverrideRequest = {
   companyId?: number;
   employeeId: number;
   shiftId?: number | null;
+  workLocationId?: number | null;
   date: string;
   kind?: ShiftOverrideKind;
   notes?: string | null;
@@ -537,9 +545,18 @@ export type ScheduleCell = {
   status: 'WORKING' | 'VACATION' | 'PERMISSION' | 'HOLIDAY' | 'OFF' | 'NO_SHIFT';
   statusLabel: string;
   shift: ShiftSummary | null;
+  workLocationId: number | null;
+  workLocationName: string | null;
+  workLocationCode: string | null;
+  workLocationSource: 'override' | 'assignment' | 'employee_location' | 'terms' | 'default' | null;
   assignmentId: number | null;
   overrideId: number | null;
   overrideKind: ShiftOverrideKind | null;
+  employmentTermsId: number | null;
+  employmentTermsContractType: string | null;
+  employmentTermsWeeklyContractMinutes: number | null;
+  employmentTermsAnnualContractMinutes: number | null;
+  employmentTermsWorkingPercentage: string | null;
   expectedStart: string | null;
   expectedEnd: string | null;
   expectedMinutes: number;

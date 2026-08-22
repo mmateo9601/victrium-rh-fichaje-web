@@ -163,16 +163,31 @@ export function buildScheduleEvents(
           end: combineDateAndTime(endDate, cell.expectedEnd),
           kind: 'shift',
           subtitle: row.employeeNombre,
-          location: row.companyName,
+          location: cell.workLocationName ?? row.companyName,
           statusLabel: cell.statusLabel,
           summary: cell.shift.code,
           description: cell.policy?.configured ? 'Política laboral aplicada' : 'Sin política configurada',
           details: [
             { label: 'Empleado', value: `${row.employeeNombre} · ${row.employeeNumero}` },
+            { label: 'Centro', value: cell.workLocationName ? `${cell.workLocationName}${cell.workLocationCode ? ` · ${cell.workLocationCode}` : ''}` : 'Sin centro' },
+            { label: 'Origen del centro', value: cell.workLocationSource ?? 'default' },
             { label: 'Horario', value: `${cell.expectedStart.slice(0, 5)} - ${cell.expectedEnd.slice(0, 5)}` },
             { label: 'Previsto', value: formatDurationLabel(cell.expectedMinutes) },
             { label: 'Realizado', value: formatDurationLabel(cell.workedMinutes) },
             { label: 'Diferencia', value: formatDurationLabel(Math.abs(cell.differenceMinutes)) },
+            {
+              label: 'Contrato',
+              value: cell.employmentTermsContractType
+                ? `${cell.employmentTermsContractType} · ${formatDurationLabel(cell.employmentTermsWeeklyContractMinutes ?? 0)}`
+                : 'Sin contrato'
+            },
+            {
+              label: 'Términos',
+              value:
+                cell.employmentTermsAnnualContractMinutes !== null && cell.employmentTermsAnnualContractMinutes !== undefined
+                  ? `Anual ${formatDurationLabel(cell.employmentTermsAnnualContractMinutes)} · ${cell.employmentTermsWorkingPercentage ?? '—'}`
+                  : cell.employmentTermsWorkingPercentage ?? 'Sin porcentaje'
+            },
             { label: 'Entrada real', value: cell.firstEntry ? cell.firstEntry.slice(0, 5) : 'Sin registro' },
             { label: 'Salida real', value: cell.lastExit ? cell.lastExit.slice(0, 5) : 'Sin registro' }
           ]

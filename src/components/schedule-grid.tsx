@@ -30,6 +30,18 @@ function shortTime(value: string | null) {
   return value.slice(0, 5);
 }
 
+function formatWorkLocation(cell: Schedule['rows'][number]['days'][number]) {
+  if (!cell.workLocationName) {
+    return 'Sin centro';
+  }
+
+  if (!cell.workLocationCode) {
+    return cell.workLocationName;
+  }
+
+  return `${cell.workLocationName} · ${cell.workLocationCode}`;
+}
+
 export function ScheduleGrid({ schedule, compact }: ScheduleGridProps) {
   const targetLabel =
     schedule.summary.targetLabel === 'weekly'
@@ -137,6 +149,15 @@ export function ScheduleGrid({ schedule, compact }: ScheduleGridProps) {
                         {cell.expectedMinutes ? formatDurationLabel(cell.expectedMinutes) : '0 min'}
                         {cell.workedMinutes ? ` · real ${formatDurationLabel(cell.workedMinutes)}` : ''}
                       </span>
+                      <span className="muted">{formatWorkLocation(cell)}</span>
+                      {cell.employmentTermsId ? (
+                        <span className="muted">
+                          {cell.employmentTermsContractType ?? 'Contrato'} · {formatDurationLabel(cell.employmentTermsWeeklyContractMinutes ?? 0)}
+                        </span>
+                      ) : null}
+                      {cell.workLocationSource ? (
+                        <span className="muted">Origen: {cell.workLocationSource}</span>
+                      ) : null}
                     </div>
                   </td>
                 ))}
