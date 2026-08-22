@@ -30,12 +30,14 @@ export function WorkTimer({ token }: WorkTimerProps) {
   async function loadCurrent() {
     try {
       const today = new Date().toISOString().slice(0, 10);
-      const [state, shift] = await Promise.all([
-        api.timeEntries.current(token),
-        api.shifts.me(token, { date: today })
-      ]);
+      const state = await api.timeEntries.current(token);
       setCurrent(state);
-      setTodayShift(shift);
+      try {
+        const shift = await api.shifts.me(token, { date: today });
+        setTodayShift(shift);
+      } catch {
+        setTodayShift(null);
+      }
       snapshotAtRef.current = Date.now();
       setError(null);
     } catch (err) {
@@ -280,14 +282,14 @@ export function WorkTimer({ token }: WorkTimerProps) {
                 Cancelar
               </button>
               <button
-              className="button button-danger"
-              type="button"
-              onClick={() => void runAction(() => api.timeEntries.finishMine(token), 'Jornada finalizada')}
-              disabled={actioning}
-            >
-              Finalizar jornada
-            </button>
-          </div>
+                className="button button-danger"
+                type="button"
+                onClick={() => void runAction(() => api.timeEntries.finishMine(token), 'Jornada finalizada')}
+                disabled={actioning}
+              >
+                Finalizar jornada
+              </button>
+            </div>
           </div>
         </div>
       ) : null}

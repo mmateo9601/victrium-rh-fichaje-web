@@ -1,5 +1,18 @@
 import type { RoleName, TimeEntryType, VacationStatus, PermissionStatus, Incident } from './api/generated';
 
+export function hasManagementAccess(roles: RoleName[] | undefined | null) {
+  if (!roles?.length) {
+    return false;
+  }
+
+  return (
+    roles.includes('ROLE_SUPER_ADMIN') ||
+    roles.includes('ROLE_ADMIN') ||
+    roles.includes('ROLE_COMPANY_ADMIN') ||
+    roles.includes('ROLE_RRHH')
+  );
+}
+
 export function getRoleLabel(roles: RoleName[] | undefined | null) {
   if (!roles?.length) {
     return 'Empleado';

@@ -8,6 +8,7 @@ import { api, type Vacation } from '../../lib/api/generated';
 import { buildVacationEvents } from '../../lib/calendar';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
+import { getVacationStatusLabel, hasManagementAccess } from '../../lib/labels';
 
 const statusColors: Record<Vacation['estado'], string> = {
   PENDIENTE: 'badge-warning',
@@ -18,10 +19,7 @@ const statusColors: Record<Vacation['estado'], string> = {
 export default function VacationsPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
-  const canManage =
-    session?.user.roles.includes('ROLE_ADMIN') ||
-    session?.user.roles.includes('ROLE_RRHH') ||
-    session?.user.roles.includes('ROLE_SUPER_ADMIN');
+  const canManage = hasManagementAccess(session?.user.roles);
 
   const [mine, setMine] = useState<Vacation[]>([]);
   const [all, setAll] = useState<Vacation[]>([]);
@@ -163,7 +161,7 @@ export default function VacationsPage() {
           vacation.inicio,
           vacation.fin,
           vacation.employeeNombre ?? vacation.employeeNumero ?? '',
-          vacation.estado,
+          getVacationStatusLabel(vacation.estado),
           vacation.aprobado ? 'Sí' : 'No',
           vacation.companyName ?? ''
         ])
@@ -199,7 +197,7 @@ export default function VacationsPage() {
           vacation.inicio,
           vacation.fin,
           vacation.employeeNombre ?? vacation.employeeNumero ?? '',
-          vacation.estado,
+          getVacationStatusLabel(vacation.estado),
           vacation.aprobado ? 'Sí' : 'No',
           vacation.companyName ?? ''
         ])
@@ -284,10 +282,10 @@ export default function VacationsPage() {
             <p className="meta">Histórico paginado filtrado por fechas y estado.</p>
           </div>
           <div className="hero-actions" style={{ marginTop: 0 }}>
-            <input
+        <input
               className="field"
               style={{ minWidth: '240px' }}
-              placeholder="Buscar por empleado..."
+              placeholder="Buscar por fecha, empleado o estado..."
               value={search}
               onChange={(event) => {
                 setPage(1);
@@ -318,7 +316,7 @@ export default function VacationsPage() {
                   <td>{vacation.fin}</td>
                   <td>{vacation.employeeNombre ?? 'Sin empleado'}</td>
                   <td>
-                    <span className={`badge ${statusColors[vacation.estado]}`}>{vacation.estado}</span>
+                    <span className={`badge ${statusColors[vacation.estado]}`}>{getVacationStatusLabel(vacation.estado)}</span>
                   </td>
                   <td>
                     <span className={`badge ${vacation.aprobado ? 'badge-success' : 'badge-danger'}`}>
@@ -382,12 +380,12 @@ export default function VacationsPage() {
               <tbody>
                 {all.map((vacation) => (
                   <tr key={vacation.id}>
-                    <td>{vacation.employeeNombre ?? vacation.employeeNumero ?? 'Sin empleado'}</td>
-                    <td>{vacation.inicio}</td>
-                    <td>{vacation.fin}</td>
-                    <td>
-                      <span className={`badge ${statusColors[vacation.estado]}`}>{vacation.estado}</span>
-                    </td>
+                      <td>{vacation.employeeNombre ?? vacation.employeeNumero ?? 'Sin empleado'}</td>
+                      <td>{vacation.inicio}</td>
+                      <td>{vacation.fin}</td>
+                      <td>
+                        <span className={`badge ${statusColors[vacation.estado]}`}>{getVacationStatusLabel(vacation.estado)}</span>
+                      </td>
                     <td className="hero-actions" style={{ gap: '0.5rem' }}>
                       <button
                         className="button button-primary"

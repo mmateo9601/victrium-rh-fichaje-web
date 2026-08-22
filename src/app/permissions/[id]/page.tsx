@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 
 import { api, type Permission } from '../../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../../lib/auth/session';
+import { getPermissionStatusLabel, hasManagementAccess } from '../../../lib/labels';
 
 const statusColors: Record<Permission['estado'], string> = {
   PENDIENTE: 'badge-warning',
@@ -16,10 +17,7 @@ export default function PermissionDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const session = useMemo(() => getStoredSession(), []);
-  const canManage =
-    session?.user.roles.includes('ROLE_ADMIN') ||
-    session?.user.roles.includes('ROLE_RRHH') ||
-    session?.user.roles.includes('ROLE_SUPER_ADMIN');
+  const canManage = hasManagementAccess(session?.user.roles);
   const [permission, setPermission] = useState<Permission | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -124,7 +122,7 @@ export default function PermissionDetailPage() {
   if (loading) {
     return (
       <section className="hero">
-        <span className="eyebrow">Permission detail</span>
+        <span className="eyebrow">Detalle de permiso</span>
         <h1>Cargando detalle...</h1>
       </section>
     );
@@ -133,7 +131,7 @@ export default function PermissionDetailPage() {
   if (!permission) {
     return (
       <section className="hero">
-        <span className="eyebrow">Permission detail</span>
+        <span className="eyebrow">Detalle de permiso</span>
         <h1>Permiso no encontrado</h1>
         {error ? <div className="notice" role="alert">{error}</div> : null}
       </section>
@@ -152,7 +150,7 @@ export default function PermissionDetailPage() {
         {error ? <div className="notice" role="alert">{error}</div> : null}
         <div className="grid-3" style={{ marginTop: '1.5rem' }}>
           <article className="stat">
-            <strong>{permission.estado}</strong>
+            <strong>{getPermissionStatusLabel(permission.estado)}</strong>
             <span className="muted">Estado</span>
           </article>
           <article className="stat">
@@ -210,7 +208,7 @@ export default function PermissionDetailPage() {
             </>
           ) : null}
         </div>
-        <span className={`badge ${statusColors[permission.estado]}`}>{permission.estado}</span>
+        <span className={`badge ${statusColors[permission.estado]}`}>{getPermissionStatusLabel(permission.estado)}</span>
       </section>
     </div>
   );

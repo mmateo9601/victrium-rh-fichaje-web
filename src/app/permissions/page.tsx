@@ -9,6 +9,7 @@ import { api, type Permission, type PermissionMonthlyStat, type PermissionUserSt
 import { buildPermissionEvents } from '../../lib/calendar';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
+import { getPermissionStatusLabel, hasManagementAccess } from '../../lib/labels';
 
 const statusColors: Record<Permission['estado'], string> = {
   PENDIENTE: 'badge-warning',
@@ -19,10 +20,7 @@ const statusColors: Record<Permission['estado'], string> = {
 export default function PermissionsPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
-  const canManage =
-    session?.user.roles.includes('ROLE_ADMIN') ||
-    session?.user.roles.includes('ROLE_RRHH') ||
-    session?.user.roles.includes('ROLE_SUPER_ADMIN');
+  const canManage = hasManagementAccess(session?.user.roles);
 
   const [mine, setMine] = useState<Permission[]>([]);
   const [all, setAll] = useState<Permission[]>([]);
@@ -73,7 +71,7 @@ export default function PermissionsPage() {
           setUsers([]);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'No se pudo cargar Permissions');
+        setError(err instanceof Error ? err.message : 'No se pudo cargar permisos');
       } finally {
         setLoading(false);
       }
@@ -186,7 +184,7 @@ export default function PermissionsPage() {
           permission.horaInicio,
           permission.horaFin,
           permission.descripcion,
-          permission.estado,
+          getPermissionStatusLabel(permission.estado),
           permission.aprobado ? 'Sí' : 'No',
           permission.employeeNombre ?? permission.employeeNumero ?? '',
           permission.companyName ?? ''
@@ -224,7 +222,7 @@ export default function PermissionsPage() {
           permission.horaInicio,
           permission.horaFin,
           permission.descripcion,
-          permission.estado,
+          getPermissionStatusLabel(permission.estado),
           permission.aprobado ? 'Sí' : 'No',
           permission.employeeNombre ?? permission.employeeNumero ?? '',
           permission.companyName ?? ''
@@ -241,7 +239,7 @@ export default function PermissionsPage() {
   if (loading) {
     return (
       <section className="hero">
-        <span className="eyebrow">Permissions</span>
+        <span className="eyebrow">Permisos</span>
         <h1>Cargando permisos...</h1>
       </section>
     );
@@ -251,7 +249,7 @@ export default function PermissionsPage() {
     <div className="stack">
       <section className="hero">
         <span className="eyebrow">Permisos laborales</span>
-        <h1>Permissions</h1>
+        <h1>Permisos</h1>
         <p>
           Gestiona las solicitudes de permisos, revisa el histórico y aprueba o deniega desde la misma
           interfaz. El usuario siempre crea sobre su propio contexto salvo que tenga rol de gestión.
@@ -321,7 +319,7 @@ export default function PermissionsPage() {
             <input
               className="field"
               style={{ minWidth: '240px' }}
-              placeholder="Buscar..."
+              placeholder="Buscar por fecha, empleado o descripción..."
               value={search}
               onChange={(event) => {
                 setPage(1);
@@ -360,7 +358,7 @@ export default function PermissionsPage() {
                   </td>
                   <td>{permission.descripcion}</td>
                   <td>
-                    <span className={`badge ${statusColors[permission.estado]}`}>{permission.estado}</span>
+                    <span className={`badge ${statusColors[permission.estado]}`}>{getPermissionStatusLabel(permission.estado)}</span>
                   </td>
                   <td>
                     <Link className="button button-secondary" href={`/permissions/${permission.id}`}>
@@ -430,7 +428,7 @@ export default function PermissionsPage() {
                         {permission.horaInicio} - {permission.horaFin}
                       </td>
                       <td>
-                        <span className={`badge ${statusColors[permission.estado]}`}>{permission.estado}</span>
+                        <span className={`badge ${statusColors[permission.estado]}`}>{getPermissionStatusLabel(permission.estado)}</span>
                       </td>
                       <td className="hero-actions" style={{ gap: '0.5rem' }}>
                         <Link className="button button-secondary" href={`/permissions/${permission.id}`}>

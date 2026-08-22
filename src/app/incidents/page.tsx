@@ -7,16 +7,14 @@ import { useRouter } from 'next/navigation';
 import { api, type Incident, type IncidentMonthlyStat, type IncidentTopSummary, type IncidentUserStat } from '../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
+import { getIncidentStateLabel, hasManagementAccess } from '../../lib/labels';
 
 const badgeForResolved = (resolved: boolean) => (resolved ? 'badge-success' : 'badge-warning');
 
 export default function IncidentsPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
-  const canManage =
-    session?.user.roles.includes('ROLE_ADMIN') ||
-    session?.user.roles.includes('ROLE_RRHH') ||
-    session?.user.roles.includes('ROLE_SUPER_ADMIN');
+  const canManage = hasManagementAccess(session?.user.roles);
 
   const [mine, setMine] = useState<Incident[]>([]);
   const [all, setAll] = useState<Incident[]>([]);
@@ -310,7 +308,7 @@ export default function IncidentsPage() {
                   <td>{incident.employeeNombre ?? 'Sin empleado'}</td>
                   <td>
                     <span className={`badge ${badgeForResolved(incident.resuelta)}`}>
-                      {incident.resuelta ? 'Sí' : 'No'}
+                      {getIncidentStateLabel(incident)}
                     </span>
                   </td>
                   <td>
@@ -380,7 +378,7 @@ export default function IncidentsPage() {
                       <td>{incident.dia}</td>
                       <td>
                         <span className={`badge ${badgeForResolved(incident.resuelta)}`}>
-                          {incident.resuelta ? 'Sí' : 'No'}
+                          {getIncidentStateLabel(incident)}
                         </span>
                       </td>
                       <td>

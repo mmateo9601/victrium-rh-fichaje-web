@@ -18,7 +18,15 @@ import {
   type Vacation
 } from '../../lib/api/generated';
 import { getAccessToken, getStoredSession, signOut } from '../../lib/auth/session';
-import { formatDurationLabel, formatInputDate, formatLongDate, getRoleLabel } from '../../lib/labels';
+import {
+  formatDurationLabel,
+  formatInputDate,
+  formatLongDate,
+  getPermissionStatusLabel,
+  getRoleLabel,
+  getVacationStatusLabel,
+  hasManagementAccess
+} from '../../lib/labels';
 import { buildWorkedDays, buildWorkedSummary } from '../../lib/time-analytics';
 import { collectAllPages } from '../../lib/csv';
 
@@ -82,7 +90,7 @@ export default function DashboardPage() {
 
         const me = await api.auth.me(authToken);
         setSessionUser(me);
-        const isManager = me.roles.includes('ROLE_ADMIN') || me.roles.includes('ROLE_RRHH');
+        const isManager = hasManagementAccess(me.roles);
         setScope(isManager ? 'manager' : 'employee');
         if (me.companyId) {
           try {
@@ -264,18 +272,18 @@ export default function DashboardPage() {
           </div>
 
           <div className="dashboard-list">
-            <article className="dashboard-list__item">
-              <div>
-                <strong>{isManager ? 'Vacaciones pendientes' : 'Vacaciones solicitadas'}</strong>
-                <p>{latestVacation ? `${latestVacation.estado} · ${formatLongDate(latestVacation.inicio)}` : 'Sin movimientos'}</p>
-              </div>
-            </article>
-            <article className="dashboard-list__item">
-              <div>
-                <strong>{isManager ? 'Permisos pendientes' : 'Permisos solicitados'}</strong>
-                <p>{latestPermission ? `${latestPermission.estado} · ${formatLongDate(latestPermission.dia)}` : 'Sin movimientos'}</p>
-              </div>
-            </article>
+              <article className="dashboard-list__item">
+                <div>
+                  <strong>{isManager ? 'Vacaciones pendientes' : 'Vacaciones solicitadas'}</strong>
+                  <p>{latestVacation ? `${getVacationStatusLabel(latestVacation.estado)} · ${formatLongDate(latestVacation.inicio)}` : 'Sin movimientos'}</p>
+                </div>
+              </article>
+              <article className="dashboard-list__item">
+                <div>
+                  <strong>{isManager ? 'Permisos pendientes' : 'Permisos solicitados'}</strong>
+                  <p>{latestPermission ? `${getPermissionStatusLabel(latestPermission.estado)} · ${formatLongDate(latestPermission.dia)}` : 'Sin movimientos'}</p>
+                </div>
+              </article>
             <article className="dashboard-list__item">
               <div>
                 <strong>{isManager ? 'Incidencias abiertas' : 'Tus incidencias'}</strong>
