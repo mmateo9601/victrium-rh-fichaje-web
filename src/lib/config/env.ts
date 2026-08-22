@@ -1,28 +1,10 @@
-const productionApiBaseUrl = 'https://victrium-rh-fichaje-api.victriumtech.com/api/v1';
-
-function isLocalhostUrl(value: string) {
-  try {
-    const url = new URL(value);
-    return url.hostname === 'localhost' || url.hostname === '127.0.0.1' || url.hostname === '0.0.0.0';
-  } catch {
-    return false;
-  }
-}
-
 function validateApiBaseUrl(value: string | undefined) {
-  try {
-    if (!value) {
-      if (process.env.NODE_ENV === 'production') {
-        return new URL(productionApiBaseUrl).origin;
-      }
-      throw new Error('Missing NEXT_PUBLIC_API_URL in Web environment');
-    }
+  if (!value) {
+    throw new Error('Missing NEXT_PUBLIC_API_URL in Web environment');
+  }
 
-    const normalized = new URL(value);
-    if (process.env.NODE_ENV === 'production' && isLocalhostUrl(normalized.toString())) {
-      return new URL(productionApiBaseUrl).origin;
-    }
-    return normalized.origin;
+  try {
+    return new URL(value).origin;
   } catch {
     throw new Error('Invalid NEXT_PUBLIC_API_URL in Web environment');
   }
