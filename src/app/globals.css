@@ -1601,6 +1601,7 @@ textarea {
     pointer-events: none;
     transition: transform 180ms ease;
     box-shadow: var(--shadow-lg);
+    z-index: 40;
   }
 
   .sidebar.is-open {
