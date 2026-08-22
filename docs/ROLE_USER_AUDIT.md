@@ -20,6 +20,7 @@ Revisar y cerrar el recorrido funcional de `ROLE_USER` en el frontend, con foco 
 - Traducí estados de vacaciones y permisos para no mostrar códigos técnicos como valor principal.
 - Ajusté textos visibles de `Permisos` para mantener el idioma de la interfaz.
 - Hice más robusto `WorkTimer` para que una consulta secundaria de horario no bloquee el reloj principal.
+- Añadí el contrato de elegibilidad de fichaje desde backend y lo consumí en `Mi jornada` para evitar fichajes tempranos desde la UI.
 - Normalicé textos de dashboard y exportaciones para mostrar etiquetas humanas.
 - Mantengo la separación por roles en la navegación y en los botones de gestión.
 - Corregí la hidratación de la barra superior para que la sesión de `localStorage` no genere mismatch entre SSR y cliente.
@@ -28,6 +29,8 @@ Revisar y cerrar el recorrido funcional de `ROLE_USER` en el frontend, con foco 
 
 - `npm run lint` en `victrium-rh-fichaje-web`: correcto.
 - `npm run build` en `victrium-rh-fichaje-web`: correcto.
+- `npm test` en `victrium-rh-fichaje-api` para `time-entries.service.spec.ts` y `time-entry-eligibility.service.spec.ts`: correcto.
+- `npm run build` en `victrium-rh-fichaje-api`: correcto.
 - Navegador local con `npm run dev`:
   - login de `ROLE_USER` con `laura@victrium.local` y `Victrium123!`;
   - recorrido de `/dashboard`, `/time-entries`, `/my-calendar`, `/vacations`, `/permissions`, `/incidents` y `/profile`;
@@ -61,3 +64,4 @@ Revisar y cerrar el recorrido funcional de `ROLE_USER` en el frontend, con foco 
 - La salida de sesión funciona en local y deja la sesión vacía.
 - Ya no se observó el mismatch de hidratación de la barra superior tras sincronizar la sesión.
 - No se detectaron códigos técnicos visibles en vacaciones, permisos ni calendario durante el recorrido local.
+- La API expone `GET /api/v1/time-entries/me/eligibility` y `GET /api/v1/time-entries/me/current` devuelve la elegibilidad asociada a la sesión.

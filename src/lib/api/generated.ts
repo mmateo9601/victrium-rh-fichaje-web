@@ -208,6 +208,37 @@ export type TimeEntryAudit = {
 
 export type WorkTimerState = 'NOT_STARTED' | 'WORKING' | 'PAUSED' | 'COMPLETED';
 
+export type TimeEntryEligibilityReason =
+  | 'ALLOWED'
+  | 'TOO_EARLY'
+  | 'OUT_OF_WINDOW'
+  | 'NO_SCHEDULE'
+  | 'EMPLOYEE_INACTIVE'
+  | 'ABSENCE_BLOCKS_CLOCK_IN'
+  | 'SESSION_ACTIVE'
+  | 'SESSION_COMPLETED'
+  | 'NO_WORK_LOCATION';
+
+export type TimeEntryEligibility = {
+  canStart: boolean;
+  reason: TimeEntryEligibilityReason;
+  message: string | null;
+  evaluatedAt: string;
+  allowedFrom: string | null;
+  allowedUntil: string | null;
+  scheduledStart: string | null;
+  scheduledEnd: string | null;
+  earlyClockInMinutes: number | null;
+  companyId: number | null;
+  companyName: string | null;
+  workLocationId: number | null;
+  workLocationName: string | null;
+  workLocationCode: string | null;
+  shiftId: number | null;
+  shiftName: string | null;
+  shiftCode: string | null;
+};
+
 export type WorkTimerBreak = {
   id: number;
   startedAt: string;
@@ -228,6 +259,7 @@ export type WorkTimerCurrent = {
   usuarioNombre: string;
   companyId: number | null;
   companyName: string | null;
+  eligibility: TimeEntryEligibility | null;
 };
 
 export type VacationStatus = 'PENDIENTE' | 'APROBADO' | 'DENEGADO';
@@ -965,6 +997,7 @@ export const api = {
   },
   timeEntries: {
     current: (token: string) => requestJson<WorkTimerCurrent>('/api/v1/time-entries/me/current', { token }),
+    eligibility: (token: string) => requestJson<TimeEntryEligibility>('/api/v1/time-entries/me/eligibility', { token }),
     start: (token: string, body: ClockTimeEntryRequest = {}) =>
       requestJsonWithMethod<WorkTimerCurrent>('/api/v1/time-entries/start', 'POST', { token, body }),
     pauseMine: (token: string) =>

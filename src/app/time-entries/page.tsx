@@ -9,16 +9,16 @@ import { AnalyticsChart } from '../../components/analytics-chart';
 import { PageHeader } from '../../components/page-header';
 import { WorkTimer } from '../../components/work-timer';
 import { WorkforceCalendar } from '../../components/workforce-calendar';
-import { api, type TimeEntry } from '../../lib/api/generated';
-import { getAccessToken, getStoredSession } from '../../lib/auth/session';
+import { api, type TimeEntry, type WorkTimerCurrent } from '../../lib/api/generated';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
+import { useStoredSession, getAccessToken } from '../../lib/auth/session';
 import { buildTimeEntryEvents } from '../../lib/calendar';
 import { formatDurationLabel, formatInputDate, formatLongDate, getRoleLabel, getTimeEntryLabel } from '../../lib/labels';
 import { buildWorkedDays, buildWorkedSummary } from '../../lib/time-analytics';
 
 export default function TimeEntriesPage() {
   const router = useRouter();
-  const session = useMemo(() => getStoredSession(), []);
+  const session = useStoredSession();
   const canManage =
     session?.user.roles.includes('ROLE_ADMIN') ||
     session?.user.roles.includes('ROLE_RRHH') ||
@@ -27,6 +27,7 @@ export default function TimeEntriesPage() {
   const [mine, setMine] = useState<TimeEntry[]>([]);
   const [all, setAll] = useState<TimeEntry[]>([]);
   const [weekEntries, setWeekEntries] = useState<TimeEntry[]>([]);
+  const [currentState, setCurrentState] = useState<WorkTimerCurrent | null>(null);
   const [search, setSearch] = useState('');
   const [numeroUsuario, setNumeroUsuario] = useState('');
   const [nombreUsuario, setNombreUsuario] = useState('');
@@ -67,13 +68,15 @@ export default function TimeEntriesPage() {
 
     async function load() {
       try {
-        const [mineResult, weekList] = await Promise.all([
+        const [mineResult, weekList, currentResult] = await Promise.all([
           api.timeEntries.mine(authToken, { search, tipo, from, to, pageSize: 15, order: 'desc' as const }),
-          collectAllPages((query) => api.timeEntries.mine(authToken, { ...weekRange, ...query, order: 'asc' }), weekRange, 100)
+          collectAllPages((query) => api.timeEntries.mine(authToken, { ...weekRange, ...query, order: 'asc' }), weekRange, 100),
+          api.timeEntries.current(authToken)
         ]);
 
         setMine(mineResult.data);
         setWeekEntries(weekList);
+        setCurrentState(currentResult);
 
         if (canManage) {
           const allResult = await api.timeEntries.list(authToken, {
@@ -125,6 +128,7 @@ export default function TimeEntriesPage() {
     }
     const weekList = await collectAllPages((query) => api.timeEntries.mine(authToken, { ...weekRange, ...query, order: 'asc' }), weekRange, 100);
     setWeekEntries(weekList);
+    setCurrentState(await api.timeEntries.current(authToken));
   }
 
   async function clock() {
@@ -137,6 +141,10 @@ export default function TimeEntriesPage() {
     setClocking(true);
     setError(null);
     try {
+      if (currentState?.state === 'NOT_STARTED' && currentState.eligibility && !currentState.eligibility.canStart) {
+        setError(currentState.eligibility.message ?? 'La jornada aún no puede iniciarse');
+        return;
+      }
       await api.timeEntries.clock(token, { origen: 'web' });
       await refresh();
     } catch (clockError) {
@@ -231,6 +239,12 @@ export default function TimeEntriesPage() {
   }
 
   const roleLabel = getRoleLabel(session?.user.roles);
+  const canClockNow =
+    currentState === null
+      ? true
+      : currentState.state === 'NOT_STARTED'
+        ? Boolean(currentState.eligibility?.canStart)
+        : currentState.state === 'WORKING' || currentState.state === 'PAUSED';
 
   return (
     <div className="stack">
@@ -315,7 +329,13 @@ export default function TimeEntriesPage() {
             <span className="eyebrow">Filtros</span>
             <h2 className="section-title">Búsqueda y fechas</h2>
           </div>
-          <button className="button button-ghost" type="button" onClick={clock} disabled={clocking}>
+          <button
+            className="button button-ghost"
+            type="button"
+            onClick={clock}
+            disabled={clocking || !canClockNow}
+            title={!canClockNow ? currentState?.eligibility?.message ?? 'La jornada aún no puede iniciarse' : undefined}
+          >
             <TimerReset size={16} />
             {clocking ? 'Registrando...' : 'Marcar entrada/salida'}
           </button>

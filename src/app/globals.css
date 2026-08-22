@@ -480,7 +480,7 @@ code {
 
 .two-col {
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.9fr);
-  align-items: start;
+  align-items: flex-start;
 }
 
 .hero {
@@ -820,7 +820,7 @@ textarea {
 }
 
 .calendar-empty-state {
-  align-items: start;
+  align-items: flex-start;
 }
 
 .calendar-detail-grid {
@@ -1388,6 +1388,14 @@ textarea {
   gap: 0.55rem;
 }
 
+.notice--warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  background: rgba(183, 121, 31, 0.08);
+  border-color: rgba(183, 121, 31, 0.18);
+}
+
 .landing-shell {
   width: min(100%, 74rem);
   display: grid;
@@ -1489,7 +1497,7 @@ textarea {
   display: grid;
   grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
   gap: 1rem;
-  align-items: start;
+  align-items: flex-start;
 }
 
 .dashboard-grid {
@@ -1505,7 +1513,7 @@ textarea {
 
 .dashboard-list__item {
   display: flex;
-  align-items: start;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
   padding: 0.95rem 1rem;
@@ -1602,7 +1610,7 @@ textarea {
   }
 
   .sidebar__header {
-    align-items: start;
+    align-items: flex-start;
   }
 
   .sidebar__close {

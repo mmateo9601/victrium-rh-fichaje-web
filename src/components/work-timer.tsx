@@ -105,6 +105,7 @@ export function WorkTimer({ token }: WorkTimerProps) {
     }
     return `Has iniciado ${todayShift.lateMinutes} min después del horario previsto`;
   }, [todayShift]);
+  const eligibility = current?.eligibility ?? null;
 
   async function runAction(action: () => Promise<WorkTimerCurrent>, successMessage: string) {
     setActioning(true);
@@ -171,6 +172,12 @@ export function WorkTimer({ token }: WorkTimerProps) {
         </div>
       ) : null}
       {message ? <div className="notice" role="status">{message}</div> : null}
+      {eligibility && current?.state === 'NOT_STARTED' ? (
+        <div className={eligibility.canStart ? 'notice notice--soft' : 'notice notice--warning'} role="status">
+          <strong>{eligibility.canStart ? 'Listo para fichar' : 'Aún no puedes fichar'}</strong>
+          <span>{eligibility.message ?? 'La jornada aún no está disponible.'}</span>
+        </div>
+      ) : null}
 
       <div className={`work-timer__hero ${current?.state === 'PAUSED' ? 'is-paused' : ''}`}>
         <div className="work-timer__hero-head">
@@ -221,7 +228,8 @@ export function WorkTimer({ token }: WorkTimerProps) {
             className="button button-primary"
             type="button"
             onClick={() => void runAction(() => api.timeEntries.start(token, { origen: 'web' }), 'Jornada iniciada')}
-            disabled={actioning}
+            disabled={actioning || (eligibility !== null && !eligibility.canStart)}
+            title={eligibility && !eligibility.canStart ? eligibility.message ?? 'La jornada aún no está disponible' : undefined}
           >
             <Play size={16} />
             Iniciar jornada
