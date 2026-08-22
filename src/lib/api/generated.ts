@@ -208,6 +208,13 @@ export type TimeEntryAudit = {
 
 export type WorkTimerState = 'NOT_STARTED' | 'WORKING' | 'PAUSED' | 'COMPLETED';
 
+export type WorkTimerBreak = {
+  id: number;
+  startedAt: string;
+  endedAt: string | null;
+  seconds: number;
+};
+
 export type TimeEntryEligibilityReason =
   | 'ALLOWED'
   | 'TOO_EARLY'
@@ -237,13 +244,6 @@ export type TimeEntryEligibility = {
   shiftId: number | null;
   shiftName: string | null;
   shiftCode: string | null;
-};
-
-export type WorkTimerBreak = {
-  id: number;
-  startedAt: string;
-  endedAt: string | null;
-  seconds: number;
 };
 
 export type WorkTimerCurrent = {
@@ -824,12 +824,7 @@ class ApiClientError extends Error {
 }
 
 function buildUrl(path: string, query?: RequestOptions['query']) {
-  const baseUrl = new URL(`${env.apiBaseUrl}/`);
-  const normalizedPath =
-    baseUrl.pathname.replace(/\/+$/, '') === '/api/v1' && path.startsWith('/api/v1')
-      ? path.slice('/api/v1'.length) || '/'
-      : path;
-  const url = new URL(normalizedPath, baseUrl);
+  const url = new URL(path, `${env.apiBaseUrl}/`);
   if (query) {
     for (const [key, value] of Object.entries(query)) {
       if (value === undefined || value === null || value === '') {
@@ -1008,7 +1003,6 @@ export const api = {
   },
   timeEntries: {
     current: (token: string) => requestJson<WorkTimerCurrent>('/api/v1/time-entries/me/current', { token }),
-    eligibility: (token: string) => requestJson<TimeEntryEligibility>('/api/v1/time-entries/me/eligibility', { token }),
     start: (token: string, body: ClockTimeEntryRequest = {}) =>
       requestJsonWithMethod<WorkTimerCurrent>('/api/v1/time-entries/start', 'POST', { token, body }),
     pauseMine: (token: string) =>

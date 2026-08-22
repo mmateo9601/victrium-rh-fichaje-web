@@ -20,13 +20,13 @@ Frontend Next.js para consumir `victrium-rh-fichaje-api` de forma independiente.
 ## Variables de entorno
 
 Usa `.env.example` como referencia y cópialo a `.env.local` para desarrollo local.
-En producción, el sitio usa la variable de entorno publicada por Hostinger/Sites.
+En producción, Hostinger/Sites debe inyectar la misma variable.
 
-- `NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1`
-  - Desarrollo local: `http://localhost:3001/api/v1`
-  - Producción: `https://victrium-rh-fichaje-api.victriumtech.com/api/v1`
+- `NEXT_PUBLIC_API_URL=https://api.example.com`
 
 La configuración tipada vive en [`src/lib/config/env.ts`](src/lib/config/env.ts).
+La URL se consume como origen de API y el cliente añade internamente la ruta `/api/v1`.
+Como variable `NEXT_PUBLIC_*`, queda embebida en el bundle en build time.
 
 ## Cliente API
 
@@ -47,7 +47,7 @@ El script escribe [`src/lib/api/generated.ts`](src/lib/api/generated.ts) a parti
 ## Desarrollo
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -67,6 +67,24 @@ npm test
 npm run build
 ```
 
+## Produccion
+
+```bash
+npm ci
+npm run build
+npm run start
+```
+
+## Comando de build
+
+- `npm ci`
+- `npm run build`
+
+## Node
+
+- Validado con Node.js 24 en este entorno.
+- Soporte declarado en `package.json`: `>=20`.
+
 ## Rutas principales
 
 - `/`
@@ -84,5 +102,6 @@ npm run build
 
 ## Integracion
 
-- La API base debe apuntar a `/api/v1`.
+- La API base se define por `NEXT_PUBLIC_API_URL`.
+- La ruta `/api/v1` la añade el cliente tipado.
 - Las pantallas de calendario, turnos y fichajes asumen que el backend ya expone Swagger y el cliente generado.

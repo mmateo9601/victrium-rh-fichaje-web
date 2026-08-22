@@ -215,6 +215,37 @@ export type WorkTimerBreak = {
   seconds: number;
 };
 
+export type TimeEntryEligibilityReason =
+  | 'ALLOWED'
+  | 'TOO_EARLY'
+  | 'OUT_OF_WINDOW'
+  | 'NO_SCHEDULE'
+  | 'EMPLOYEE_INACTIVE'
+  | 'ABSENCE_BLOCKS_CLOCK_IN'
+  | 'SESSION_ACTIVE'
+  | 'SESSION_COMPLETED'
+  | 'NO_WORK_LOCATION';
+
+export type TimeEntryEligibility = {
+  canStart: boolean;
+  reason: TimeEntryEligibilityReason;
+  message: string | null;
+  evaluatedAt: string;
+  allowedFrom: string | null;
+  allowedUntil: string | null;
+  scheduledStart: string | null;
+  scheduledEnd: string | null;
+  earlyClockInMinutes: number | null;
+  companyId: number | null;
+  companyName: string | null;
+  workLocationId: number | null;
+  workLocationName: string | null;
+  workLocationCode: string | null;
+  shiftId: number | null;
+  shiftName: string | null;
+  shiftCode: string | null;
+};
+
 export type WorkTimerCurrent = {
   state: WorkTimerState;
   sessionId: number | null;
@@ -228,6 +259,7 @@ export type WorkTimerCurrent = {
   usuarioNombre: string;
   companyId: number | null;
   companyName: string | null;
+  eligibility: TimeEntryEligibility | null;
 };
 
 export type VacationStatus = 'PENDIENTE' | 'APROBADO' | 'DENEGADO';
@@ -792,12 +824,7 @@ class ApiClientError extends Error {
 }
 
 function buildUrl(path: string, query?: RequestOptions['query']) {
-  const baseUrl = new URL(`${env.apiBaseUrl}/`);
-  const normalizedPath =
-    baseUrl.pathname.replace(/\/+$/, '') === '/api/v1' && path.startsWith('/api/v1')
-      ? path.slice('/api/v1'.length) || '/'
-      : path;
-  const url = new URL(normalizedPath, baseUrl);
+  const url = new URL(path, `${env.apiBaseUrl}/`);
   if (query) {
     for (const [key, value] of Object.entries(query)) {
       if (value === undefined || value === null || value === '') {
