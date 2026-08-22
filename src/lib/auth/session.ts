@@ -69,7 +69,7 @@ export async function signOut() {
 }
 
 export function useStoredSession() {
-  const [session, setSession] = useState<AuthSession | null>(() => getStoredSession());
+  const [session, setSession] = useState<AuthSession | null>(null);
 
   useEffect(() => {
     const syncSession = () => setSession(getStoredSession());

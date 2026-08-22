@@ -22,11 +22,17 @@ Revisar y cerrar el recorrido funcional de `ROLE_USER` en el frontend, con foco 
 - Hice más robusto `WorkTimer` para que una consulta secundaria de horario no bloquee el reloj principal.
 - Normalicé textos de dashboard y exportaciones para mostrar etiquetas humanas.
 - Mantengo la separación por roles en la navegación y en los botones de gestión.
+- Corregí la hidratación de la barra superior para que la sesión de `localStorage` no genere mismatch entre SSR y cliente.
 
 ## Verificaciones realizadas
 
 - `npm run lint` en `victrium-rh-fichaje-web`: correcto.
 - `npm run build` en `victrium-rh-fichaje-web`: correcto.
+- Navegador local con `npm run dev`:
+  - login de `ROLE_USER` con `laura@victrium.local` y `Victrium123!`;
+  - recorrido de `/dashboard`, `/time-entries`, `/my-calendar`, `/vacations`, `/permissions`, `/incidents` y `/profile`;
+  - validación de menú móvil abierto y cerrado;
+  - validación de cierre de sesión en navegador local.
 
 ## Puntos revisados para `ROLE_USER`
 
@@ -49,8 +55,9 @@ Revisar y cerrar el recorrido funcional de `ROLE_USER` en el frontend, con foco 
 - acceso al perfil propio y cambio de contraseña;
 - navegación limitada a vistas de autoservicio.
 
-## Riesgos o límites
+## Hallazgos locales
 
-- No pude ejecutar una sesión real de navegador autenticada en escritorio y móvil desde esta sesión, así que la validación final es de código y build, no de interacción manual visual.
-- Si quieres una verificación manual completa, el siguiente paso natural es abrir la app en navegador y comprobar login y navegación con un usuario `ROLE_USER`.
-
+- La navegación móvil abre y muestra correctamente las opciones de autoservicio.
+- La salida de sesión funciona en local y deja la sesión vacía.
+- Ya no se observó el mismatch de hidratación de la barra superior tras sincronizar la sesión.
+- No se detectaron códigos técnicos visibles en vacaciones, permisos ni calendario durante el recorrido local.
