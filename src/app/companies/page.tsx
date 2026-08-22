@@ -24,7 +24,10 @@ export default function CompaniesPage() {
   const [error, setError] = useState<string | null>(null);
 
   const session = useMemo(() => getStoredSession(), []);
-  const canManage = session?.user.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_SUPER_ADMIN') ?? false;
+  const canManage =
+    session?.user.roles.some(
+      (role) => role === 'ROLE_ADMIN' || role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_SUPER_ADMIN'
+    ) ?? false;
 
   function beginEdit(company: Company) {
     setSelectedCompany(company);
