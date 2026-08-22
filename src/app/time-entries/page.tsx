@@ -21,6 +21,7 @@ export default function TimeEntriesPage() {
   const session = useStoredSession();
   const canManage =
     session?.user.roles.includes('ROLE_ADMIN') ||
+    session?.user.roles.includes('ROLE_COMPANY_ADMIN') ||
     session?.user.roles.includes('ROLE_RRHH') ||
     session?.user.roles.includes('ROLE_SUPER_ADMIN');
 
