@@ -28,4 +28,12 @@ describe('env config', () => {
 
     expect(env.apiBaseUrl).toBe('https://victrium-rh-fichaje-api.victriumtech.com');
   });
+
+  it('falls back to the production API when the env var is missing in production', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+
+    const { env } = await import('./env');
+
+    expect(env.apiBaseUrl).toBe('https://victrium-rh-fichaje-api.victriumtech.com');
+  });
 });

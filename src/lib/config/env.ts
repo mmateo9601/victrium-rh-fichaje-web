@@ -10,11 +10,14 @@ function isLocalhostUrl(value: string) {
 }
 
 function validateApiBaseUrl(value: string | undefined) {
-  if (!value) {
-    throw new Error('Missing NEXT_PUBLIC_API_URL in Web environment');
-  }
-
   try {
+    if (!value) {
+      if (process.env.NODE_ENV === 'production') {
+        return new URL(productionApiBaseUrl).origin;
+      }
+      throw new Error('Missing NEXT_PUBLIC_API_URL in Web environment');
+    }
+
     const normalized = new URL(value);
     if (process.env.NODE_ENV === 'production' && isLocalhostUrl(normalized.toString())) {
       return new URL(productionApiBaseUrl).origin;
