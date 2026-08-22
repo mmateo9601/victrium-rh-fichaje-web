@@ -9,7 +9,13 @@ import type {
   TimeEntry,
   Vacation
 } from './api/generated';
-import { formatDurationLabel, formatLongDate } from './labels';
+import {
+  formatDurationLabel,
+  formatLongDate,
+  getIncidentStateLabel,
+  getPermissionStatusLabel,
+  getVacationStatusLabel
+} from './labels';
 
 export type WorkforceCalendarView = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay' | 'listMonth' | 'multiMonthYear';
 
@@ -258,13 +264,13 @@ export function buildVacationEvents(vacations: Vacation[]) {
     kind: 'vacation' as const,
     subtitle: vacation.employeeNombre ?? vacation.employeeNumero ?? undefined,
     summary: vacation.companyName ?? 'Global',
-    statusLabel: vacation.estado,
+    statusLabel: getVacationStatusLabel(vacation.estado),
     details: [
       { label: 'Empleado', value: vacation.employeeNombre ?? vacation.employeeNumero ?? 'Sin empleado' },
       { label: 'Empresa', value: vacation.companyName ?? 'Global' },
       { label: 'Inicio', value: formatLongDate(vacation.inicio) },
       { label: 'Fin', value: formatLongDate(vacation.fin) },
-      { label: 'Estado', value: vacation.estado }
+      { label: 'Estado', value: getVacationStatusLabel(vacation.estado) }
     ]
   })) satisfies WorkforceCalendarEvent[];
 }
@@ -279,13 +285,13 @@ export function buildPermissionEvents(permissions: Permission[]) {
     kind: 'permission' as const,
     subtitle: permission.employeeNombre ?? permission.employeeNumero ?? undefined,
     summary: permission.companyName ?? 'Global',
-    statusLabel: permission.estado,
+    statusLabel: getPermissionStatusLabel(permission.estado),
     details: [
       { label: 'Empleado', value: permission.employeeNombre ?? permission.employeeNumero ?? 'Sin empleado' },
       { label: 'Empresa', value: permission.companyName ?? 'Global' },
       { label: 'Día', value: formatLongDate(permission.dia) },
       { label: 'Horario', value: `${permission.horaInicio} - ${permission.horaFin}` },
-      { label: 'Estado', value: permission.estado }
+      { label: 'Estado', value: getPermissionStatusLabel(permission.estado) }
     ]
   })) satisfies WorkforceCalendarEvent[];
 }
@@ -345,12 +351,12 @@ export function buildIncidentEvents(incidents: Incident[]) {
     kind: 'incident' as const,
     subtitle: incident.employeeNombre ?? incident.employeeNumero ?? undefined,
     summary: incident.companyName ?? 'Global',
-    statusLabel: incident.resuelta ? 'Cerrada' : 'Abierta',
+    statusLabel: getIncidentStateLabel(incident),
     details: [
       { label: 'Empleado', value: incident.employeeNombre ?? incident.employeeNumero ?? 'Sin empleado' },
       { label: 'Empresa', value: incident.companyName ?? 'Global' },
       { label: 'Fecha', value: formatLongDate(incident.dia) },
-      { label: 'Estado', value: incident.resuelta ? 'Cerrada' : 'Abierta' },
+      { label: 'Estado', value: getIncidentStateLabel(incident) },
       { label: 'Descripción', value: incident.descripcion }
     ]
   })) satisfies WorkforceCalendarEvent[];
@@ -365,12 +371,15 @@ export function buildPlanningPeriodEvents(periods: PlanningPeriod[]) {
     allDay: true,
     kind: 'planning-period' as const,
     subtitle: period.companyName ?? undefined,
-    statusLabel: period.status,
+    statusLabel: period.status === 'PUBLISHED' ? 'Publicado' : 'Borrador',
     details: [
       { label: 'Periodo', value: period.name },
       { label: 'Inicio', value: formatLongDate(period.startDate) },
       { label: 'Fin', value: formatLongDate(period.endDate) },
-      { label: 'Estado', value: period.status }
+      {
+        label: 'Estado',
+        value: period.status === 'PUBLISHED' ? 'Publicado' : 'Borrador'
+      }
     ]
   })) satisfies WorkforceCalendarEvent[];
 }
