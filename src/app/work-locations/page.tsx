@@ -5,7 +5,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { PageHeader } from '../../components/page-header';
-import { api, type WorkLocation } from '../../lib/api/generated';
+import { api, type Company, type WorkLocation } from '../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 
 export default function WorkLocationsPage() {
@@ -14,6 +14,8 @@ export default function WorkLocationsPage() {
   const [locations, setLocations] = useState<WorkLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [companyId, setCompanyId] = useState('');
   const [search, setSearch] = useState('');
   const [active, setActive] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +33,7 @@ export default function WorkLocationsPage() {
       router.replace('/login');
       return;
     }
+    const isSuperAdmin = session?.user.roles.includes('ROLE_SUPER_ADMIN') ?? false;
     const canManage =
       session?.user.roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN') ??
       false;
@@ -42,8 +45,14 @@ export default function WorkLocationsPage() {
 
     async function load() {
       try {
-        const result = await api.workLocations.list(token, { search, active });
-        setLocations(result.data);
+        const locationsResult = await api.workLocations.list(token, { search, active });
+        setLocations(locationsResult.data);
+
+        if (isSuperAdmin) {
+          const companiesResult = await api.companies.list(token, { pageSize: 100 });
+          setCompanies(companiesResult.data);
+          setCompanyId((current) => current || (companiesResult.data[0] ? String(companiesResult.data[0].id) : ''));
+        }
       } catch (loadError) {
         setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar los centros');
       } finally {
@@ -65,7 +74,11 @@ export default function WorkLocationsPage() {
     setCreating(true);
     setError(null);
     try {
+      if (session?.user.roles.includes('ROLE_SUPER_ADMIN') && !companyId) {
+        throw new Error('Selecciona una empresa para crear el centro');
+      }
       await api.workLocations.create(token, {
+        companyId: session?.user.roles.includes('ROLE_SUPER_ADMIN') ? Number(companyId) || undefined : undefined,
         name,
         code,
         timezone,
@@ -125,7 +138,26 @@ export default function WorkLocationsPage() {
           </button>
         </div>
 
-        <div className="field-grid">
+          <div className="field-grid">
+          {session?.user.roles.includes('ROLE_SUPER_ADMIN') ? (
+            <div className="field">
+              <label htmlFor="companyId">Empresa</label>
+              <select
+                id="companyId"
+                value={companyId}
+                onChange={(e) => setCompanyId(e.target.value)}
+                required
+              >
+                <option value="">Selecciona una empresa</option>
+                {companies.map((company) => (
+                  <option key={company.id} value={company.id}>
+                    {company.name} ({company.code})
+                  </option>
+                ))}
+              </select>
+              {!companies.length ? <p className="meta">No hay empresas cargadas para enlazar el centro.</p> : null}
+            </div>
+          ) : null}
           <div className="field">
             <label htmlFor="name">Nombre</label>
             <input id="name" value={name} onChange={(e) => setName(e.target.value)} />
