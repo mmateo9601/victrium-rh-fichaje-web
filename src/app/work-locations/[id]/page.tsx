@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
 import { PageHeader } from '../../../components/page-header';
-import { api, type EmployeeLocationAssignment, type WorkLocation } from '../../../lib/api/generated';
-import { getAccessToken } from '../../../lib/auth/session';
+import { api, type Company, type EmployeeLocationAssignment, type WorkLocation } from '../../../lib/api/generated';
+import { getAccessToken, getStoredSession } from '../../../lib/auth/session';
 import { formatLongDate } from '../../../lib/labels';
 
 function parseId(value: string | string[] | undefined | null) {
@@ -20,8 +20,10 @@ export default function WorkLocationDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const locationId = useMemo(() => parseId(params.id), [params.id]);
+  const session = useMemo(() => getStoredSession(), []);
   const [location, setLocation] = useState<WorkLocation | null>(null);
   const [assignments, setAssignments] = useState<EmployeeLocationAssignment[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +35,7 @@ export default function WorkLocationDetailPage() {
   const [province, setProvince] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [active, setActive] = useState(true);
+  const [companyId, setCompanyId] = useState('');
 
   useEffect(() => {
     const accessToken = getAccessToken();
@@ -41,6 +44,7 @@ export default function WorkLocationDetailPage() {
       return;
     }
     const token = accessToken;
+    const isSuperAdmin = session?.user.roles.includes('ROLE_SUPER_ADMIN') ?? false;
     if (Number.isNaN(locationId)) {
       setError('Centro no válido');
       setLoading(false);
@@ -62,7 +66,12 @@ export default function WorkLocationDetailPage() {
         setProvince(locationResult.province ?? '');
         setPostalCode(locationResult.postalCode ?? '');
         setActive(locationResult.active);
+        setCompanyId(locationResult.companyId ? String(locationResult.companyId) : '');
         setAssignments(assignmentsResult.data);
+        if (isSuperAdmin) {
+          const companiesResult = await api.companies.list(token, { pageSize: 100 });
+          setCompanies(companiesResult.data);
+        }
       } catch (loadError) {
         setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar el centro');
       } finally {
@@ -71,7 +80,7 @@ export default function WorkLocationDetailPage() {
     }
 
     void load();
-  }, [locationId, router]);
+  }, [locationId, router, session]);
 
   async function save() {
     const token = getAccessToken();
@@ -83,6 +92,7 @@ export default function WorkLocationDetailPage() {
     setError(null);
     try {
       const updated = await api.workLocations.update(token, location.id, {
+        companyId: companyId ? Number(companyId) : undefined,
         name,
         code,
         timezone: timezone || null,
@@ -181,6 +191,25 @@ export default function WorkLocationDetailPage() {
           </div>
         </div>
         <div className="field-grid">
+          {session?.user.roles.includes('ROLE_SUPER_ADMIN') ? (
+            <div className="field">
+              <label htmlFor="companyId">Empresa</label>
+              <select
+                id="companyId"
+                value={companyId}
+                onChange={(e) => setCompanyId(e.target.value)}
+                required
+              >
+                <option value="">Selecciona una empresa</option>
+                {companies.map((company) => (
+                  <option key={company.id} value={company.id}>
+                    {company.name} ({company.code})
+                  </option>
+                ))}
+              </select>
+              {!companies.length ? <p className="meta">Cargando empresas...</p> : null}
+            </div>
+          ) : null}
           <div className="field">
             <label htmlFor="name">Nombre</label>
             <input id="name" value={name} onChange={(e) => setName(e.target.value)} />
