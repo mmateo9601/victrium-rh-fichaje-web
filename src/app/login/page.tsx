@@ -10,7 +10,7 @@ import { clearSession, getStoredSession, saveSession } from '../../lib/auth/sess
 
 export default function LoginPage() {
   const router = useRouter();
-  const [numero, setNumero] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +28,7 @@ export default function LoginPage() {
 
     try {
       clearSession();
-      const session = await api.auth.login({ numero, password });
+      const session = await api.auth.login({ email, password });
       saveSession(session);
       router.replace('/dashboard');
     } catch (err) {
@@ -59,7 +59,7 @@ export default function LoginPage() {
           <article className="stat">
             <BadgeCheck size={18} />
             <strong>Rápido</strong>
-            <span className="muted">Número de empleado y contraseña en una sola vista.</span>
+            <span className="muted">Correo electrónico y contraseña en una sola vista.</span>
           </article>
           <article className="stat">
             <Sparkles size={18} />
@@ -82,14 +82,14 @@ export default function LoginPage() {
           </div>
 
           <div className="field">
-            <label htmlFor="numero">Número de empleado o email</label>
+            <label htmlFor="email">Correo electrónico</label>
             <input
-              id="numero"
-              value={numero}
-              onChange={(event) => setNumero(event.target.value)}
-              placeholder="VIC-ADM o admin@victrium.local"
+              id="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="admin@victrium.local"
               autoComplete="username"
-              inputMode="text"
+              inputMode="email"
               required
             />
           </div>

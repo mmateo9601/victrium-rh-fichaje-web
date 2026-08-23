@@ -593,7 +593,7 @@ export type Schedule = {
 };
 
 export type LoginRequest = {
-  numero: string;
+  email: string;
   password: string;
 };
 
