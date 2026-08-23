@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { PageHeader } from '../../components/page-header';
+import { RotationPatternEditor, createRotationPatternStep, type RotationPatternStep } from '../../components/rotation-pattern-editor';
 import { api, type Shift, type ShiftDay } from '../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 import { getRoleListLabel } from '../../lib/labels';
@@ -93,14 +94,6 @@ function dayMinutes(day: ShiftDay) {
   return day.workingMinutes ?? 0;
 }
 
-function defaultRotationPattern() {
-  return [
-    { working: true, startTime: '08:00:00', endTime: '16:00:00', breakMinutes: 30, workingMinutes: 450, crossesMidnight: false },
-    { working: true, startTime: '16:00:00', endTime: '00:00:00', breakMinutes: 30, workingMinutes: 450, crossesMidnight: true },
-    { working: false, startTime: null, endTime: null, breakMinutes: 0, workingMinutes: 0, crossesMidnight: false }
-  ];
-}
-
 export default function ShiftsPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
@@ -116,7 +109,11 @@ export default function ShiftsPage() {
   const [description, setDescription] = useState('Turno base de mañana');
   const [days, setDays] = useState<Omit<ShiftDay, 'id'>[]>(defaultDays());
   const [rotationStartDate, setRotationStartDate] = useState('');
-  const [rotationPattern, setRotationPattern] = useState(JSON.stringify(defaultRotationPattern(), null, 2));
+  const [rotationPattern, setRotationPattern] = useState<RotationPatternStep[]>([
+    createRotationPatternStep(),
+    { ...createRotationPatternStep(), startTime: '16:00:00', endTime: '00:00:00', crossesMidnight: true },
+    { ...createRotationPatternStep(), working: false, startTime: null, endTime: null, breakMinutes: 0, workingMinutes: 0, crossesMidnight: false }
+  ]);
 
   useEffect(() => {
     const accessToken = getAccessToken();
@@ -125,7 +122,7 @@ export default function ShiftsPage() {
       return;
     }
     const canManage =
-      session?.user.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN') ??
+      session?.user.roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN' || role === 'ROLE_MANAGER') ??
       false;
     if (!canManage) {
       router.replace('/forbidden');
@@ -162,7 +159,6 @@ export default function ShiftsPage() {
     setCreating(true);
     setError(null);
     try {
-      const parsedRotation = rotationPattern.trim() ? (JSON.parse(rotationPattern) as Array<{ working: boolean; startTime: string | null; endTime: string | null; breakMinutes: number; workingMinutes: number | null; crossesMidnight: boolean }>) : [];
       await api.shifts.create(token, {
         name,
         code,
@@ -171,7 +167,7 @@ export default function ShiftsPage() {
         active: true,
         days,
         rotationStartDate: rotationStartDate || null,
-        rotationPattern: parsedRotation
+        rotationPattern
       });
       const refreshed = await api.shifts.list(token, { search, active });
       setShifts(refreshed);
@@ -252,16 +248,7 @@ export default function ShiftsPage() {
           </div>
         </div>
 
-        <div className="field">
-          <label htmlFor="rotationPattern">Patrón de rotación JSON</label>
-          <textarea
-            id="rotationPattern"
-            rows={8}
-            value={rotationPattern}
-            onChange={(e) => setRotationPattern(e.target.value)}
-            spellCheck={false}
-          />
-        </div>
+        <RotationPatternEditor value={rotationPattern} onChange={setRotationPattern} title="Patrón de rotación" description="Crea el ciclo visualmente. Cada bloque representa un paso del patrón y puedes reordenarlo sin tocar código." />
 
         <div className="stack">
           {days.map((day, index) => (

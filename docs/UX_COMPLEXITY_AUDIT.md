@@ -14,7 +14,20 @@
 - Long tables can feel heavy on smaller screens even when the responsive layout is correct.
 - Management sections can silently disappear for some roles, so inline explanations need to stay clear.
 - Dense data entry forms on incidents and permissions should keep validation feedback immediate and human-readable.
+- The login screen uses a long split-screen hero on mobile, which pushes the form below the first viewport and delays the primary task.
+
+## Browser observations
+- Desktop login and homepage have a strong visual hierarchy, consistent brand treatment, and readable contrast.
+- Mobile homepage keeps the CTA visible and preserves the visual language well.
+- Mobile login is the weakest responsive surface: the hero occupies the first screen and the actual form starts below the fold.
+- Multi-role browser validation on production showed a coherent role ladder:
+  - `ROLE_USER` gets a compact self-service menu.
+  - `ROLE_COMPANY_ADMIN` gets the operational tenant shell without global admin items.
+  - `ROLE_RRHH` expands to people management and user administration.
+  - `ROLE_ADMIN` and `ROLE_SUPER_ADMIN` add the full platform set.
+- `Mi jornada` is visually consistent with the rest of the shell, but the screen never fully resolves on production because the backend responds with `503` on its primary data calls.
 
 ## Audit result
-- No blocker UX issue remains after the company-admin access alignment.
-- Main remaining complexity is information density, not broken navigation.
+- The clearest UX regression is still the mobile login layout.
+- The clearest functional blocker in the browser is `Mi jornada` loading failure on production.
+- Outside that failure, the shell and role-based hierarchy are coherent and predictable.

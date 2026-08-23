@@ -40,7 +40,7 @@ describe('Topbar', () => {
     mocks.useStoredSession.mockReturnValue({
       user: {
         nombreEmpleado: 'Ada Admin',
-        roles: ['ROLE_ADMIN']
+        roles: ['ROLE_COMPANY_ADMIN']
       }
     });
 

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
 import { PageHeader } from '../../../components/page-header';
+import { RotationPatternEditor, type RotationPatternStep } from '../../../components/rotation-pattern-editor';
 import {
   api,
   type Employee,
@@ -33,6 +34,18 @@ function rotationMinutes(step: Shift['rotationPattern'][number]) {
   return step.workingMinutes ?? 0;
 }
 
+function rotationStepLabel(step: Shift['rotationPattern'][number]) {
+  if (!step.working) {
+    return 'Libre';
+  }
+
+  const start = step.startTime?.slice(0, 5) ?? '—';
+  const end = step.endTime?.slice(0, 5) ?? '—';
+  const breakMinutes = step.breakMinutes ? ` · Descanso ${step.breakMinutes} min` : '';
+  const midnight = step.crossesMidnight ? ' · Cruza medianoche' : '';
+  return `${start} - ${end}${breakMinutes}${midnight}`;
+}
+
 export default function ShiftDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
@@ -45,7 +58,7 @@ export default function ShiftDetailPage() {
   const [active, setActive] = useState(true);
   const [rotationStartDate, setRotationStartDate] = useState('');
   const [days, setDays] = useState<Omit<Shift['days'][number], 'id'>[]>([]);
-  const [rotationPattern, setRotationPattern] = useState('');
+  const [rotationPattern, setRotationPattern] = useState<RotationPatternStep[]>([]);
   const [assignments, setAssignments] = useState<ShiftAssignment[]>([]);
   const [overrides, setOverrides] = useState<ShiftOverride[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -64,7 +77,7 @@ export default function ShiftDetailPage() {
   const [overrideNotes, setOverrideNotes] = useState('');
 
   const totalMinutes = useMemo(() => days.reduce((acc, day) => acc + dayMinutes(day), 0), [days]);
-  const rotationMinutesTotal = useMemo(() => shift?.rotationPattern.reduce((acc, step) => acc + rotationMinutes(step), 0) ?? 0, [shift]);
+  const rotationMinutesTotal = useMemo(() => rotationPattern.reduce((acc, step) => acc + rotationMinutes(step as Shift['rotationPattern'][number]), 0), [rotationPattern]);
 
   useEffect(() => {
     const accessToken = getAccessToken();
@@ -90,7 +103,7 @@ export default function ShiftDetailPage() {
         setActive(shiftResult.active);
         setRotationStartDate(shiftResult.rotationStartDate ?? '');
         setDays(shiftResult.days.map(({ id: _id, ...day }) => day));
-        setRotationPattern(JSON.stringify(shiftResult.rotationPattern.map(({ id: _id, ...step }) => step), null, 2));
+        setRotationPattern(shiftResult.rotationPattern.map(({ id: _id, ...step }) => step));
         setAssignments(assignmentsResult);
         setOverrides(overridesResult.filter((item) => item.shift?.id === shiftId || item.kind === 'OFF'));
         setEmployees(employeesResult.data);
@@ -117,6 +130,7 @@ export default function ShiftDetailPage() {
       api.shiftAssignments.listOverrides(token, {})
     ]);
     setShift(shiftResult);
+    setRotationPattern(shiftResult.rotationPattern.map(({ id: _id, ...step }) => step));
     setAssignments(assignmentsResult);
     setOverrides(overridesResult.filter((item) => item.shift?.id === shiftId || item.kind === 'OFF'));
   }
@@ -130,16 +144,6 @@ export default function ShiftDetailPage() {
     setSaving(true);
     setError(null);
     try {
-      const parsedRotation = rotationPattern.trim()
-        ? (JSON.parse(rotationPattern) as Array<{
-            working: boolean;
-            startTime: string | null;
-            endTime: string | null;
-            breakMinutes: number;
-            workingMinutes: number | null;
-            crossesMidnight: boolean;
-          }>)
-        : [];
       const updated = await api.shifts.update(token, shift.id, {
         name,
         code,
@@ -148,11 +152,11 @@ export default function ShiftDetailPage() {
         active,
         rotationStartDate: rotationStartDate || null,
         days,
-        rotationPattern: parsedRotation
+        rotationPattern
       });
       setShift(updated);
       setDays(updated.days.map(({ id: _id, ...day }) => day));
-      setRotationPattern(JSON.stringify(updated.rotationPattern.map(({ id: _id, ...step }) => step), null, 2));
+      setRotationPattern(updated.rotationPattern.map(({ id: _id, ...step }) => step));
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : 'No se pudo actualizar el turno');
     } finally {
@@ -314,16 +318,12 @@ export default function ShiftDetailPage() {
           </div>
         </div>
 
-        <div className="field">
-          <label htmlFor="shiftRotationPattern">Patrón de rotación JSON</label>
-          <textarea
-            id="shiftRotationPattern"
-            rows={8}
-            value={rotationPattern}
-            onChange={(e) => setRotationPattern(e.target.value)}
-            spellCheck={false}
-          />
-        </div>
+        <RotationPatternEditor
+          value={rotationPattern}
+          onChange={setRotationPattern}
+          title="Patrón de rotación"
+          description="Edita el ciclo por bloques y reorganiza los pasos visualmente. El turno puede quedarse sin pasos si es semanal."
+        />
 
         <div className="stack">
           {days.map((day, index) => (
@@ -432,7 +432,7 @@ export default function ShiftDetailPage() {
             <p className="meta">Si existe un patrón rotativo, se aplica sobre la fecha de inicio configurada.</p>
           </div>
         </div>
-        {shift.rotationPattern.length ? (
+        {rotationPattern.length ? (
           <>
             <div className="grid-3">
               <article className="stat">
@@ -444,37 +444,17 @@ export default function ShiftDetailPage() {
                 <span className="muted">Total ciclo</span>
               </article>
               <article className="stat">
-                <strong>{shift.rotationPattern.length}</strong>
+                <strong>{rotationPattern.length}</strong>
                 <span className="muted">Pasos</span>
               </article>
             </div>
-            <div className="table-wrap">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Paso</th>
-                    <th>Trabaja</th>
-                    <th>Inicio</th>
-                    <th>Fin</th>
-                    <th>Descanso</th>
-                    <th>Medianoche</th>
-                    <th>Minutos</th>
-                  </tr>
-                </thead>
-                <tbody>
-              {shift.rotationPattern.map((step) => (
-                    <tr key={step.id}>
-                      <td>{step.id}</td>
-                      <td>{step.working ? 'Sí' : 'No'}</td>
-                      <td>{step.startTime?.slice(0, 5) ?? '—'}</td>
-                      <td>{step.endTime?.slice(0, 5) ?? '—'}</td>
-                      <td>{step.breakMinutes}</td>
-                      <td>{step.crossesMidnight ? 'Sí' : 'No'}</td>
-                      <td>{minutesLabel(step.workingMinutes)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="rotation-pattern-compact stack">
+              {rotationPattern.map((step, index) => (
+                <article key={`${step.working ? 'work' : 'off'}-${index}`} className="rotation-step rotation-step--compact">
+                  <strong>Paso {index + 1}</strong>
+                  <p className="meta">{rotationStepLabel(step as Shift['rotationPattern'][number])}</p>
+                </article>
+              ))}
             </div>
           </>
         ) : (

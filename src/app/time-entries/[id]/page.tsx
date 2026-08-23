@@ -23,7 +23,6 @@ export default function TimeEntryDetailPage() {
   const params = useParams<{ id: string }>();
   const session = useMemo(() => getStoredSession(), []);
   const canManage =
-    session?.user.roles.includes('ROLE_ADMIN') ||
     session?.user.roles.includes('ROLE_COMPANY_ADMIN') ||
     session?.user.roles.includes('ROLE_RRHH') ||
     session?.user.roles.includes('ROLE_SUPER_ADMIN');

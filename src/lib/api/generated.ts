@@ -1,6 +1,13 @@
 import { env } from '../config';
 
-export type RoleName = 'ROLE_SUPER_ADMIN' | 'ROLE_ADMIN' | 'ROLE_COMPANY_ADMIN' | 'ROLE_RRHH' | 'ROLE_USER';
+export type RoleName =
+  | 'ROLE_SUPER_ADMIN'
+  | 'ROLE_COMPANY_ADMIN'
+  | 'ROLE_RRHH'
+  | 'ROLE_MANAGER'
+  | 'ROLE_USER'
+  | 'ROLE_AUDITOR'
+  | 'ROLE_WORKFORCE_REPRESENTATIVE';
 
 export type PaginationState = {
   page: number;
@@ -32,12 +39,17 @@ export type AuthSession = {
 
 export type PublicUser = {
   id: number;
+  email: string;
   numero: string;
   nombreEmpleado: string;
   companyId: number | null;
   employeeId: number | null;
+  companyName: string | null;
+  employeeName: string | null;
   roles: RoleName[];
   admin: boolean;
+  active: boolean;
+  lastLoginAt: string | null;
 };
 
 export type Company = {
@@ -48,6 +60,20 @@ export type Company = {
   workPolicy: Record<string, unknown> | null;
   active: boolean;
 };
+
+export type CreateUserAdminRequest = {
+  email: string;
+  numero: string;
+  nombreEmpleado: string;
+  dni: string;
+  password: string;
+  companyId?: number | null;
+  employeeId?: number | null;
+  roles: RoleName[];
+  active?: boolean;
+};
+
+export type UpdateUserAdminRequest = Partial<CreateUserAdminRequest>;
 
 export type PlanningPeriodStatus = 'DRAFT' | 'PUBLISHED';
 
@@ -929,7 +955,9 @@ export const api = {
     create: (token: string, body: CreateCompanyRequest) =>
       requestJsonWithMethod<Company>('/api/v1/companies', 'POST', { token, body }),
     update: (token: string, id: number, body: UpdateCompanyRequest) =>
-      requestJsonWithMethod<Company>(`/api/v1/companies/${id}`, 'PATCH', { token, body })
+      requestJsonWithMethod<Company>(`/api/v1/companies/${id}`, 'PATCH', { token, body }),
+    workLocations: (token: string, id: number, query: ListQuery & { active?: string } = {}) =>
+      requestJson<PaginatedResult<WorkLocation>>(`/api/v1/companies/${id}/work-locations`, { token, query })
   },
   workLocations: {
     list: (token: string, query: ListQuery & { active?: string; companyId?: number } = {}) =>
@@ -953,13 +981,21 @@ export const api = {
       requestJsonWithMethod<EmployeeLocationAssignment>(`/api/v1/employee-location-assignments/${id}`, 'PATCH', { token, body })
   },
   users: {
-    list: (token: string, query: ListQuery = {}) =>
+    list: (token: string, query: ListQuery & { role?: string; active?: string; companyId?: number; employeeId?: number } = {}) =>
       requestJson<PaginatedResult<PublicUser>>('/api/v1/users', { token, query }),
     mine: (token: string) => requestJson<PublicUser>('/api/v1/users/me', { token }),
-    byId: (token: string, id: number) => requestJson<PublicUser>(`/api/v1/users/${id}`, { token })
+    byId: (token: string, id: number) => requestJson<PublicUser>(`/api/v1/users/${id}`, { token }),
+    create: (token: string, body: CreateUserAdminRequest) =>
+      requestJsonWithMethod<PublicUser>('/api/v1/users', 'POST', { token, body }),
+    update: (token: string, id: number, body: UpdateUserAdminRequest) =>
+      requestJsonWithMethod<PublicUser>(`/api/v1/users/${id}`, 'PATCH', { token, body }),
+    activate: (token: string, id: number) =>
+      requestJsonWithMethod<PublicUser>(`/api/v1/users/${id}/activate`, 'PATCH', { token }),
+    deactivate: (token: string, id: number) =>
+      requestJsonWithMethod<PublicUser>(`/api/v1/users/${id}/deactivate`, 'PATCH', { token })
   },
   employees: {
-    list: (token: string, query: ListQuery = {}) =>
+    list: (token: string, query: ListQuery & { companyId?: number } = {}) =>
       requestJson<PaginatedResult<Employee>>('/api/v1/employees', { token, query }),
     mine: (token: string) => requestJson<Employee>('/api/v1/employees/me', { token }),
     byId: (token: string, id: number) => requestJson<Employee>(`/api/v1/employees/${id}`, { token }),

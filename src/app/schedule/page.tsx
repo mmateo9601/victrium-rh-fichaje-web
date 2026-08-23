@@ -22,7 +22,7 @@ export default function SchedulePage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
   const canAccess =
-    session?.user.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_SUPER_ADMIN') ??
+    session?.user.roles.some((role) => role === 'ROLE_RRHH' || role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_SUPER_ADMIN' || role === 'ROLE_MANAGER') ??
     false;
   const initialRange = useMemo(() => monthRange(new Date()), []);
   const [from, setFrom] = useState(initialRange.from);

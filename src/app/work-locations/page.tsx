@@ -32,7 +32,7 @@ export default function WorkLocationsPage() {
       return;
     }
     const canManage =
-      session?.user.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN') ??
+      session?.user.roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN') ??
       false;
     if (!canManage) {
       router.replace('/forbidden');

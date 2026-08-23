@@ -12,7 +12,7 @@ import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 export default function PlanningPeriodsPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
-  const canManage = session?.user.roles.includes('ROLE_ADMIN') || session?.user.roles.includes('ROLE_COMPANY_ADMIN') || session?.user.roles.includes('ROLE_RRHH') || session?.user.roles.includes('ROLE_SUPER_ADMIN');
+  const canManage = session?.user.roles.includes('ROLE_COMPANY_ADMIN') || session?.user.roles.includes('ROLE_RRHH') || session?.user.roles.includes('ROLE_SUPER_ADMIN');
   const [periods, setPeriods] = useState<PlanningPeriod[]>([]);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<PlanningPeriodStatus | ''>('');

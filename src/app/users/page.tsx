@@ -3,18 +3,76 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { api, type PublicUser } from '../../lib/api/generated';
+import { api, type Company, type Employee, type PublicUser, type RoleName } from '../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
-import { getRoleListLabel } from '../../lib/labels';
+import { formatDateTime, getRoleListLabel } from '../../lib/labels';
+
+type UserFilters = {
+  search: string;
+  role: string;
+  active: string;
+  companyId: string;
+  employeeId: string;
+};
+
+type UserFormState = {
+  email: string;
+  numero: string;
+  dni: string;
+  nombreEmpleado: string;
+  password: string;
+  companyId: string;
+  employeeId: string;
+  roles: RoleName[];
+  active: boolean;
+};
+
+const ROLE_OPTIONS: RoleName[] = [
+  'ROLE_SUPER_ADMIN',
+  'ROLE_COMPANY_ADMIN',
+  'ROLE_RRHH',
+  'ROLE_MANAGER',
+  'ROLE_USER',
+  'ROLE_AUDITOR',
+  'ROLE_WORKFORCE_REPRESENTATIVE'
+];
+
+function emptyForm(defaultCompanyId = ''): UserFormState {
+  return {
+    email: '',
+    numero: '',
+    dni: '',
+    nombreEmpleado: '',
+    password: '',
+    companyId: defaultCompanyId,
+    employeeId: '',
+    roles: ['ROLE_USER'],
+    active: true
+  };
+}
 
 export default function UsersPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
-  const canAccess = session?.user.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN') ?? false;
+  const roles = session?.user.roles ?? [];
+  const canAccess = roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN');
+  const canManageGlobally = roles.includes('ROLE_SUPER_ADMIN');
+  const fixedCompanyId = !canManageGlobally ? String(session?.user.companyId ?? '') : '';
   const [users, setUsers] = useState<PublicUser[]>([]);
-  const [search, setSearch] = useState('');
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [filters, setFilters] = useState<UserFilters>({
+    search: '',
+    role: '',
+    active: '',
+    companyId: fixedCompanyId,
+    employeeId: ''
+  });
+  const [form, setForm] = useState<UserFormState>(emptyForm(fixedCompanyId));
+  const [selectedUser, setSelectedUser] = useState<PublicUser | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,21 +86,185 @@ export default function UsersPage() {
       router.replace('/forbidden');
       return;
     }
+  }, [router, canAccess]);
+
+  useEffect(() => {
+    const token = getAccessToken();
+    if (!token || !canAccess) {
+      return;
+    }
     const authToken = token;
 
-    async function load() {
+    async function loadOptions() {
       try {
-        const result = await api.users.list(authToken, { search, pageSize: 50 });
+        if (canManageGlobally) {
+          const companyResult = await api.companies.list(authToken, { pageSize: 100 });
+          setCompanies(companyResult.data);
+        } else {
+          const mine = await api.companies.mine(authToken);
+          setCompanies([mine]);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'No se pudieron cargar las empresas');
+      }
+    }
+
+    void loadOptions();
+  }, [canAccess, canManageGlobally]);
+
+  useEffect(() => {
+    const token = getAccessToken();
+    const scopeCompanyId = (form.companyId || filters.companyId || '').trim();
+    if (!token || !canAccess || !scopeCompanyId) {
+      setEmployees([]);
+      return;
+    }
+
+    const authToken = token;
+    const companyId = Number(scopeCompanyId);
+
+    async function loadEmployees() {
+      try {
+        const result = await api.employees.list(authToken, { companyId, pageSize: 100 });
+        setEmployees(result.data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'No se pudieron cargar los empleados');
+      }
+    }
+
+    void loadEmployees();
+  }, [canAccess, filters.companyId, form.companyId]);
+
+  useEffect(() => {
+    const token = getAccessToken();
+    if (!token || !canAccess) {
+      return;
+    }
+    const authToken = token;
+
+    async function loadUsers() {
+      setLoading(true);
+      try {
+        const result = await api.users.list(authToken, {
+          search: filters.search || undefined,
+          role: filters.role || undefined,
+          active: filters.active || undefined,
+          companyId: filters.companyId ? Number(filters.companyId) : undefined,
+          employeeId: filters.employeeId ? Number(filters.employeeId) : undefined,
+          pageSize: 100
+        });
         setUsers(result.data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'No se pudo cargar usuarios');
+        setError(err instanceof Error ? err.message : 'No se pudieron cargar los usuarios');
       } finally {
         setLoading(false);
       }
     }
 
-    void load();
-  }, [router, search, canAccess]);
+    void loadUsers();
+  }, [canAccess, filters.search, filters.role, filters.active, filters.companyId, filters.employeeId]);
+
+  function beginCreate() {
+    setSelectedUser(null);
+    setForm(emptyForm(fixedCompanyId));
+  }
+
+  function beginEdit(user: PublicUser) {
+    setSelectedUser(user);
+    setForm({
+      email: user.email,
+      numero: user.numero,
+      dni: '',
+      nombreEmpleado: user.nombreEmpleado,
+      password: '',
+      companyId: user.companyId ? String(user.companyId) : fixedCompanyId,
+      employeeId: user.employeeId ? String(user.employeeId) : '',
+      roles: user.roles,
+      active: user.active
+    });
+  }
+
+  async function saveUser() {
+    const token = getAccessToken();
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    try {
+      const basePayload = {
+        email: form.email.trim(),
+        numero: form.numero.trim(),
+        dni: form.dni.trim(),
+        nombreEmpleado: form.nombreEmpleado.trim(),
+        companyId: form.companyId ? Number(form.companyId) : undefined,
+        employeeId: form.employeeId ? Number(form.employeeId) : undefined,
+        roles: form.roles,
+        active: form.active
+      };
+
+      if (selectedUser) {
+        const payload = {
+          ...basePayload,
+          ...(form.password ? { password: form.password } : {})
+        };
+        await api.users.update(token, selectedUser.id, payload);
+      } else {
+        if (!form.password) {
+          throw new Error('La contraseña inicial es obligatoria para crear usuarios');
+        }
+        await api.users.create(token, {
+          ...basePayload,
+          password: form.password
+        });
+      }
+
+      beginCreate();
+      const refreshed = await api.users.list(token, {
+        search: filters.search || undefined,
+        role: filters.role || undefined,
+        active: filters.active || undefined,
+        companyId: filters.companyId ? Number(filters.companyId) : undefined,
+        employeeId: filters.employeeId ? Number(filters.employeeId) : undefined,
+        pageSize: 100
+      });
+      setUsers(refreshed.data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo guardar el usuario');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function setUserActive(user: PublicUser, active: boolean) {
+    const token = getAccessToken();
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+
+    setError(null);
+    try {
+      if (active) {
+        await api.users.activate(token, user.id);
+      } else {
+        await api.users.deactivate(token, user.id);
+      }
+      const refreshed = await api.users.list(token, {
+        search: filters.search || undefined,
+        role: filters.role || undefined,
+        active: filters.active || undefined,
+        companyId: filters.companyId ? Number(filters.companyId) : undefined,
+        employeeId: filters.employeeId ? Number(filters.employeeId) : undefined,
+        pageSize: 100
+      });
+      setUsers(refreshed.data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo actualizar el estado del usuario');
+    }
+  }
 
   async function exportCsv() {
     const token = getAccessToken();
@@ -54,15 +276,32 @@ export default function UsersPage() {
     setExporting(true);
     setError(null);
     try {
-      const items = await collectAllPages((query) => api.users.list(token, { search, ...query }), { search });
+      const items = await collectAllPages(
+        (query) =>
+          api.users.list(token, {
+            search: filters.search || undefined,
+            role: filters.role || undefined,
+            active: filters.active || undefined,
+            companyId: filters.companyId ? Number(filters.companyId) : undefined,
+            employeeId: filters.employeeId ? Number(filters.employeeId) : undefined,
+            ...query
+          }),
+        {
+          search: filters.search || undefined,
+          role: filters.role || undefined,
+          active: filters.active || undefined
+        }
+      );
       const csv = buildCsv(
-        ['Número', 'Nombre', 'Empresa', 'Roles', 'Admin'],
+        ['Usuario', 'Email', 'Empresa', 'Rol', 'Empleado', 'Estado', 'Último acceso'],
         items.map((user) => [
           user.numero,
-          user.nombreEmpleado,
-          user.companyId ?? 'Global',
+          user.email,
+          user.companyName ?? 'Global',
           getRoleListLabel(user.roles),
-          user.admin ? 'Sí' : 'No'
+          user.employeeName ?? '-',
+          user.active ? 'Activo' : 'Inactivo',
+          user.lastLoginAt ? formatDateTime(user.lastLoginAt) : 'Sin acceso'
         ])
       );
       downloadCsv('usuarios.csv', csv);
@@ -87,27 +326,186 @@ export default function UsersPage() {
       <section className="hero">
         <span className="eyebrow">Identidad</span>
         <h1>Usuarios</h1>
-        <p>Listado de identidades de acceso para la organización.</p>
-        {error ? <div className="notice" role="alert">{error}</div> : null}
+        <p>Alta, edición y activación de accesos por empresa, con vínculo opcional a empleado.</p>
+        {error ? (
+          <div className="notice" role="alert">
+            {error}
+          </div>
+        ) : null}
+      </section>
+
+      <section className="panel stack">
+        <div className="toolbar">
+          <div>
+            <h2 className="section-title">Filtros</h2>
+            <p className="meta">La compañía se limita por el rol autenticado.</p>
+          </div>
+          <div className="hero-actions" style={{ marginTop: 0 }}>
+            <input className="field" placeholder="Buscar..." value={filters.search} onChange={(e) => setFilters((current) => ({ ...current, search: e.target.value }))} />
+            <button className="button button-secondary" type="button" onClick={exportCsv} disabled={exporting}>
+              {exporting ? 'Exportando...' : 'Exportar CSV'}
+            </button>
+            <button className="button" type="button" onClick={beginCreate}>
+              Nuevo usuario
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid--3">
+          <label className="stack">
+            <span className="field-label">Rol</span>
+            <select className="field" value={filters.role} onChange={(e) => setFilters((current) => ({ ...current, role: e.target.value }))}>
+              <option value="">Todos</option>
+              {ROLE_OPTIONS.map((role) => (
+                <option key={role} value={role}>
+                  {getRoleListLabel([role])}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="stack">
+            <span className="field-label">Estado</span>
+            <select className="field" value={filters.active} onChange={(e) => setFilters((current) => ({ ...current, active: e.target.value }))}>
+              <option value="">Todos</option>
+              <option value="true">Activos</option>
+              <option value="false">Inactivos</option>
+            </select>
+          </label>
+          {canManageGlobally ? (
+            <label className="stack">
+              <span className="field-label">Empresa</span>
+              <select className="field" value={filters.companyId} onChange={(e) => setFilters((current) => ({ ...current, companyId: e.target.value }))}>
+                <option value="">Todas</option>
+                {companies.map((company) => (
+                  <option key={company.id} value={company.id}>
+                    {company.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+        </div>
+      </section>
+
+      <section className="panel stack">
+        <div className="toolbar">
+          <div>
+            <h2 className="section-title">{selectedUser ? 'Editar usuario' : 'Crear usuario'}</h2>
+            <p className="meta">
+              {selectedUser ? `Editando ${selectedUser.nombreEmpleado}` : 'Define identidad, compañía y vínculo a empleado si aplica.'}
+            </p>
+          </div>
+          {selectedUser ? (
+            <button className="button button-secondary" type="button" onClick={beginCreate}>
+              Cancelar edición
+            </button>
+          ) : null}
+        </div>
+
+        <div className="grid grid--2">
+          <label className="stack">
+            <span className="field-label">Email</span>
+            <input className="field" value={form.email} onChange={(e) => setForm((current) => ({ ...current, email: e.target.value }))} />
+          </label>
+          <label className="stack">
+            <span className="field-label">Login / número</span>
+            <input className="field" value={form.numero} onChange={(e) => setForm((current) => ({ ...current, numero: e.target.value }))} />
+          </label>
+          <label className="stack">
+            <span className="field-label">DNI</span>
+            <input className="field" value={form.dni} onChange={(e) => setForm((current) => ({ ...current, dni: e.target.value }))} />
+          </label>
+          <label className="stack">
+            <span className="field-label">Nombre</span>
+            <input className="field" value={form.nombreEmpleado} onChange={(e) => setForm((current) => ({ ...current, nombreEmpleado: e.target.value }))} />
+          </label>
+          <label className="stack">
+            <span className="field-label">Contraseña inicial {selectedUser ? '(opcional)' : ''}</span>
+            <input
+              className="field"
+              type="password"
+              value={form.password}
+              onChange={(e) => setForm((current) => ({ ...current, password: e.target.value }))}
+            />
+          </label>
+          <label className="stack">
+            <span className="field-label">Estado</span>
+            <select className="field" value={String(form.active)} onChange={(e) => setForm((current) => ({ ...current, active: e.target.value === 'true' }))}>
+              <option value="true">Activo</option>
+              <option value="false">Inactivo</option>
+            </select>
+          </label>
+          <label className="stack">
+            <span className="field-label">Empresa</span>
+            <select
+              className="field"
+              value={form.companyId}
+              onChange={(e) => {
+                const companyId = e.target.value;
+                setForm((current) => ({ ...current, companyId, employeeId: '' }));
+              }}
+              disabled={!canManageGlobally}
+            >
+              <option value="">{canManageGlobally ? 'Selecciona una empresa' : 'Empresa del contexto'}</option>
+              {(canManageGlobally ? companies : companies.slice(0, 1)).map((company) => (
+                <option key={company.id} value={company.id}>
+                  {company.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="stack">
+            <span className="field-label">Empleado vinculado</span>
+            <select className="field" value={form.employeeId} onChange={(e) => setForm((current) => ({ ...current, employeeId: e.target.value }))}>
+              <option value="">Sin vínculo</option>
+              {employees.map((employee) => (
+                <option key={employee.id} value={employee.id}>
+                  {employee.numero} · {employee.nombreEmpleado}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="stack">
+          <span className="field-label">Roles</span>
+          <div className="chips-grid">
+            {ROLE_OPTIONS.map((role) => {
+              const checked = form.roles.includes(role);
+              return (
+                <label key={role} className={checked ? 'chip chip--selected' : 'chip'}>
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(e) =>
+                      setForm((current) => ({
+                        ...current,
+                        roles: e.target.checked ? [...new Set([...current.roles, role])] : current.roles.filter((value) => value !== role)
+                      }))
+                    }
+                  />
+                  <span>{getRoleListLabel([role])}</span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="hero-actions">
+          <button className="button" type="button" onClick={() => void saveUser()} disabled={saving}>
+            {saving ? 'Guardando...' : selectedUser ? 'Guardar cambios' : 'Crear usuario'}
+          </button>
+          <button className="button button-secondary" type="button" onClick={beginCreate}>
+            Limpiar
+          </button>
+        </div>
       </section>
 
       <section className="panel stack">
         <div className="toolbar">
           <div>
             <h2 className="section-title">Listado</h2>
-            <p className="meta">Se filtra por la empresa del usuario autenticado.</p>
-          </div>
-          <div className="hero-actions" style={{ marginTop: 0 }}>
-            <input
-              className="field"
-              style={{ minWidth: '240px' }}
-              placeholder="Buscar usuario..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <button className="button button-secondary" type="button" onClick={exportCsv} disabled={exporting}>
-              {exporting ? 'Exportando...' : 'Exportar CSV'}
-            </button>
+            <p className="meta">Usuario, empresa, rol, vínculo y acceso.</p>
           </div>
         </div>
 
@@ -115,26 +513,41 @@ export default function UsersPage() {
           <table className="table">
             <thead>
               <tr>
-                <th>Número</th>
-                <th>Nombre</th>
+                <th>Usuario</th>
+                <th>Email</th>
                 <th>Empresa</th>
-                <th>Roles</th>
-                <th>Admin</th>
+                <th>Rol</th>
+                <th>Empleado</th>
+                <th>Estado</th>
+                <th>Último acceso</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {users.map((user) => (
                 <tr key={user.id}>
                   <td>{user.numero}</td>
-                  <td>{user.nombreEmpleado}</td>
-                  <td>{user.companyId ?? 'Global'}</td>
+                  <td>{user.email}</td>
+                  <td>{user.companyName ?? 'Global'}</td>
                   <td>{getRoleListLabel(user.roles)}</td>
-                  <td>{user.admin ? 'Sí' : 'No'}</td>
+                  <td>{user.employeeName ?? '-'}</td>
+                  <td>{user.active ? 'Activo' : 'Inactivo'}</td>
+                  <td>{user.lastLoginAt ? formatDateTime(user.lastLoginAt) : 'Sin acceso'}</td>
+                  <td>
+                    <div className="inline-actions">
+                      <button className="button button-secondary" type="button" onClick={() => beginEdit(user)}>
+                        Editar
+                      </button>
+                      <button className="button button-secondary" type="button" onClick={() => void setUserActive(user, !user.active)}>
+                        {user.active ? 'Desactivar' : 'Activar'}
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
               {!users.length ? (
                 <tr>
-                  <td colSpan={5} className="muted">
+                  <td colSpan={8} className="muted">
                     Sin resultados.
                   </td>
                 </tr>

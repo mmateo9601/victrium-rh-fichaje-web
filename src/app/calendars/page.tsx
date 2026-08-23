@@ -17,7 +17,7 @@ export default function CalendarsPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
   const canManage =
-    session?.user.roles.includes('ROLE_ADMIN') ||
+    session?.user.roles.includes('ROLE_COMPANY_ADMIN') ||
     session?.user.roles.includes('ROLE_RRHH') ||
     session?.user.roles.includes('ROLE_SUPER_ADMIN');
 

@@ -47,7 +47,8 @@ const baseCell: ScheduleCell = {
   shift: {
     id: 1,
     name: 'Mañana',
-    code: 'M'
+    code: 'M',
+    color: '#2f6fed'
   },
   workLocationId: 11,
   workLocationName: 'Madrid Centro',
@@ -226,8 +227,6 @@ describe('calendar builders', () => {
   it('builds calendar, time entry and planning period events', () => {
     const calendar = {
       id: 3,
-      companyId: 7,
-      companyName: 'Victrium',
       nombre: 'Calendario 2026',
       year: 2026,
       minutosMasEntrada: 10,

@@ -14,7 +14,7 @@ import { getAccessToken, useStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
 import { getRoleLabel, getRoleListLabel } from '../../lib/labels';
 
-const baseRoleOptions: RoleName[] = ['ROLE_USER', 'ROLE_RRHH', 'ROLE_COMPANY_ADMIN', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'];
+const baseRoleOptions: RoleName[] = ['ROLE_USER', 'ROLE_RRHH', 'ROLE_COMPANY_ADMIN', 'ROLE_MANAGER', 'ROLE_SUPER_ADMIN'];
 
 export default function EmployeesPage() {
   const router = useRouter();
@@ -37,7 +37,7 @@ export default function EmployeesPage() {
 
   const session = useStoredSession();
   const canManage =
-    session?.user.roles.some((role) => role === 'ROLE_ADMIN' || role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN') ??
+    session?.user.roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN') ??
     false;
   const roleOptions = useMemo(
     () =>

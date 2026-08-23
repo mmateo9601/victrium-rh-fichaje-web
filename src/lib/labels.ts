@@ -7,9 +7,9 @@ export function hasManagementAccess(roles: RoleName[] | undefined | null) {
 
   return (
     roles.includes('ROLE_SUPER_ADMIN') ||
-    roles.includes('ROLE_ADMIN') ||
     roles.includes('ROLE_COMPANY_ADMIN') ||
-    roles.includes('ROLE_RRHH')
+    roles.includes('ROLE_RRHH') ||
+    roles.includes('ROLE_MANAGER')
   );
 }
 
@@ -22,16 +22,24 @@ export function getRoleLabel(roles: RoleName[] | undefined | null) {
     return 'Super admin';
   }
 
-  if (roles.includes('ROLE_ADMIN')) {
-    return 'Administrador';
-  }
-
   if (roles.includes('ROLE_COMPANY_ADMIN')) {
     return 'Admin. empresa';
   }
 
   if (roles.includes('ROLE_RRHH')) {
     return 'RRHH';
+  }
+
+  if (roles.includes('ROLE_MANAGER')) {
+    return 'Manager';
+  }
+
+  if (roles.includes('ROLE_AUDITOR')) {
+    return 'Auditor';
+  }
+
+  if (roles.includes('ROLE_WORKFORCE_REPRESENTATIVE')) {
+    return 'Representante';
   }
 
   return 'Empleado';

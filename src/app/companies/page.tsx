@@ -26,7 +26,7 @@ export default function CompaniesPage() {
   const session = useMemo(() => getStoredSession(), []);
   const canManage =
     session?.user.roles.some(
-      (role) => role === 'ROLE_ADMIN' || role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_SUPER_ADMIN'
+      (role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_SUPER_ADMIN'
     ) ?? false;
 
   function beginEdit(company: Company) {

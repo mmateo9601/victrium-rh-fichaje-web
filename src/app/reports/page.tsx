@@ -12,7 +12,7 @@ import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 export default function ReportsPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
-  const canAccess = Boolean(session?.user.roles.some((role) => ['ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN'].includes(role)));
+  const canAccess = Boolean(session?.user.roles.some((role) => ['ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH'].includes(role)));
   const [summary, setSummary] = useState<ReportsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
