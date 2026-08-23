@@ -10,6 +10,7 @@ import {
   Clock3,
   Home,
   LayoutGrid,
+  Menu,
   ShieldCheck,
   Sparkles,
   Users,
@@ -200,16 +201,20 @@ export function Topbar({ children }: TopbarProps) {
         <header className="app-topbar">
           <div className="app-topbar__left">
             <button
-              className="icon-button"
+              className={mobileOpen ? 'menu-toggle is-open' : 'menu-toggle'}
               type="button"
               onClick={() => setMobileOpen((current) => !current)}
               aria-label={mobileOpen ? 'Cerrar navegación' : 'Abrir navegación'}
               aria-expanded={mobileOpen}
               aria-controls="primary-navigation"
             >
-              <span />
-              <span />
-              <span />
+              <span className="menu-toggle__icon" aria-hidden="true">
+                {mobileOpen ? <span className="menu-toggle__close-mark" /> : <Menu size={18} strokeWidth={2.25} />}
+              </span>
+              <span className="menu-toggle__text">
+                <strong>{mobileOpen ? 'Cerrar' : 'Menú'}</strong>
+                <small>Navegación</small>
+              </span>
             </button>
             <div className="stack">
               <span className="app-topbar__eyebrow">Victrium RH</span>
