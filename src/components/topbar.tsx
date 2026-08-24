@@ -129,9 +129,11 @@ export function Topbar({ children }: TopbarProps) {
             </span>
           </Link>
 
-          <button className="sidebar__close button button-secondary" type="button" onClick={closeMobileNavigation} aria-label="Cerrar navegación">
-            Cerrar
-          </button>
+          {mobileOpen ? (
+            <button className="sidebar__close button button-secondary" type="button" onClick={closeMobileNavigation} aria-label="Cerrar navegación">
+              Cerrar
+            </button>
+          ) : null}
         </div>
 
         <nav className="sidebar__nav" aria-label="Secciones">
@@ -188,8 +190,8 @@ export function Topbar({ children }: TopbarProps) {
                 Acceder
               </Link>
             )}
-            {session ? (
-              <button className="button button-ghost button-full" type="button" onClick={() => void logout()} disabled={loggingOut}>
+            {session && mobileOpen ? (
+              <button className="sidebar__logout button button-ghost button-full" type="button" onClick={() => void logout()} disabled={loggingOut}>
                 {loggingOut ? 'Saliendo...' : 'Cerrar sesión'}
               </button>
             ) : null}
@@ -225,7 +227,7 @@ export function Topbar({ children }: TopbarProps) {
           <div className="app-topbar__right">
             {session ? <span className="session-pill">{getRoleLabel(roles)}</span> : null}
             {session ? (
-              <button className="button button-secondary" type="button" onClick={() => void logout()} disabled={loggingOut}>
+              <button className="app-topbar__logout button button-secondary" type="button" onClick={() => void logout()} disabled={loggingOut}>
                 {loggingOut ? 'Saliendo...' : 'Cerrar sesión'}
               </button>
             ) : (

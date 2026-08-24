@@ -285,6 +285,10 @@ code {
   gap: 0.6rem;
 }
 
+.sidebar__logout {
+  display: none;
+}
+
 .app-main {
   min-width: 0;
   display: grid;
@@ -1726,6 +1730,10 @@ textarea {
   }
 
   .sidebar__close {
+    display: inline-flex;
+  }
+
+  .sidebar__logout {
     display: inline-flex;
   }
 

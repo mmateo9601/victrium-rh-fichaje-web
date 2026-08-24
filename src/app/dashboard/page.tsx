@@ -17,7 +17,7 @@ import {
   type TimeEntry,
   type Vacation
 } from '../../lib/api/generated';
-import { getAccessToken, getStoredSession, signOut } from '../../lib/auth/session';
+import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 import {
   formatDurationLabel,
   formatInputDate,
@@ -152,11 +152,6 @@ export default function DashboardPage() {
     void load();
   }, [router, weekRange.from, weekRange.to]);
 
-  async function logout() {
-    await signOut();
-    router.replace('/login');
-  }
-
   if (loading) {
     return (
       <section className="dashboard-skeleton stack">
@@ -206,9 +201,6 @@ export default function DashboardPage() {
             <Link className="button button-secondary" href="/time-entries">
               Ver fichajes
             </Link>
-            <button className="button button-primary" type="button" onClick={logout}>
-              Cerrar sesión
-            </button>
           </>
         }
         stats={pageStats.map((stat) => (

@@ -52,7 +52,7 @@ describe('Topbar', () => {
 
     expect(screen.getByRole('link', { name: /inicio/i })).toHaveAttribute('href', '/dashboard');
     expect(screen.getByRole('link', { name: /empleados/i })).toHaveAttribute('href', '/employees');
-    expect(screen.getAllByRole('button', { name: /cerrar sesión/i })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: /cerrar sesión/i })).toHaveLength(1);
   });
 
   it('shows a reduced company-admin navigation without platform links', () => {
@@ -71,9 +71,9 @@ describe('Topbar', () => {
 
     expect(screen.getByRole('link', { name: /empleados/i })).toHaveAttribute('href', '/employees');
     expect(screen.getByRole('link', { name: /planificación/i })).toHaveAttribute('href', '/schedule');
-    expect(screen.queryByRole('link', { name: /usuarios/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /usuarios/i })).toHaveAttribute('href', '/users');
     expect(screen.queryByRole('link', { name: /plataforma/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /empresas/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /empresas/i })).toHaveAttribute('href', '/companies');
   });
 
   it('renders public routes without the app shell', () => {
