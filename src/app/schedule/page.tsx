@@ -245,8 +245,8 @@ export default function SchedulePage() {
     <div className="stack">
       <PageHeader
         eyebrow="Organización"
-        title="Planificación"
-        description="Consulta turnos, ausencias y cobertura por empleado y por día."
+        title="Planificación de trabajo"
+        description="Consulta y ajusta asignaciones por periodo, empleado y centro de trabajo."
         stats={
           <>
             <article className="stat stat--compact">
@@ -267,7 +267,30 @@ export default function SchedulePage() {
             </article>
           </>
         }
-      />
+        />
+
+      <section className="panel stack">
+        <div className="toolbar">
+          <div>
+            <h2 className="section-title">Cómo leer esta pantalla</h2>
+            <p className="meta">Usa estos tres bloques para entender el flujo sin entrar en detalles técnicos.</p>
+          </div>
+        </div>
+        <div className="grid-3">
+          <article className="stat">
+            <strong>Periodos</strong>
+            <span className="muted">Ventana temporal que vas a revisar o publicar.</span>
+          </article>
+          <article className="stat">
+            <strong>Turnos</strong>
+            <span className="muted">Plantillas horarias reutilizables para cada jornada.</span>
+          </article>
+          <article className="stat">
+            <strong>Planificación</strong>
+            <span className="muted">Asignación concreta por empleado, fecha y centro.</span>
+          </article>
+        </div>
+      </section>
 
       {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
 
@@ -276,7 +299,7 @@ export default function SchedulePage() {
           <div>
             <h2 className="section-title">Filtros</h2>
             <p className="meta">
-              Rango actual {formatLongDate(from)} - {formatLongDate(to)}.
+              Rango actual {formatLongDate(from)} - {formatLongDate(to)}. Primero elige periodo y luego afina por empleado o turno.
             </p>
             {planningPeriodId ? (
               <p className="meta">

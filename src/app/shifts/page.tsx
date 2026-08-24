@@ -191,11 +191,11 @@ export default function ShiftsPage() {
     <div className="stack">
       <PageHeader
         eyebrow="Organización"
-        title="Turnos"
-        description="Define horarios reutilizables, jornadas nocturnas y descansos planificados."
+        title="Turnos de trabajo"
+        description="Plantillas horarias reutilizables para mañana, tarde, noche o jornadas partidas."
         actions={
           <a className="button button-primary" href="#nuevo-turno">
-            Crear turno
+            Nuevo turno
           </a>
         }
         stats={
@@ -218,10 +218,10 @@ export default function ShiftsPage() {
         <div className="toolbar">
           <div>
             <h2 className="section-title">Nuevo turno</h2>
-            <p className="meta">Editor semanal simple con horario, descanso y jornadas que cruzan medianoche.</p>
+            <p className="meta">Define una plantilla clara: horario, descanso y pasos de rotación si aplica.</p>
           </div>
           <button className="button button-primary" type="submit" disabled={creating}>
-            {creating ? 'Guardando...' : 'Crear turno'}
+            {creating ? 'Guardando...' : 'Guardar turno'}
           </button>
         </div>
 

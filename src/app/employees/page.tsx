@@ -10,7 +10,7 @@ import {
   type Employee,
   type RoleName
 } from '../../lib/api/generated';
-import { getAccessToken, getEffectiveRoles, useStoredSession } from '../../lib/auth/session';
+import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
 import { getRoleLabel, getRoleListLabel } from '../../lib/labels';
 
@@ -36,7 +36,8 @@ export default function EmployeesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const session = useStoredSession();
+  const [session, setSession] = useState(() => getStoredSession());
+  const [sessionReady, setSessionReady] = useState(false);
   const roles = getEffectiveRoles(session);
   const canManage = roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN');
   const roleOptions = useMemo(
@@ -55,8 +56,20 @@ export default function EmployeesPage() {
   }, [roleOptions]);
 
   useEffect(() => {
+    setSession(getStoredSession());
+    setSessionReady(true);
+  }, []);
+
+  useEffect(() => {
     const token = getAccessToken();
     if (!token) {
+      router.replace('/login');
+      return;
+    }
+    if (!sessionReady) {
+      return;
+    }
+    if (!session) {
       router.replace('/login');
       return;
     }
@@ -88,7 +101,7 @@ export default function EmployeesPage() {
     }
 
     void load();
-  }, [router, search, companyFilter, pagination.page, pagination.pageSize, canManage]);
+  }, [router, search, companyFilter, pagination.page, pagination.pageSize, canManage, session, sessionReady]);
 
   async function createEmployee(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
