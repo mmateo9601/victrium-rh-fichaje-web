@@ -46,7 +46,7 @@ export default function PlatformPage() {
   if (loading) {
     return (
       <section className="hero">
-        <span className="eyebrow">Plataforma</span>
+        <span className="eyebrow">Configuración</span>
         <h1>Cargando consola...</h1>
       </section>
     );
@@ -56,7 +56,7 @@ export default function PlatformPage() {
     <div className="stack">
       <PageHeader
         eyebrow="Super admin"
-        title="Consola de plataforma"
+        title="Configuración de plataforma"
         description="Resumen operativo global de compañías, centros, planificación y actividad."
         stats={
           <>

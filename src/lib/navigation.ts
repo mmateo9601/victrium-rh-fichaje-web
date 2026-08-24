@@ -46,14 +46,14 @@ export const navigationGroups: NavigationGroup[] = [
   {
     label: 'Organización',
     items: [
+      { href: '/companies', label: 'Empresas', icon: 'building', roles: ['ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN'] },
       { href: '/work-locations', label: 'Centros', icon: 'building', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN'] },
       { href: '/calendars', label: 'Calendarios', icon: 'calendar', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN'] },
       { href: '/shifts', label: 'Turnos', icon: 'sparkles', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN', 'ROLE_MANAGER'] },
       { href: '/planning-periods', label: 'Periodos', icon: 'layout-grid', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN', 'ROLE_MANAGER'] },
       { href: '/reports', label: 'Informes', icon: 'layout-grid', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN'] },
-      { href: '/platform', label: 'Plataforma', icon: 'sparkles', roles: ['ROLE_SUPER_ADMIN'] },
+      { href: '/platform', label: 'Configuración', icon: 'sparkles', roles: ['ROLE_SUPER_ADMIN'] },
       { href: '/schedule', label: 'Planificación', icon: 'layout-grid', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN', 'ROLE_MANAGER'] },
-      { href: '/companies', label: 'Empresas', icon: 'building', roles: ['ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN'] },
       { href: '/api-keys', label: 'Claves', icon: 'shield', roles: ['ROLE_SUPER_ADMIN'] }
     ]
   }
@@ -81,7 +81,7 @@ export function getNavigationTitle(pathname: string) {
   if (pathname.startsWith('/shifts')) return 'Turnos';
   if (pathname.startsWith('/planning-periods')) return 'Periodos de planificación';
   if (pathname.startsWith('/reports')) return 'Informes';
-  if (pathname.startsWith('/platform')) return 'Plataforma';
+  if (pathname.startsWith('/platform')) return 'Configuración';
   if (pathname.startsWith('/schedule')) return 'Planificación';
   if (pathname.startsWith('/companies')) return 'Empresas';
   if (pathname.startsWith('/api-keys')) return 'Claves';

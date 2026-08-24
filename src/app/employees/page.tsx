@@ -22,6 +22,7 @@ export default function EmployeesPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [pagination, setPagination] = useState({ page: 1, pageSize: 10, total: 0, totalPages: 0 });
   const [search, setSearch] = useState('');
+  const [companyFilter, setCompanyFilter] = useState('');
   const [createCompanyId, setCreateCompanyId] = useState('');
   const [createNumero, setCreateNumero] = useState('');
   const [createNombre, setCreateNombre] = useState('');
@@ -69,7 +70,12 @@ export default function EmployeesPage() {
     async function load() {
       try {
         const [employeesResult, companiesResult] = await Promise.all([
-          api.employees.list(authToken, { search, page: pagination.page, pageSize: pagination.pageSize }),
+          api.employees.list(authToken, {
+            search,
+            companyId: companyFilter ? Number(companyFilter) : undefined,
+            page: pagination.page,
+            pageSize: pagination.pageSize
+          }),
           api.companies.list(authToken, { pageSize: 50 })
         ]);
         setEmployees(employeesResult.data);
@@ -83,7 +89,7 @@ export default function EmployeesPage() {
     }
 
     void load();
-  }, [router, search, pagination.page, pagination.pageSize, canManage]);
+  }, [router, search, companyFilter, pagination.page, pagination.pageSize, canManage]);
 
   async function createEmployee(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -107,7 +113,12 @@ export default function EmployeesPage() {
         roles: createRoles,
         working: createWorking
       });
-      const refreshed = await api.employees.list(authToken, { search, page: 1, pageSize: pagination.pageSize });
+      const refreshed = await api.employees.list(authToken, {
+        search,
+        companyId: companyFilter ? Number(companyFilter) : undefined,
+        page: 1,
+        pageSize: pagination.pageSize
+      });
       setEmployees(refreshed.data);
       setPagination(refreshed.pagination);
       setCreateNumero('');
@@ -141,8 +152,8 @@ export default function EmployeesPage() {
     setError(null);
     try {
       const items = await collectAllPages(
-        (query) => api.employees.list(token, { search, ...query }),
-        { search }
+        (query) => api.employees.list(token, { search, companyId: companyFilter ? Number(companyFilter) : undefined, ...query }),
+        { search, companyId: companyFilter ? Number(companyFilter) : undefined }
       );
       const csv = buildCsv(
         ['Número', 'Nombre', 'Email', 'DNI', 'Empresa', 'Estado', 'Roles', 'Working'],
@@ -291,6 +302,24 @@ export default function EmployeesPage() {
                 setSearch(e.target.value);
               }}
             />
+            {session?.user.roles.includes('ROLE_SUPER_ADMIN') ? (
+              <select
+                className="field"
+                style={{ minWidth: '220px' }}
+                value={companyFilter}
+                onChange={(e) => {
+                  setPagination((current) => ({ ...current, page: 1 }));
+                  setCompanyFilter(e.target.value);
+                }}
+              >
+                <option value="">Todas las empresas</option>
+                {companies.map((company) => (
+                  <option key={company.id} value={company.id}>
+                    {company.name}
+                  </option>
+                ))}
+              </select>
+            ) : null}
             <button className="button button-secondary" type="button" onClick={exportCsv} disabled={exporting}>
               {exporting ? 'Exportando...' : 'Exportar CSV'}
             </button>

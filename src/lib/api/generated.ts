@@ -57,6 +57,7 @@ export type Company = {
   name: string;
   code: string;
   timezone: string | null;
+  defaultCalendarId: number | null;
   workPolicy: Record<string, unknown> | null;
   active: boolean;
 };
@@ -638,6 +639,7 @@ export type CreateCompanyRequest = {
   code: string;
   active?: boolean;
   timezone?: string | null;
+  defaultCalendarId?: number | null;
   workPolicy?: Record<string, unknown> | null;
 };
 
@@ -952,6 +954,7 @@ export const api = {
     list: (token: string, query: ListQuery = {}) =>
       requestJson<PaginatedResult<Company>>('/api/v1/companies', { token, query }),
     mine: (token: string) => requestJson<Company>('/api/v1/companies/me', { token }),
+    byId: (token: string, id: number) => requestJson<Company>(`/api/v1/companies/${id}`, { token }),
     create: (token: string, body: CreateCompanyRequest) =>
       requestJsonWithMethod<Company>('/api/v1/companies', 'POST', { token, body }),
     update: (token: string, id: number, body: UpdateCompanyRequest) =>

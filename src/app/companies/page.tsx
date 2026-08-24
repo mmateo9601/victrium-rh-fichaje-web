@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -169,7 +170,14 @@ export default function CompaniesPage() {
         <h1>Empresas</h1>
         <p>Gestiona las empresas disponibles y su información básica para la organización.</p>
         {companyMe ? (
-          <div className="notice">Empresa actual: {companyMe.name} ({companyMe.code})</div>
+          <div className="notice">
+            Empresa actual: {companyMe.name} ({companyMe.code})
+            <div style={{ marginTop: '0.75rem' }}>
+              <Link className="button button-secondary" href={`/companies/${companyMe.id}`}>
+                Ajustes de empresa
+              </Link>
+            </div>
+          </div>
         ) : null}
         {error ? <div className="notice" role="alert">{error}</div> : null}
       </section>
@@ -284,9 +292,14 @@ export default function CompaniesPage() {
                   </td>
                   {canManage ? (
                     <td>
-                      <button className="button button-secondary" type="button" onClick={() => beginEdit(company)}>
-                        Editar
-                      </button>
+                      <div className="hero-actions" style={{ marginTop: 0 }}>
+                        <button className="button button-secondary" type="button" onClick={() => beginEdit(company)}>
+                          Editar
+                        </button>
+                        <Link className="button button-primary" href={`/companies/${company.id}`}>
+                          Ajustes
+                        </Link>
+                      </div>
                     </td>
                   ) : null}
                 </tr>
