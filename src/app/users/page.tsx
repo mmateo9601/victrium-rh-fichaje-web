@@ -326,7 +326,7 @@ export default function UsersPage() {
       <section className="hero">
         <span className="eyebrow">Identidad</span>
         <h1>Usuarios</h1>
-        <p>Alta, edición y activación de accesos por empresa, con vínculo opcional a empleado.</p>
+        <p>Alta, edición y activación de accesos por empresa. El acceso de usuario y el empleado vinculado se gestionan por separado.</p>
         {error ? (
           <div className="notice" role="alert">
             {error}
@@ -416,7 +416,7 @@ export default function UsersPage() {
             <input className="field" value={form.dni} onChange={(e) => setForm((current) => ({ ...current, dni: e.target.value }))} />
           </label>
           <label className="stack">
-            <span className="field-label">Nombre</span>
+            <span className="field-label">Nombre para mostrar</span>
             <input className="field" value={form.nombreEmpleado} onChange={(e) => setForm((current) => ({ ...current, nombreEmpleado: e.target.value }))} />
           </label>
           <label className="stack">

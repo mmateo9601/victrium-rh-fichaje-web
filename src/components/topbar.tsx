@@ -56,6 +56,7 @@ export function Topbar({ children }: TopbarProps) {
   const session = useStoredSession();
   const roles = (session?.user.roles ?? []) as RoleName[];
   const isPublicRoute = routeIsPublic(pathname);
+  const identityLabel = session?.user.email ?? session?.user.numero ?? session?.user.nombreEmpleado ?? 'Usuario';
   const visibleGroups = navigationGroups
     .map((group) => ({
       ...group,
@@ -165,10 +166,10 @@ export function Topbar({ children }: TopbarProps) {
         <div className="sidebar__footer">
           {session ? (
             <div className="profile-chip">
-              <span className="profile-chip__avatar">{session.user.nombreEmpleado?.charAt(0) ?? 'V'}</span>
+              <span className="profile-chip__avatar">{identityLabel.charAt(0).toUpperCase()}</span>
               <div>
-                <strong>{session.user.nombreEmpleado}</strong>
-                <small>{getRoleLabel(session.user.roles as RoleName[])}</small>
+                <strong>{identityLabel}</strong>
+                <small>{session.user.employeeName ? `${session.user.employeeName} · ${getRoleLabel(session.user.roles as RoleName[])}` : getRoleLabel(session.user.roles as RoleName[])}</small>
               </div>
             </div>
           ) : (

@@ -67,7 +67,7 @@ export default function CompaniesPage() {
       try {
         const [companyList, mine] = await Promise.all([
           api.companies.list(authToken, { search: search || undefined, pageSize: 50 }),
-          api.companies.mine(authToken)
+          api.companies.mine(authToken).catch(() => null)
         ]);
         setCompanies(companyList.data);
         setCompanyMe(mine);
