@@ -7,10 +7,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { PageHeader } from '../../../components/page-header';
 import { api, type CalendarListItem, type Company } from '../../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../../lib/auth/session';
-
-function toInputValue(value: unknown) {
-  return typeof value === 'number' && Number.isFinite(value) ? String(value) : '';
-}
+import { formatFlexibleDurationMinutes, parseFlexibleDurationMinutes } from '../../../lib/duration';
+import { getTimezoneOptions } from '../../../lib/timezones';
 
 export default function CompanySettingsPage() {
   const router = useRouter();
@@ -38,6 +36,7 @@ export default function CompanySettingsPage() {
   const [nightWorkStart, setNightWorkStart] = useState('');
   const [nightWorkEnd, setNightWorkEnd] = useState('');
   const [allowNightWork, setAllowNightWork] = useState(false);
+  const timezoneOptions = getTimezoneOptions();
 
   const canManageGlobally = session?.user.roles.includes('ROLE_SUPER_ADMIN') ?? false;
 
@@ -70,13 +69,13 @@ export default function CompanySettingsPage() {
         setDefaultCalendarId(companyResult.defaultCalendarId ? String(companyResult.defaultCalendarId) : '');
 
         const policy = (companyResult.workPolicy ?? {}) as Record<string, unknown>;
-        setWeeklyTargetMinutes(toInputValue(policy.weeklyTargetMinutes));
-        setMonthlyTargetMinutes(toInputValue(policy.monthlyTargetMinutes));
-        setMaxDailyMinutes(toInputValue(policy.maxDailyMinutes));
-        setMinimumBreakMinutes(toInputValue(policy.minimumBreakMinutes));
-        setExpectedBreakMinutes(toInputValue(policy.expectedBreakMinutes));
-        setLateThresholdMinutes(toInputValue(policy.lateThresholdMinutes));
-        setOvertimeWarningMinutes(toInputValue(policy.overtimeWarningMinutes));
+        setWeeklyTargetMinutes(formatFlexibleDurationMinutes(typeof policy.weeklyTargetMinutes === 'number' ? policy.weeklyTargetMinutes : null));
+        setMonthlyTargetMinutes(formatFlexibleDurationMinutes(typeof policy.monthlyTargetMinutes === 'number' ? policy.monthlyTargetMinutes : null));
+        setMaxDailyMinutes(formatFlexibleDurationMinutes(typeof policy.maxDailyMinutes === 'number' ? policy.maxDailyMinutes : null));
+        setMinimumBreakMinutes(formatFlexibleDurationMinutes(typeof policy.minimumBreakMinutes === 'number' ? policy.minimumBreakMinutes : null));
+        setExpectedBreakMinutes(formatFlexibleDurationMinutes(typeof policy.expectedBreakMinutes === 'number' ? policy.expectedBreakMinutes : null));
+        setLateThresholdMinutes(formatFlexibleDurationMinutes(typeof policy.lateThresholdMinutes === 'number' ? policy.lateThresholdMinutes : null));
+        setOvertimeWarningMinutes(formatFlexibleDurationMinutes(typeof policy.overtimeWarningMinutes === 'number' ? policy.overtimeWarningMinutes : null));
         setNightWorkStart(typeof policy.nightWorkStart === 'string' ? policy.nightWorkStart : '');
         setNightWorkEnd(typeof policy.nightWorkEnd === 'string' ? policy.nightWorkEnd : '');
         setAllowNightWork(Boolean(policy.allowNightWork));
@@ -100,13 +99,13 @@ export default function CompanySettingsPage() {
     setError(null);
     try {
       const workPolicy = {
-        weeklyTargetMinutes: weeklyTargetMinutes ? Number(weeklyTargetMinutes) : null,
-        monthlyTargetMinutes: monthlyTargetMinutes ? Number(monthlyTargetMinutes) : null,
-        maxDailyMinutes: maxDailyMinutes ? Number(maxDailyMinutes) : null,
-        minimumBreakMinutes: minimumBreakMinutes ? Number(minimumBreakMinutes) : null,
-        expectedBreakMinutes: expectedBreakMinutes ? Number(expectedBreakMinutes) : null,
-        lateThresholdMinutes: lateThresholdMinutes ? Number(lateThresholdMinutes) : null,
-        overtimeWarningMinutes: overtimeWarningMinutes ? Number(overtimeWarningMinutes) : null,
+        weeklyTargetMinutes: parseFlexibleDurationMinutes(weeklyTargetMinutes),
+        monthlyTargetMinutes: parseFlexibleDurationMinutes(monthlyTargetMinutes),
+        maxDailyMinutes: parseFlexibleDurationMinutes(maxDailyMinutes),
+        minimumBreakMinutes: parseFlexibleDurationMinutes(minimumBreakMinutes),
+        expectedBreakMinutes: parseFlexibleDurationMinutes(expectedBreakMinutes),
+        lateThresholdMinutes: parseFlexibleDurationMinutes(lateThresholdMinutes),
+        overtimeWarningMinutes: parseFlexibleDurationMinutes(overtimeWarningMinutes),
         nightWorkStart: nightWorkStart || null,
         nightWorkEnd: nightWorkEnd || null,
         allowNightWork
@@ -207,7 +206,14 @@ export default function CompanySettingsPage() {
           </div>
           <div className="field">
             <label htmlFor="timezone">Zona horaria</label>
-            <input id="timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)} />
+            <select id="timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)}>
+              <option value="">Selecciona una zona horaria</option>
+              {timezoneOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="field">
             <label htmlFor="defaultCalendarId">Calendario por defecto</label>
@@ -240,32 +246,32 @@ export default function CompanySettingsPage() {
 
         <div className="field-grid">
           <div className="field">
-            <label htmlFor="weeklyTargetMinutes">Objetivo semanal (minutos)</label>
-            <input id="weeklyTargetMinutes" type="number" min="0" value={weeklyTargetMinutes} onChange={(e) => setWeeklyTargetMinutes(e.target.value)} />
+            <label htmlFor="weeklyTargetMinutes">Objetivo semanal</label>
+            <input id="weeklyTargetMinutes" type="text" inputMode="decimal" placeholder="480 o 8:00" value={weeklyTargetMinutes} onChange={(e) => setWeeklyTargetMinutes(e.target.value)} />
           </div>
           <div className="field">
-            <label htmlFor="monthlyTargetMinutes">Objetivo mensual (minutos)</label>
-            <input id="monthlyTargetMinutes" type="number" min="0" value={monthlyTargetMinutes} onChange={(e) => setMonthlyTargetMinutes(e.target.value)} />
+            <label htmlFor="monthlyTargetMinutes">Objetivo mensual</label>
+            <input id="monthlyTargetMinutes" type="text" inputMode="decimal" placeholder="8:00 o 480" value={monthlyTargetMinutes} onChange={(e) => setMonthlyTargetMinutes(e.target.value)} />
           </div>
           <div className="field">
-            <label htmlFor="maxDailyMinutes">Máximo diario (minutos)</label>
-            <input id="maxDailyMinutes" type="number" min="0" value={maxDailyMinutes} onChange={(e) => setMaxDailyMinutes(e.target.value)} />
+            <label htmlFor="maxDailyMinutes">Máximo diario</label>
+            <input id="maxDailyMinutes" type="text" inputMode="decimal" placeholder="8:30 o 510" value={maxDailyMinutes} onChange={(e) => setMaxDailyMinutes(e.target.value)} />
           </div>
           <div className="field">
-            <label htmlFor="minimumBreakMinutes">Descanso mínimo (minutos)</label>
-            <input id="minimumBreakMinutes" type="number" min="0" value={minimumBreakMinutes} onChange={(e) => setMinimumBreakMinutes(e.target.value)} />
+            <label htmlFor="minimumBreakMinutes">Descanso mínimo</label>
+            <input id="minimumBreakMinutes" type="text" inputMode="decimal" placeholder="30 o 0:30" value={minimumBreakMinutes} onChange={(e) => setMinimumBreakMinutes(e.target.value)} />
           </div>
           <div className="field">
-            <label htmlFor="expectedBreakMinutes">Descanso esperado (minutos)</label>
-            <input id="expectedBreakMinutes" type="number" min="0" value={expectedBreakMinutes} onChange={(e) => setExpectedBreakMinutes(e.target.value)} />
+            <label htmlFor="expectedBreakMinutes">Descanso esperado</label>
+            <input id="expectedBreakMinutes" type="text" inputMode="decimal" placeholder="30 o 0:30" value={expectedBreakMinutes} onChange={(e) => setExpectedBreakMinutes(e.target.value)} />
           </div>
           <div className="field">
-            <label htmlFor="lateThresholdMinutes">Umbral de retraso (minutos)</label>
-            <input id="lateThresholdMinutes" type="number" min="0" value={lateThresholdMinutes} onChange={(e) => setLateThresholdMinutes(e.target.value)} />
+            <label htmlFor="lateThresholdMinutes">Umbral de retraso</label>
+            <input id="lateThresholdMinutes" type="text" inputMode="decimal" placeholder="10 o 0:10" value={lateThresholdMinutes} onChange={(e) => setLateThresholdMinutes(e.target.value)} />
           </div>
           <div className="field">
-            <label htmlFor="overtimeWarningMinutes">Aviso de horas extra (minutos)</label>
-            <input id="overtimeWarningMinutes" type="number" min="0" value={overtimeWarningMinutes} onChange={(e) => setOvertimeWarningMinutes(e.target.value)} />
+            <label htmlFor="overtimeWarningMinutes">Aviso de horas extra</label>
+            <input id="overtimeWarningMinutes" type="text" inputMode="decimal" placeholder="30 o 0:30" value={overtimeWarningMinutes} onChange={(e) => setOvertimeWarningMinutes(e.target.value)} />
           </div>
           <div className="field">
             <label htmlFor="nightWorkStart">Inicio trabajo nocturno</label>

@@ -7,6 +7,7 @@ import { WorkforceCalendar } from '../../../components/workforce-calendar';
 import { api, type Calendar, type CalendarDay } from '../../../lib/api/generated';
 import { buildCalendarEvents } from '../../../lib/calendar';
 import { getAccessToken, getStoredSession } from '../../../lib/auth/session';
+import { formatFlexibleDurationMinutes, parseFlexibleDurationMinutes } from '../../../lib/duration';
 
 type CalendarDayForm = Omit<CalendarDay, 'id'>;
 
@@ -21,8 +22,8 @@ export default function CalendarDetailPage() {
   const [calendar, setCalendar] = useState<Calendar | null>(null);
   const [name, setName] = useState('');
   const [year, setYear] = useState('');
-  const [minMas, setMinMas] = useState(0);
-  const [minMenos, setMinMenos] = useState(0);
+  const [minMas, setMinMas] = useState(formatFlexibleDurationMinutes(0));
+  const [minMenos, setMinMenos] = useState(formatFlexibleDurationMinutes(0));
   const [active, setActive] = useState(false);
   const [days, setDays] = useState<CalendarDayForm[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,8 +52,8 @@ export default function CalendarDetailPage() {
         setCalendar(item);
         setName(item.nombre);
         setYear(String(item.year));
-        setMinMas(item.minutosMasEntrada);
-        setMinMenos(item.minutosMenosEntrada);
+        setMinMas(formatFlexibleDurationMinutes(item.minutosMasEntrada));
+        setMinMenos(formatFlexibleDurationMinutes(item.minutosMenosEntrada));
         setActive(item.active);
         setDays(item.days.map((day) => ({ dia: day.dia, horaInicio: day.horaInicio, horaFin: day.horaFin })));
       } catch (err) {
@@ -88,8 +89,8 @@ export default function CalendarDetailPage() {
         await api.calendars.update(authToken, Number(calendarId), {
           nombre: name,
         year: Number(year),
-        minutosMasEntrada: minMas,
-        minutosMenosEntrada: minMenos,
+        minutosMasEntrada: parseFlexibleDurationMinutes(minMas) ?? 0,
+        minutosMenosEntrada: parseFlexibleDurationMinutes(minMenos) ?? 0,
         active,
           days
         });
@@ -97,8 +98,8 @@ export default function CalendarDetailPage() {
         setCalendar(refreshed);
         setName(refreshed.nombre);
         setYear(String(refreshed.year));
-        setMinMas(refreshed.minutosMasEntrada);
-      setMinMenos(refreshed.minutosMenosEntrada);
+        setMinMas(formatFlexibleDurationMinutes(refreshed.minutosMasEntrada));
+      setMinMenos(formatFlexibleDurationMinutes(refreshed.minutosMenosEntrada));
       setActive(refreshed.active);
       setDays(refreshed.days.map((day) => ({ dia: day.dia, horaInicio: day.horaInicio, horaFin: day.horaFin })));
     } catch (err) {
@@ -187,11 +188,11 @@ export default function CalendarDetailPage() {
             </div>
             <div className="field">
               <label htmlFor="minMas">Minutos más entrada</label>
-              <input id="minMas" type="number" value={minMas} onChange={(e) => setMinMas(Number(e.target.value))} />
+              <input id="minMas" type="text" inputMode="decimal" placeholder="10 o 0:10" value={minMas} onChange={(e) => setMinMas(e.target.value)} />
             </div>
             <div className="field">
               <label htmlFor="minMenos">Minutos menos entrada</label>
-              <input id="minMenos" type="number" value={minMenos} onChange={(e) => setMinMenos(Number(e.target.value))} />
+              <input id="minMenos" type="text" inputMode="decimal" placeholder="10 o 0:10" value={minMenos} onChange={(e) => setMinMenos(e.target.value)} />
             </div>
             <div className="field">
               <label htmlFor="active">Activo</label>

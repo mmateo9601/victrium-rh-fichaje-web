@@ -13,6 +13,7 @@ import {
   type ShiftOverride
 } from '../../../lib/api/generated';
 import { getAccessToken } from '../../../lib/auth/session';
+import { formatFlexibleDurationMinutes, parseFlexibleDurationMinutes } from '../../../lib/duration';
 
 const weekLabels = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
 
@@ -349,11 +350,23 @@ export default function ShiftDetailPage() {
               </div>
               <div className="field">
                 <label>Descanso</label>
-                <input type="number" value={day.breakMinutes} onChange={(e) => setDays((current) => current.map((item, currentIndex) => (currentIndex === index ? { ...item, breakMinutes: Number(e.target.value) } : item)))} />
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="30 o 0:30"
+                  value={formatFlexibleDurationMinutes(day.breakMinutes)}
+                  onChange={(e) => setDays((current) => current.map((item, currentIndex) => (currentIndex === index ? { ...item, breakMinutes: parseFlexibleDurationMinutes(e.target.value) ?? 0 } : item)))}
+                />
               </div>
               <div className="field">
                 <label>Min. útiles</label>
-                <input type="number" value={day.workingMinutes ?? 0} onChange={(e) => setDays((current) => current.map((item, currentIndex) => (currentIndex === index ? { ...item, workingMinutes: Number(e.target.value) } : item)))} />
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="480 o 8:00"
+                  value={formatFlexibleDurationMinutes(day.workingMinutes)}
+                  onChange={(e) => setDays((current) => current.map((item, currentIndex) => (currentIndex === index ? { ...item, workingMinutes: parseFlexibleDurationMinutes(e.target.value) ?? 0 } : item)))}
+                />
               </div>
               <div className="field">
                 <label>Medianoche</label>

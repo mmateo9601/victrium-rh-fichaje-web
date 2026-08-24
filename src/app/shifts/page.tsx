@@ -9,6 +9,7 @@ import { RotationPatternEditor, createRotationPatternStep, type RotationPatternS
 import { api, type Shift, type ShiftDay } from '../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 import { getRoleListLabel } from '../../lib/labels';
+import { formatFlexibleDurationMinutes, parseFlexibleDurationMinutes } from '../../lib/duration';
 
 const weekLabels = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
 
@@ -274,11 +275,23 @@ export default function ShiftsPage() {
               </div>
               <div className="field">
                 <label>Descanso</label>
-                <input type="number" value={day.breakMinutes} onChange={(e) => updateDay(index, { breakMinutes: Number(e.target.value) })} />
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="30 o 0:30"
+                  value={formatFlexibleDurationMinutes(day.breakMinutes)}
+                  onChange={(e) => updateDay(index, { breakMinutes: parseFlexibleDurationMinutes(e.target.value) ?? 0 })}
+                />
               </div>
               <div className="field">
                 <label>Min. útiles</label>
-                <input type="number" value={day.workingMinutes ?? 0} onChange={(e) => updateDay(index, { workingMinutes: Number(e.target.value) })} />
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="480 o 8:00"
+                  value={formatFlexibleDurationMinutes(day.workingMinutes)}
+                  onChange={(e) => updateDay(index, { workingMinutes: parseFlexibleDurationMinutes(e.target.value) ?? 0 })}
+                />
               </div>
               <div className="field">
                 <label>Medianoche</label>

@@ -7,6 +7,7 @@ import { PageHeader } from '../../../components/page-header';
 import { api, type Company, type EmployeeLocationAssignment, type WorkLocation } from '../../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../../lib/auth/session';
 import { formatLongDate } from '../../../lib/labels';
+import { getTimezoneOptions } from '../../../lib/timezones';
 
 function parseId(value: string | string[] | undefined | null) {
   const raw = Array.isArray(value) ? value[0] : value;
@@ -36,6 +37,7 @@ export default function WorkLocationDetailPage() {
   const [postalCode, setPostalCode] = useState('');
   const [active, setActive] = useState(true);
   const [companyId, setCompanyId] = useState('');
+  const timezoneOptions = getTimezoneOptions();
 
   useEffect(() => {
     const accessToken = getAccessToken();
@@ -91,10 +93,10 @@ export default function WorkLocationDetailPage() {
     setSaving(true);
     setError(null);
     try {
-      const updated = await api.workLocations.update(token, location.id, {
-        companyId: companyId ? Number(companyId) : undefined,
-        name,
-        code,
+        const updated = await api.workLocations.update(token, location.id, {
+          companyId: companyId ? Number(companyId) : undefined,
+          name,
+          code,
         timezone: timezone || null,
         address: address || null,
         city: city || null,
@@ -220,7 +222,14 @@ export default function WorkLocationDetailPage() {
           </div>
           <div className="field">
             <label htmlFor="timezone">Zona horaria</label>
-            <input id="timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)} />
+            <select id="timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)}>
+              <option value="">Selecciona una zona horaria</option>
+              {timezoneOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="field">
             <label htmlFor="address">Dirección</label>

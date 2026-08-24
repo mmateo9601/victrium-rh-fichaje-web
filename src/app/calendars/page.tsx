@@ -8,6 +8,7 @@ import { api, type CalendarDay, type CalendarListItem } from '../../lib/api/gene
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, downloadCsv } from '../../lib/csv';
 import { getRoleListLabel } from '../../lib/labels';
+import { formatFlexibleDurationMinutes, parseFlexibleDurationMinutes } from '../../lib/duration';
 
 type CalendarDayForm = Omit<CalendarDay, 'id'>;
 
@@ -27,8 +28,8 @@ export default function CalendarsPage() {
   const [year, setYear] = useState('');
   const [createNombre, setCreateNombre] = useState(`Calendario ${new Date().getFullYear()}`);
   const [createYear, setCreateYear] = useState(String(new Date().getFullYear()));
-  const [createMinMas, setCreateMinMas] = useState(0);
-  const [createMinMenos, setCreateMinMenos] = useState(0);
+  const [createMinMas, setCreateMinMas] = useState(formatFlexibleDurationMinutes(0));
+  const [createMinMenos, setCreateMinMenos] = useState(formatFlexibleDurationMinutes(0));
   const [createActive, setCreateActive] = useState(false);
   const [createDays, setCreateDays] = useState<CalendarDayForm[]>([defaultDay()]);
   const [loading, setLoading] = useState(true);
@@ -92,15 +93,15 @@ export default function CalendarsPage() {
       await api.calendars.create(authToken, {
         nombre: createNombre,
         year: Number(createYear),
-        minutosMasEntrada: createMinMas,
-        minutosMenosEntrada: createMinMenos,
+        minutosMasEntrada: parseFlexibleDurationMinutes(createMinMas) ?? 0,
+        minutosMenosEntrada: parseFlexibleDurationMinutes(createMinMenos) ?? 0,
         active: createActive,
         days: createDays
       });
       setCreateNombre(`Calendario ${new Date().getFullYear()}`);
       setCreateYear(String(new Date().getFullYear()));
-      setCreateMinMas(0);
-      setCreateMinMenos(0);
+      setCreateMinMas(formatFlexibleDurationMinutes(0));
+      setCreateMinMenos(formatFlexibleDurationMinutes(0));
       setCreateActive(false);
       setCreateDays([defaultDay()]);
       await refresh();
@@ -186,21 +187,11 @@ export default function CalendarsPage() {
             </div>
             <div className="field">
               <label htmlFor="minMas">Minutos más entrada</label>
-              <input
-                id="minMas"
-                type="number"
-                value={createMinMas}
-                onChange={(e) => setCreateMinMas(Number(e.target.value))}
-              />
+              <input id="minMas" type="text" inputMode="decimal" placeholder="10 o 0:10" value={createMinMas} onChange={(e) => setCreateMinMas(e.target.value)} />
             </div>
             <div className="field">
               <label htmlFor="minMenos">Minutos menos entrada</label>
-              <input
-                id="minMenos"
-                type="number"
-                value={createMinMenos}
-                onChange={(e) => setCreateMinMenos(Number(e.target.value))}
-              />
+              <input id="minMenos" type="text" inputMode="decimal" placeholder="10 o 0:10" value={createMinMenos} onChange={(e) => setCreateMinMenos(e.target.value)} />
             </div>
             <div className="field">
               <label htmlFor="active">Activo</label>

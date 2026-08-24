@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { PageHeader } from '../../components/page-header';
 import { api, type Company, type WorkLocation } from '../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
+import { getTimezoneOptions } from '../../lib/timezones';
 
 export default function WorkLocationsPage() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function WorkLocationsPage() {
   const [creating, setCreating] = useState(false);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState('');
+  const [companyFilter, setCompanyFilter] = useState('');
   const [search, setSearch] = useState('');
   const [active, setActive] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +28,7 @@ export default function WorkLocationsPage() {
   const [city, setCity] = useState('Madrid');
   const [province, setProvince] = useState('Madrid');
   const [postalCode, setPostalCode] = useState('28013');
+  const timezoneOptions = getTimezoneOptions();
 
   useEffect(() => {
     const accessToken = getAccessToken();
@@ -45,7 +48,11 @@ export default function WorkLocationsPage() {
 
     async function load() {
       try {
-        const locationsResult = await api.workLocations.list(token, { search, active });
+        const locationsResult = await api.workLocations.list(token, {
+          search,
+          active,
+          companyId: session?.user.roles.includes('ROLE_SUPER_ADMIN') && companyFilter ? Number(companyFilter) : undefined
+        });
         setLocations(locationsResult.data);
 
         if (isSuperAdmin) {
@@ -61,7 +68,7 @@ export default function WorkLocationsPage() {
     }
 
     void load();
-  }, [active, router, search, session]);
+  }, [active, companyFilter, router, search, session]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -87,7 +94,11 @@ export default function WorkLocationsPage() {
         province,
         postalCode
       });
-      const refreshed = await api.workLocations.list(token, { search, active });
+      const refreshed = await api.workLocations.list(token, {
+        search,
+        active,
+        companyId: session?.user.roles.includes('ROLE_SUPER_ADMIN') && companyFilter ? Number(companyFilter) : undefined
+      });
       setLocations(refreshed.data);
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : 'No se pudo crear el centro');
@@ -168,7 +179,14 @@ export default function WorkLocationsPage() {
           </div>
           <div className="field">
             <label htmlFor="timezone">Zona horaria</label>
-            <input id="timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)} />
+            <select id="timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)}>
+              <option value="">Selecciona una zona horaria</option>
+              {timezoneOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="field">
             <label htmlFor="address">Dirección</label>
@@ -197,6 +215,16 @@ export default function WorkLocationsPage() {
           </div>
           <div className="hero-actions" style={{ marginTop: 0 }}>
             <input className="field" style={{ minWidth: '220px' }} placeholder="Buscar centro..." value={search} onChange={(e) => setSearch(e.target.value)} />
+            {session?.user.roles.includes('ROLE_SUPER_ADMIN') ? (
+              <select className="field" style={{ minWidth: '220px' }} value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)}>
+                <option value="">Todas las empresas</option>
+                {companies.map((company) => (
+                  <option key={company.id} value={company.id}>
+                    {company.name} ({company.code})
+                  </option>
+                ))}
+              </select>
+            ) : null}
             <select className="field" style={{ minWidth: '140px' }} value={active} onChange={(e) => setActive(e.target.value)}>
               <option value="">Todos</option>
               <option value="true">Activos</option>

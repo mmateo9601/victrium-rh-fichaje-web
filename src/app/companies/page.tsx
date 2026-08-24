@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { api, type Company } from '../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
+import { getTimezoneOptions } from '../../lib/timezones';
 
 export default function CompaniesPage() {
   const router = useRouter();
@@ -23,6 +24,7 @@ export default function CompaniesPage() {
   const [updating, setUpdating] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const timezoneOptions = getTimezoneOptions();
 
   const session = useMemo(() => getStoredSession(), []);
   const canManage =
@@ -196,7 +198,14 @@ export default function CompaniesPage() {
             </div>
             <div className="field">
               <label htmlFor="company-timezone">Zona horaria</label>
-              <input id="company-timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)} />
+              <select id="company-timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)}>
+                <option value="">Selecciona una zona horaria</option>
+                {timezoneOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="field">
               <label htmlFor="company-active">Estado</label>
@@ -234,7 +243,14 @@ export default function CompaniesPage() {
             </div>
             <div className="field">
               <label htmlFor="edit-company-timezone">Zona horaria</label>
-              <input id="edit-company-timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)} />
+              <select id="edit-company-timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)}>
+                <option value="">Selecciona una zona horaria</option>
+                {timezoneOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="field">
               <label htmlFor="edit-company-active">Estado</label>

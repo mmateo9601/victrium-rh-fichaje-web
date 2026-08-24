@@ -1,6 +1,7 @@
 'use client';
 
 import type { ShiftRotationStep } from '../lib/api/generated';
+import { formatFlexibleDurationMinutes, parseFlexibleDurationMinutes } from '../lib/duration';
 
 export type RotationPatternStep = Omit<ShiftRotationStep, 'id'>;
 
@@ -29,7 +30,7 @@ function formatStep(step: RotationPatternStep) {
 
   const start = step.startTime?.slice(0, 5) ?? '—';
   const end = step.endTime?.slice(0, 5) ?? '—';
-  const breakMinutes = step.breakMinutes ? ` · Descanso ${step.breakMinutes} min` : '';
+  const breakMinutes = step.breakMinutes ? ` · Descanso ${formatFlexibleDurationMinutes(step.breakMinutes)}` : '';
   const midnight = step.crossesMidnight ? ' · Cruza medianoche' : '';
   return `${start} - ${end}${breakMinutes}${midnight}`;
 }
@@ -161,11 +162,23 @@ export function RotationPatternEditor({ value, onChange, title = 'Patrón de rot
                 </div>
                 <div className="field">
                   <label>Descanso</label>
-                  <input type="number" min={0} value={step.breakMinutes} onChange={(event) => updateStep(index, { breakMinutes: Number(event.target.value) })} />
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="30 o 0:30"
+                    value={formatFlexibleDurationMinutes(step.breakMinutes)}
+                    onChange={(event) => updateStep(index, { breakMinutes: parseFlexibleDurationMinutes(event.target.value) ?? 0 })}
+                  />
                 </div>
                 <div className="field">
                   <label>Min. útiles</label>
-                  <input type="number" min={0} value={step.workingMinutes ?? 0} onChange={(event) => updateStep(index, { workingMinutes: Number(event.target.value) })} />
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="480 o 8:00"
+                    value={formatFlexibleDurationMinutes(step.workingMinutes)}
+                    onChange={(event) => updateStep(index, { workingMinutes: parseFlexibleDurationMinutes(event.target.value) ?? 0 })}
+                  />
                 </div>
                 <div className="field">
                   <label>Medianoche</label>
