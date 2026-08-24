@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, Pause, Play, SquareCheckBig, TimerReset } from 'lucide-react';
 
-import { api, type ScheduleCell, type WorkTimerCurrent } from '../lib/api/generated';
+import { api, type Company, type ScheduleCell, type WorkTimerCurrent } from '../lib/api/generated';
 import { formatClock, formatDateTime, formatDurationLabel } from '../lib/labels';
 
 type WorkTimerProps = {
@@ -25,19 +25,21 @@ export function WorkTimer({ token }: WorkTimerProps) {
   const [now, setNow] = useState(Date.now());
   const [finishConfirmOpen, setFinishConfirmOpen] = useState(false);
   const [todayShift, setTodayShift] = useState<ScheduleCell | null>(null);
+  const [company, setCompany] = useState<Company | null>(null);
   const snapshotAtRef = useRef(Date.now());
+  const autoFinishTriggeredRef = useRef(false);
 
   async function loadCurrent() {
     try {
       const today = new Date().toISOString().slice(0, 10);
-      const state = await api.timeEntries.current(token);
+      const [state, shift, currentCompany] = await Promise.all([
+        api.timeEntries.current(token),
+        api.shifts.me(token, { date: today }),
+        api.companies.mine(token).catch(() => null)
+      ]);
       setCurrent(state);
-      try {
-        const shift = await api.shifts.me(token, { date: today });
-        setTodayShift(shift);
-      } catch {
-        setTodayShift(null);
-      }
+      setTodayShift(shift);
+      setCompany(currentCompany);
       snapshotAtRef.current = Date.now();
       setError(null);
     } catch (err) {
@@ -78,6 +80,10 @@ export function WorkTimer({ token }: WorkTimerProps) {
     };
   }, [token]);
 
+  useEffect(() => {
+    autoFinishTriggeredRef.current = false;
+  }, [current?.sessionId]);
+
   const effectiveWorkedSeconds = useMemo(() => {
     if (!current) {
       return 0;
@@ -106,6 +112,34 @@ export function WorkTimer({ token }: WorkTimerProps) {
     return `Has iniciado ${todayShift.lateMinutes} min después del horario previsto`;
   }, [todayShift]);
   const eligibility = current?.eligibility ?? null;
+  const allowOvertime = useMemo(() => {
+    const policy = company?.workPolicy as Record<string, unknown> | null | undefined;
+    const configured = policy?.allowOvertime;
+    return configured === false ? false : true;
+  }, [company]);
+  const turnEndAt = useMemo(() => {
+    const scheduledEnd = current?.eligibility?.scheduledEnd;
+    if (!scheduledEnd) {
+      return null;
+    }
+
+    const deadline = new Date(scheduledEnd);
+    return Number.isNaN(deadline.getTime()) ? null : deadline;
+  }, [current?.eligibility?.scheduledEnd]);
+
+  useEffect(() => {
+    if (!current || current.state !== 'WORKING' || allowOvertime) {
+      return;
+    }
+
+    if (!turnEndAt || now < turnEndAt.getTime() || autoFinishTriggeredRef.current) {
+      return;
+    }
+
+    autoFinishTriggeredRef.current = true;
+    setMessage('La empresa no permite horas extra. La jornada se cerró automáticamente al terminar el turno.');
+    void runAction(() => api.timeEntries.finishMine(token), 'Jornada finalizada automáticamente al completar el turno');
+  }, [allowOvertime, current, now, token, turnEndAt]);
 
   async function runAction(action: () => Promise<WorkTimerCurrent>, successMessage: string) {
     setActioning(true);

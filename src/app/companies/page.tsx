@@ -19,6 +19,7 @@ export default function CompaniesPage() {
   const [code, setCode] = useState('');
   const [timezone, setTimezone] = useState('');
   const [active, setActive] = useState(true);
+  const [allowOvertime, setAllowOvertime] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -38,6 +39,7 @@ export default function CompaniesPage() {
     setCode(company.code);
     setTimezone(company.timezone ?? '');
     setActive(company.active);
+    setAllowOvertime((company.workPolicy as Record<string, unknown> | null | undefined)?.allowOvertime !== false);
   }
 
   function clearEdit() {
@@ -46,6 +48,7 @@ export default function CompaniesPage() {
     setCode('');
     setTimezone('');
     setActive(true);
+    setAllowOvertime(true);
   }
 
   useEffect(() => {
@@ -116,7 +119,13 @@ export default function CompaniesPage() {
     setSaving(true);
     setError(null);
     try {
-      await api.companies.create(authToken, { name, code, timezone: timezone || null, active });
+      await api.companies.create(authToken, {
+        name,
+        code,
+        timezone: timezone || null,
+        active,
+        workPolicy: { allowOvertime }
+      });
       setName('');
       setCode('');
       setTimezone('');
@@ -144,7 +153,8 @@ export default function CompaniesPage() {
         name,
         code,
         timezone: timezone || null,
-        active
+        active,
+        workPolicy: { allowOvertime }
       });
       const refreshed = await api.companies.list(token, { search: search || undefined, pageSize: 50 });
       setCompanies(refreshed.data);
@@ -214,6 +224,13 @@ export default function CompaniesPage() {
                 <option value="false">Inactiva</option>
               </select>
             </div>
+            <div className="field">
+              <label htmlFor="company-allow-overtime">Horas extra</label>
+              <select id="company-allow-overtime" value={String(allowOvertime)} onChange={(e) => setAllowOvertime(e.target.value === 'true')}>
+                <option value="true">Permitidas</option>
+                <option value="false">No permitidas</option>
+              </select>
+            </div>
           </div>
           <button className="button button-primary" type="submit" disabled={saving}>
             {saving ? 'Guardando...' : 'Crear empresa'}
@@ -257,6 +274,17 @@ export default function CompaniesPage() {
               <select id="edit-company-active" value={String(active)} onChange={(e) => setActive(e.target.value === 'true')}>
                 <option value="true">Activa</option>
                 <option value="false">Inactiva</option>
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="edit-company-allow-overtime">Horas extra</label>
+              <select
+                id="edit-company-allow-overtime"
+                value={String(allowOvertime)}
+                onChange={(e) => setAllowOvertime(e.target.value === 'true')}
+              >
+                <option value="true">Permitidas</option>
+                <option value="false">No permitidas</option>
               </select>
             </div>
           </div>

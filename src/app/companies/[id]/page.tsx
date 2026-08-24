@@ -35,6 +35,7 @@ export default function CompanySettingsPage() {
   const [overtimeWarningMinutes, setOvertimeWarningMinutes] = useState('');
   const [nightWorkStart, setNightWorkStart] = useState('');
   const [nightWorkEnd, setNightWorkEnd] = useState('');
+  const [allowOvertime, setAllowOvertime] = useState(true);
   const [allowNightWork, setAllowNightWork] = useState(false);
   const timezoneOptions = getTimezoneOptions();
 
@@ -78,6 +79,7 @@ export default function CompanySettingsPage() {
         setOvertimeWarningMinutes(formatFlexibleDurationMinutes(typeof policy.overtimeWarningMinutes === 'number' ? policy.overtimeWarningMinutes : null));
         setNightWorkStart(typeof policy.nightWorkStart === 'string' ? policy.nightWorkStart : '');
         setNightWorkEnd(typeof policy.nightWorkEnd === 'string' ? policy.nightWorkEnd : '');
+        setAllowOvertime(policy.allowOvertime !== false);
         setAllowNightWork(Boolean(policy.allowNightWork));
       } catch (loadError) {
         setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar la configuración de la empresa');
@@ -108,6 +110,7 @@ export default function CompanySettingsPage() {
         overtimeWarningMinutes: parseFlexibleDurationMinutes(overtimeWarningMinutes),
         nightWorkStart: nightWorkStart || null,
         nightWorkEnd: nightWorkEnd || null,
+        allowOvertime,
         allowNightWork
       };
 
@@ -280,6 +283,13 @@ export default function CompanySettingsPage() {
           <div className="field">
             <label htmlFor="nightWorkEnd">Fin trabajo nocturno</label>
             <input id="nightWorkEnd" type="time" value={nightWorkEnd} onChange={(e) => setNightWorkEnd(e.target.value)} />
+          </div>
+          <div className="field">
+            <label htmlFor="allowOvertime">Horas extra</label>
+            <select id="allowOvertime" value={String(allowOvertime)} onChange={(e) => setAllowOvertime(e.target.value === 'true')}>
+              <option value="true">Permitidas</option>
+              <option value="false">No permitidas</option>
+            </select>
           </div>
           <div className="field">
             <label htmlFor="allowNightWork">Trabajo nocturno</label>
