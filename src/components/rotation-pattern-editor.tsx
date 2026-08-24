@@ -35,6 +35,14 @@ function formatStep(step: RotationPatternStep) {
   return `${start} - ${end}${breakMinutes}${midnight}`;
 }
 
+function countWorkingSteps(value: RotationPatternStep[]) {
+  return value.filter((step) => step.working).length;
+}
+
+function totalWorkingMinutes(value: RotationPatternStep[]) {
+  return value.reduce((total, step) => total + (step.workingMinutes ?? 0), 0);
+}
+
 function clampMinutes(value: number) {
   if (!Number.isFinite(value)) {
     return 0;
@@ -51,6 +59,10 @@ export function createRotationPatternStep(): RotationPatternStep {
 }
 
 export function RotationPatternEditor({ value, onChange, title = 'Patrón de rotación', description = 'Organiza el ciclo en pasos visuales. Puedes añadir, duplicar, reordenar o eliminar pasos.' }: RotationPatternEditorProps) {
+  const workingSteps = countWorkingSteps(value);
+  const offSteps = value.length - workingSteps;
+  const cycleMinutes = totalWorkingMinutes(value);
+
   function updateStep(index: number, patch: Partial<RotationPatternStep>) {
     onChange(
       value.map((step, currentIndex) =>
@@ -99,14 +111,26 @@ export function RotationPatternEditor({ value, onChange, title = 'Patrón de rot
 
   return (
     <section className="rotation-editor stack">
-      <div className="toolbar">
+      <div className="toolbar rotation-editor__header">
         <div>
           <h3 className="section-title">{title}</h3>
           <p className="meta">{description}</p>
         </div>
-        <button className="button button-secondary" type="button" onClick={addStep}>
+        <div className="rotation-editor__summary">
+          <span className="badge badge-neutral">Pasos: {value.length}</span>
+          <span className="badge badge-primary">Trabajo: {workingSteps}</span>
+          <span className="badge badge-warning">Libre: {offSteps}</span>
+          <span className="badge badge-info">Ciclo: {formatFlexibleDurationMinutes(cycleMinutes)}</span>
+        </div>
+      </div>
+
+      <div className="rotation-editor__actions">
+        <button className="button button-primary" type="button" onClick={addStep}>
           Añadir paso
         </button>
+        <p className="meta">
+          Define cada bloque como trabajo o descanso y luego ordénalo. Si un paso no trabaja, sus horas se ocultan automáticamente.
+        </p>
       </div>
 
       {value.length ? (
@@ -134,7 +158,23 @@ export function RotationPatternEditor({ value, onChange, title = 'Patrón de rot
                 </div>
               </div>
 
-              <div className="field-grid">
+              <div className="rotation-step__summary">
+                <span className={`badge ${step.working ? 'badge-success' : 'badge-neutral'}`}>{step.working ? 'Trabaja' : 'Libre'}</span>
+                {step.working ? (
+                  <>
+                    <span className="badge badge-primary">
+                      {step.startTime?.slice(0, 5) ?? '—'} - {step.endTime?.slice(0, 5) ?? '—'}
+                    </span>
+                    <span className="badge badge-info">{formatFlexibleDurationMinutes(step.workingMinutes ?? 0)}</span>
+                    {step.breakMinutes ? <span className="badge badge-warning">Descanso {formatFlexibleDurationMinutes(step.breakMinutes)}</span> : null}
+                    {step.crossesMidnight ? <span className="badge badge-danger">Cruza medianoche</span> : null}
+                  </>
+                ) : (
+                  <span className="badge badge-neutral">Sin horario</span>
+                )}
+              </div>
+
+              <div className="field-grid rotation-step__fields">
                 <div className="field">
                   <label>Trabaja</label>
                   <select
@@ -192,9 +232,12 @@ export function RotationPatternEditor({ value, onChange, title = 'Patrón de rot
           ))}
         </div>
       ) : (
-        <div className="empty-state">
-          <strong>Sin pasos</strong>
-          <p className="meta">Añade un paso para definir un ciclo rotativo.</p>
+        <div className="empty-state rotation-editor__empty">
+          <strong>Sin pasos de rotación</strong>
+          <p className="meta">Añade un primer paso para empezar el ciclo. Si el turno no rota, puedes dejarlo vacío y usar solo el horario semanal.</p>
+          <button className="button button-primary" type="button" onClick={addStep}>
+            Añadir primer paso
+          </button>
         </div>
       )}
     </section>

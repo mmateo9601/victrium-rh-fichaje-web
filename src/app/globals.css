@@ -1205,6 +1205,31 @@ textarea {
   gap: 1rem;
 }
 
+.rotation-editor__header {
+  align-items: flex-start;
+}
+
+.rotation-editor__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.rotation-editor__actions {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1rem;
+  border-radius: 1.15rem;
+  border: 1px solid var(--border);
+  background: rgba(15, 118, 110, 0.05);
+}
+
+.rotation-editor__section {
+  display: grid;
+  gap: 1rem;
+}
+
 .rotation-editor__list {
   display: grid;
   gap: 0.85rem;
@@ -1236,6 +1261,20 @@ textarea {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+.rotation-step__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.rotation-step__fields {
+  padding-top: 0.25rem;
+}
+
+.rotation-editor__empty {
+  justify-items: start;
 }
 
 .rotation-pattern-compact {

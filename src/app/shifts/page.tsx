@@ -192,7 +192,7 @@ export default function ShiftsPage() {
       <PageHeader
         eyebrow="Organización"
         title="Turnos de trabajo"
-        description="Plantillas horarias reutilizables para mañana, tarde, noche o jornadas partidas."
+        description="Define una plantilla simple: nombre, horario semanal y patrón de rotación opcional."
         actions={
           <a className="button button-primary" href="#nuevo-turno">
             Nuevo turno
@@ -218,20 +218,27 @@ export default function ShiftsPage() {
         <div className="toolbar">
           <div>
             <h2 className="section-title">Nuevo turno</h2>
-            <p className="meta">Define una plantilla clara: horario, descanso y pasos de rotación si aplica.</p>
+            <p className="meta">Usa horario semanal para turnos fijos y patrón de rotación solo cuando el ciclo cambia por pasos.</p>
           </div>
           <button className="button button-primary" type="submit" disabled={creating}>
             {creating ? 'Guardando...' : 'Guardar turno'}
           </button>
         </div>
 
+        <section className="rotation-editor__section">
+          <div className="toolbar">
+            <div>
+              <h3 className="section-title">Datos básicos</h3>
+              <p className="meta">Identifica el turno sin detalles técnicos innecesarios.</p>
+            </div>
+          </div>
         <div className="field-grid">
           <div className="field">
-            <label htmlFor="name">Nombre</label>
+            <label htmlFor="name">Nombre del turno</label>
             <input id="name" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="field">
-            <label htmlFor="code">Código</label>
+            <label htmlFor="code">Código corto</label>
             <input id="code" value={code} onChange={(e) => setCode(e.target.value)} />
           </div>
           <div className="field">
@@ -243,72 +250,86 @@ export default function ShiftsPage() {
             <input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
           </div>
           <div className="field">
-            <label htmlFor="rotationStartDate">Inicio rotación</label>
+            <label htmlFor="rotationStartDate">Fecha de inicio de rotación</label>
             <input id="rotationStartDate" type="date" value={rotationStartDate} onChange={(e) => setRotationStartDate(e.target.value)} />
           </div>
         </div>
+        </section>
 
-        <RotationPatternEditor value={rotationPattern} onChange={setRotationPattern} title="Patrón de rotación" description="Crea el ciclo visualmente. Cada bloque representa un paso del patrón y puedes reordenarlo sin tocar código." />
+        <RotationPatternEditor
+          value={rotationPattern}
+          onChange={setRotationPattern}
+          title="Patrón de rotación"
+          description="Añade pasos solo si el turno cambia con el tiempo. Si el turno es fijo, deja el patrón vacío."
+        />
 
-        <div className="stack">
-          {days.map((day, index) => (
-            <div className="field-grid" key={day.dayOfWeek}>
-              <div className="field">
-                <label>Día</label>
-                <div className="schedule-day__badge">{weekLabels[day.dayOfWeek]}</div>
-              </div>
-              <div className="field">
-                <label>Trabaja</label>
-                <select value={String(day.working)} onChange={(e) => updateDay(index, { working: e.target.value === 'true' })}>
-                  <option value="true">Sí</option>
-                  <option value="false">No</option>
-                </select>
-              </div>
-              <div className="field">
-                <label>Inicio</label>
-                <input type="time" value={day.startTime ?? ''} onChange={(e) => updateDay(index, { startTime: e.target.value ? `${e.target.value}:00` : null })} />
-              </div>
-              <div className="field">
-                <label>Fin</label>
-                <input type="time" value={day.endTime ?? ''} onChange={(e) => updateDay(index, { endTime: e.target.value ? `${e.target.value}:00` : null })} />
-              </div>
-              <div className="field">
-                <label>Descanso</label>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="30 o 0:30"
-                  value={formatFlexibleDurationMinutes(day.breakMinutes)}
-                  onChange={(e) => updateDay(index, { breakMinutes: parseFlexibleDurationMinutes(e.target.value) ?? 0 })}
-                />
-              </div>
-              <div className="field">
-                <label>Min. útiles</label>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="480 o 8:00"
-                  value={formatFlexibleDurationMinutes(day.workingMinutes)}
-                  onChange={(e) => updateDay(index, { workingMinutes: parseFlexibleDurationMinutes(e.target.value) ?? 0 })}
-                />
-              </div>
-              <div className="field">
-                <label>Medianoche</label>
-                <select value={String(day.crossesMidnight)} onChange={(e) => updateDay(index, { crossesMidnight: e.target.value === 'true' })}>
-                  <option value="false">No</option>
-                  <option value="true">Sí</option>
-                </select>
-              </div>
+        <section className="rotation-editor__section">
+          <div className="toolbar">
+            <div>
+              <h3 className="section-title">Horario semanal</h3>
+              <p className="meta">Completa las franjas fijas por día. Si un día no se trabaja, márcalo como no laborable.</p>
             </div>
-          ))}
-        </div>
+          </div>
+          <div className="stack">
+            {days.map((day, index) => (
+              <div className="field-grid" key={day.dayOfWeek}>
+                <div className="field">
+                  <label>Día</label>
+                  <div className="schedule-day__badge">{weekLabels[day.dayOfWeek]}</div>
+                </div>
+                <div className="field">
+                  <label>Trabaja</label>
+                  <select value={String(day.working)} onChange={(e) => updateDay(index, { working: e.target.value === 'true' })}>
+                    <option value="true">Sí</option>
+                    <option value="false">No</option>
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Inicio</label>
+                  <input type="time" value={day.startTime ?? ''} onChange={(e) => updateDay(index, { startTime: e.target.value ? `${e.target.value}:00` : null })} />
+                </div>
+                <div className="field">
+                  <label>Fin</label>
+                  <input type="time" value={day.endTime ?? ''} onChange={(e) => updateDay(index, { endTime: e.target.value ? `${e.target.value}:00` : null })} />
+                </div>
+                <div className="field">
+                  <label>Descanso</label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="30 o 0:30"
+                    value={formatFlexibleDurationMinutes(day.breakMinutes)}
+                    onChange={(e) => updateDay(index, { breakMinutes: parseFlexibleDurationMinutes(e.target.value) ?? 0 })}
+                  />
+                </div>
+                <div className="field">
+                  <label>Min. útiles</label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="480 o 8:00"
+                    value={formatFlexibleDurationMinutes(day.workingMinutes)}
+                    onChange={(e) => updateDay(index, { workingMinutes: parseFlexibleDurationMinutes(e.target.value) ?? 0 })}
+                  />
+                </div>
+                <div className="field">
+                  <label>Medianoche</label>
+                  <select value={String(day.crossesMidnight)} onChange={(e) => updateDay(index, { crossesMidnight: e.target.value === 'true' })}>
+                    <option value="false">No</option>
+                    <option value="true">Sí</option>
+                  </select>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       </form>
 
       <section className="panel stack">
         <div className="toolbar">
           <div>
-            <h2 className="section-title">Listado</h2>
-            <p className="meta">Turnos reutilizables con histórico y asignaciones.</p>
+            <h2 className="section-title">Turnos guardados</h2>
+            <p className="meta">Consulta, filtra y abre cada plantilla para ajustarla más tarde.</p>
           </div>
           <div className="hero-actions" style={{ marginTop: 0 }}>
             <input className="field" style={{ minWidth: '220px' }} placeholder="Buscar turno..." value={search} onChange={(e) => setSearch(e.target.value)} />
