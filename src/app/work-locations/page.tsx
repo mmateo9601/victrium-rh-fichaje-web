@@ -6,12 +6,13 @@ import { useRouter } from 'next/navigation';
 
 import { PageHeader } from '../../components/page-header';
 import { api, type Company, type WorkLocation } from '../../lib/api/generated';
-import { getAccessToken, getStoredSession } from '../../lib/auth/session';
+import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../lib/auth/session';
 import { getTimezoneOptions } from '../../lib/timezones';
 
 export default function WorkLocationsPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
+  const roles = useMemo(() => getEffectiveRoles(session), [session]);
   const [locations, setLocations] = useState<WorkLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -37,10 +38,8 @@ export default function WorkLocationsPage() {
       router.replace('/login');
       return;
     }
-    const isSuperAdmin = session?.user.roles.includes('ROLE_SUPER_ADMIN') ?? false;
-    const canManage =
-      session?.user.roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN') ??
-      false;
+    const isSuperAdmin = roles.includes('ROLE_SUPER_ADMIN');
+    const canManage = roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN');
     if (!canManage) {
       router.replace('/forbidden');
       return;
@@ -52,7 +51,7 @@ export default function WorkLocationsPage() {
         const locationsResult = await api.workLocations.list(token, {
           search,
           active,
-          companyId: session?.user.roles.includes('ROLE_SUPER_ADMIN') && companyFilter ? Number(companyFilter) : undefined
+          companyId: roles.includes('ROLE_SUPER_ADMIN') && companyFilter ? Number(companyFilter) : undefined
         });
         setLocations(locationsResult.data);
 
@@ -69,7 +68,7 @@ export default function WorkLocationsPage() {
     }
 
     void load();
-  }, [active, companyFilter, router, search, session]);
+  }, [active, companyFilter, router, roles, search, session]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -82,11 +81,11 @@ export default function WorkLocationsPage() {
     setCreating(true);
     setError(null);
     try {
-      if (session?.user.roles.includes('ROLE_SUPER_ADMIN') && !companyId) {
+      if (roles.includes('ROLE_SUPER_ADMIN') && !companyId) {
         throw new Error('Selecciona una empresa para crear el centro');
       }
       await api.workLocations.create(token, {
-        companyId: session?.user.roles.includes('ROLE_SUPER_ADMIN') ? Number(companyId) || undefined : undefined,
+        companyId: roles.includes('ROLE_SUPER_ADMIN') ? Number(companyId) || undefined : undefined,
         name,
         code,
         timezone,
@@ -98,7 +97,7 @@ export default function WorkLocationsPage() {
       const refreshed = await api.workLocations.list(token, {
         search,
         active,
-        companyId: session?.user.roles.includes('ROLE_SUPER_ADMIN') && companyFilter ? Number(companyFilter) : undefined
+        companyId: roles.includes('ROLE_SUPER_ADMIN') && companyFilter ? Number(companyFilter) : undefined
       });
       setLocations(refreshed.data);
     } catch (createError) {
@@ -132,11 +131,39 @@ export default function WorkLocationsPage() {
       const refreshed = await api.workLocations.list(token, {
         search,
         active,
-        companyId: session?.user.roles.includes('ROLE_SUPER_ADMIN') && companyFilter ? Number(companyFilter) : undefined
+        companyId: roles.includes('ROLE_SUPER_ADMIN') && companyFilter ? Number(companyFilter) : undefined
       });
       setLocations(refreshed.data);
     } catch (toggleError) {
       setError(toggleError instanceof Error ? toggleError.message : 'No se pudo cambiar el estado del centro');
+    } finally {
+      setTogglingId(null);
+    }
+  }
+
+  async function deleteLocation(location: WorkLocation) {
+    const token = getAccessToken();
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+
+    if (!window.confirm(`¿Eliminar el centro ${location.name}? Esta acción solo se permite si no tiene dependencias.`)) {
+      return;
+    }
+
+    setTogglingId(location.id);
+    setError(null);
+    try {
+      await api.workLocations.delete(token, location.id);
+      const refreshed = await api.workLocations.list(token, {
+        search,
+        active,
+        companyId: roles.includes('ROLE_SUPER_ADMIN') && companyFilter ? Number(companyFilter) : undefined
+      });
+      setLocations(refreshed.data);
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : 'No se pudo eliminar el centro');
     } finally {
       setTogglingId(null);
     }
@@ -185,7 +212,7 @@ export default function WorkLocationsPage() {
         </div>
 
           <div className="field-grid">
-          {session?.user.roles.includes('ROLE_SUPER_ADMIN') ? (
+          {roles.includes('ROLE_SUPER_ADMIN') ? (
             <div className="field">
               <label htmlFor="companyId">Empresa</label>
               <select
@@ -250,7 +277,7 @@ export default function WorkLocationsPage() {
           </div>
           <div className="hero-actions" style={{ marginTop: 0 }}>
             <input className="field" style={{ minWidth: '220px' }} placeholder="Buscar centro..." value={search} onChange={(e) => setSearch(e.target.value)} />
-            {session?.user.roles.includes('ROLE_SUPER_ADMIN') ? (
+            {roles.includes('ROLE_SUPER_ADMIN') ? (
               <select className="field" style={{ minWidth: '220px' }} value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)}>
                 <option value="">Todas las empresas</option>
                 {companies.map((company) => (
@@ -300,6 +327,14 @@ export default function WorkLocationsPage() {
                           disabled={togglingId === location.id}
                         >
                           {location.active ? 'Desactivar' : 'Activar'}
+                        </button>
+                        <button
+                          className="button button-secondary"
+                          type="button"
+                          onClick={() => void deleteLocation(location)}
+                          disabled={togglingId === location.id}
+                        >
+                          Eliminar
                         </button>
                       </div>
                     </td>

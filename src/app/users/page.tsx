@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { api, type Company, type Employee, type PublicUser, type RoleName } from '../../lib/api/generated';
-import { getAccessToken, getStoredSession } from '../../lib/auth/session';
+import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
 import { formatDateTime, getRoleListLabel } from '../../lib/labels';
 
@@ -55,7 +55,7 @@ function emptyForm(defaultCompanyId = ''): UserFormState {
 export default function UsersPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
-  const roles = session?.user.roles ?? [];
+  const roles = getEffectiveRoles(session);
   const canAccess = roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN');
   const canManageGlobally = roles.includes('ROLE_SUPER_ADMIN');
   const fixedCompanyId = !canManageGlobally ? String(session?.user.companyId ?? '') : '';
@@ -293,10 +293,10 @@ export default function UsersPage() {
         }
       );
       const csv = buildCsv(
-        ['Cuenta', 'Email', 'Empresa', 'Roles', 'Empleado vinculado', 'Estado', 'Último acceso'],
+        ['Email', 'Identificador interno', 'Empresa', 'Roles', 'Empleado vinculado', 'Estado', 'Último acceso'],
         items.map((user) => [
-          user.numero,
           user.email,
+          user.numero,
           user.companyName ?? 'Global',
           getRoleListLabel(user.roles),
           user.employeeName ?? '-',
@@ -315,7 +315,7 @@ export default function UsersPage() {
   if (loading) {
     return (
       <section className="hero">
-        <span className="eyebrow">Usuarios</span>
+        <span className="eyebrow">Cuentas de acceso</span>
         <h1>Cargando usuarios...</h1>
       </section>
     );
@@ -326,7 +326,7 @@ export default function UsersPage() {
       <section className="hero">
         <span className="eyebrow">Cuentas</span>
         <h1>Usuarios de acceso</h1>
-        <p>Alta, edición y activación de cuentas por empresa. El acceso y el empleado vinculado son entidades distintas.</p>
+        <p>El acceso solo usa correo y contraseña. El número, el DNI y el nombre visible son datos internos de la cuenta, no credenciales.</p>
         {error ? (
           <div className="notice" role="alert">
             {error}
@@ -337,7 +337,7 @@ export default function UsersPage() {
       <section className="panel stack">
         <div className="toolbar">
           <div>
-            <h2 className="section-title">Filtros de cuenta</h2>
+            <h2 className="section-title">Filtros de acceso</h2>
             <p className="meta">La empresa se limita por el rol autenticado.</p>
           </div>
           <div className="hero-actions" style={{ marginTop: 0 }}>
@@ -390,9 +390,9 @@ export default function UsersPage() {
       <section className="panel stack">
         <div className="toolbar">
           <div>
-            <h2 className="section-title">{selectedUser ? 'Editar cuenta' : 'Crear cuenta'}</h2>
+            <h2 className="section-title">{selectedUser ? 'Editar acceso' : 'Crear acceso'}</h2>
             <p className="meta">
-              {selectedUser ? `Editando acceso de ${selectedUser.email}` : 'Define acceso, empresa y empleado vinculado si aplica.'}
+              {selectedUser ? `Editando acceso de ${selectedUser.email}` : 'Define el correo, la contraseña inicial y los datos internos si aplican.'}
             </p>
           </div>
           {selectedUser ? (
@@ -408,15 +408,15 @@ export default function UsersPage() {
             <input className="field" value={form.email} onChange={(e) => setForm((current) => ({ ...current, email: e.target.value }))} />
           </label>
           <label className="stack">
-            <span className="field-label">Login / número de acceso</span>
+            <span className="field-label">Identificador interno</span>
             <input className="field" value={form.numero} onChange={(e) => setForm((current) => ({ ...current, numero: e.target.value }))} />
           </label>
           <label className="stack">
-            <span className="field-label">DNI</span>
+            <span className="field-label">DNI interno</span>
             <input className="field" value={form.dni} onChange={(e) => setForm((current) => ({ ...current, dni: e.target.value }))} />
           </label>
           <label className="stack">
-            <span className="field-label">Nombre de acceso</span>
+            <span className="field-label">Nombre visible</span>
             <input className="field" value={form.nombreEmpleado} onChange={(e) => setForm((current) => ({ ...current, nombreEmpleado: e.target.value }))} />
           </label>
           <label className="stack">
@@ -504,8 +504,8 @@ export default function UsersPage() {
       <section className="panel stack">
         <div className="toolbar">
           <div>
-            <h2 className="section-title">Listado de cuentas</h2>
-            <p className="meta">Cuenta de acceso, empresa, roles y empleado vinculado.</p>
+            <h2 className="section-title">Listado de accesos</h2>
+            <p className="meta">Correo, empresa, roles y empleado vinculado.</p>
           </div>
         </div>
 
@@ -513,8 +513,8 @@ export default function UsersPage() {
           <table className="table">
             <thead>
               <tr>
-                <th>Cuenta</th>
-                <th>Email</th>
+                <th>Acceso</th>
+                <th>Identificador interno</th>
                 <th>Empresa</th>
                 <th>Roles</th>
                 <th>Empleado vinculado</th>
@@ -526,8 +526,8 @@ export default function UsersPage() {
             <tbody>
               {users.map((user) => (
                 <tr key={user.id}>
-                  <td>{user.numero}</td>
                   <td>{user.email}</td>
+                  <td>{user.numero}</td>
                   <td>{user.companyName ?? 'Global'}</td>
                   <td>{getRoleListLabel(user.roles)}</td>
                   <td>{user.employeeName ?? '-'}</td>
@@ -548,7 +548,7 @@ export default function UsersPage() {
               {!users.length ? (
                 <tr>
                   <td colSpan={8} className="muted">
-                    Sin cuentas de acceso.
+                    Sin accesos.
                   </td>
                 </tr>
               ) : null}

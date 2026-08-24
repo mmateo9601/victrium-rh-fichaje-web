@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 
 import { PageHeader } from '../../../components/page-header';
 import { api, type Company, type EmployeeLocationAssignment, type WorkLocation } from '../../../lib/api/generated';
-import { getAccessToken, getStoredSession } from '../../../lib/auth/session';
+import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../../lib/auth/session';
 import { formatLongDate } from '../../../lib/labels';
 import { getTimezoneOptions } from '../../../lib/timezones';
 
@@ -22,6 +22,7 @@ export default function WorkLocationDetailPage() {
   const params = useParams<{ id: string }>();
   const locationId = useMemo(() => parseId(params.id), [params.id]);
   const session = useMemo(() => getStoredSession(), []);
+  const roles = useMemo(() => getEffectiveRoles(session), [session]);
   const [location, setLocation] = useState<WorkLocation | null>(null);
   const [assignments, setAssignments] = useState<EmployeeLocationAssignment[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -46,7 +47,7 @@ export default function WorkLocationDetailPage() {
       return;
     }
     const token = accessToken;
-    const isSuperAdmin = session?.user.roles.includes('ROLE_SUPER_ADMIN') ?? false;
+    const isSuperAdmin = roles.includes('ROLE_SUPER_ADMIN');
     if (Number.isNaN(locationId)) {
       setError('Centro no válido');
       setLoading(false);
@@ -82,7 +83,7 @@ export default function WorkLocationDetailPage() {
     }
 
     void load();
-  }, [locationId, router, session]);
+  }, [locationId, router, roles, session]);
 
   async function save() {
     const token = getAccessToken();
@@ -133,6 +134,28 @@ export default function WorkLocationDetailPage() {
     }
   }
 
+  async function deleteLocation() {
+    const token = getAccessToken();
+    if (!token || !location) {
+      return;
+    }
+
+    if (!window.confirm(`¿Eliminar el centro ${location.name}? Esta acción solo se permite si no tiene dependencias.`)) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    try {
+      await api.workLocations.delete(token, location.id);
+      router.push('/work-locations');
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : 'No se pudo eliminar el centro');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (loading) {
     return (
       <section className="hero">
@@ -158,9 +181,14 @@ export default function WorkLocationDetailPage() {
         title={location.name}
         description="Centro de trabajo, calendario asociado y asignaciones históricas."
         actions={
-          <button className="button button-secondary" type="button" onClick={() => void setStatus(!location.active)} disabled={saving}>
-            {location.active ? 'Desactivar centro' : 'Activar centro'}
-          </button>
+          <>
+            <button className="button button-secondary" type="button" onClick={() => void setStatus(!location.active)} disabled={saving}>
+              {location.active ? 'Desactivar centro' : 'Activar centro'}
+            </button>
+            <button className="button button-secondary" type="button" onClick={() => void deleteLocation()} disabled={saving}>
+              Eliminar centro
+            </button>
+          </>
         }
         stats={
           <>
@@ -191,7 +219,7 @@ export default function WorkLocationDetailPage() {
           <span className={`badge ${location.active ? 'badge-success' : 'badge-danger'}`}>{location.active ? 'Activo' : 'Inactivo'}</span>
         </div>
         <div className="field-grid">
-          {session?.user.roles.includes('ROLE_SUPER_ADMIN') ? (
+          {roles.includes('ROLE_SUPER_ADMIN') ? (
             <div className="field">
               <label htmlFor="companyId">Empresa</label>
               <select

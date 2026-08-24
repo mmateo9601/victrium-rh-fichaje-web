@@ -7,12 +7,13 @@ import { useRouter } from 'next/navigation';
 import { PageHeader } from '../../components/page-header';
 import { api, type ReportsSummary } from '../../lib/api/generated';
 import { formatDurationLabel, formatLongDate, formatNumber } from '../../lib/labels';
-import { getAccessToken, getStoredSession } from '../../lib/auth/session';
+import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../lib/auth/session';
 
 export default function PlatformPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
-  const canAccess = session?.user.roles.includes('ROLE_SUPER_ADMIN');
+  const roles = getEffectiveRoles(session);
+  const canAccess = roles.includes('ROLE_SUPER_ADMIN');
   const [summary, setSummary] = useState<ReportsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

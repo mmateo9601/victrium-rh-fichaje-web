@@ -5,7 +5,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { api, type Company } from '../../lib/api/generated';
-import { getAccessToken, getStoredSession } from '../../lib/auth/session';
+import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
 import { getTimezoneOptions } from '../../lib/timezones';
 
@@ -29,10 +29,8 @@ export default function CompaniesPage() {
   const timezoneOptions = getTimezoneOptions();
 
   const session = useMemo(() => getStoredSession(), []);
-  const canManage =
-    session?.user.roles.some(
-      (role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_SUPER_ADMIN'
-    ) ?? false;
+  const roles = useMemo(() => getEffectiveRoles(session), [session]);
+  const canManage = roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_SUPER_ADMIN');
 
   function beginEdit(company: Company) {
     setSelectedCompany(company);
@@ -188,6 +186,32 @@ export default function CompaniesPage() {
       setCompanies(refreshed.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo cambiar el estado de la empresa');
+    } finally {
+      setTogglingId(null);
+    }
+  }
+
+  async function deleteCompany(company: Company) {
+    const token = getAccessToken();
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+    if (!window.confirm(`¿Eliminar la empresa ${company.name}? Esta acción solo se permite si no tiene dependencias.`)) {
+      return;
+    }
+
+    setTogglingId(company.id);
+    setError(null);
+    try {
+      await api.companies.delete(token, company.id);
+      const refreshed = await api.companies.list(token, { search: search || undefined, pageSize: 50 });
+      setCompanies(refreshed.data);
+      if (selectedCompany?.id === company.id) {
+        clearEdit();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo eliminar la empresa');
     } finally {
       setTogglingId(null);
     }
@@ -377,6 +401,14 @@ export default function CompaniesPage() {
                           disabled={togglingId === company.id}
                         >
                           {company.active ? 'Desactivar' : 'Activar'}
+                        </button>
+                        <button
+                          className="button button-secondary"
+                          type="button"
+                          onClick={() => void deleteCompany(company)}
+                          disabled={togglingId === company.id}
+                        >
+                          Eliminar
                         </button>
                       </div>
                     </td>

@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { PageHeader } from '../../components/page-header';
 import { RotationPatternEditor, createRotationPatternStep, type RotationPatternStep } from '../../components/rotation-pattern-editor';
 import { api, type Shift, type ShiftDay } from '../../lib/api/generated';
-import { getAccessToken, getStoredSession } from '../../lib/auth/session';
+import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../lib/auth/session';
 import { getRoleListLabel } from '../../lib/labels';
 import { formatFlexibleDurationMinutes, parseFlexibleDurationMinutes } from '../../lib/duration';
 
@@ -98,6 +98,7 @@ function dayMinutes(day: ShiftDay) {
 export default function ShiftsPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
+  const roles = getEffectiveRoles(session);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -122,9 +123,7 @@ export default function ShiftsPage() {
       router.replace('/login');
       return;
     }
-    const canManage =
-      session?.user.roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN' || role === 'ROLE_MANAGER') ??
-      false;
+    const canManage = roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN' || role === 'ROLE_MANAGER');
     if (!canManage) {
       router.replace('/forbidden');
       return;
@@ -143,7 +142,7 @@ export default function ShiftsPage() {
     }
 
     void load();
-  }, [router, search, active, session]);
+  }, [router, search, active, roles, session]);
 
   function updateDay(index: number, patch: Partial<Omit<ShiftDay, 'id'>>) {
     setDays((current) => current.map((day, currentIndex) => (currentIndex === index ? { ...day, ...patch } : day)));
@@ -206,7 +205,7 @@ export default function ShiftsPage() {
               <span className="muted">Turnos visibles</span>
             </article>
             <article className="stat stat--compact">
-              <strong>{getRoleListLabel(session?.user.roles)}</strong>
+              <strong>{getRoleListLabel(roles)}</strong>
               <span className="muted">Acceso actual</span>
             </article>
           </>

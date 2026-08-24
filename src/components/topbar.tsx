@@ -18,7 +18,7 @@ import {
   UserRound
 } from 'lucide-react';
 
-import { signOut, useStoredSession } from '../lib/auth/session';
+import { getEffectiveRoles, signOut, useStoredSession } from '../lib/auth/session';
 import { getRoleLabel } from '../lib/labels';
 import { canAccessNavigationItem, getNavigationTitle, navigationGroups, type RoleName } from '../lib/navigation';
 
@@ -54,7 +54,7 @@ export function Topbar({ children }: TopbarProps) {
   const [loggingOut, setLoggingOut] = useState(false);
 
   const session = useStoredSession();
-  const roles = (session?.user.roles ?? []) as RoleName[];
+  const roles = getEffectiveRoles(session) as RoleName[];
   const isPublicRoute = routeIsPublic(pathname);
   const identityLabel = session?.user.email ?? session?.user.numero ?? session?.user.nombreEmpleado ?? 'Usuario';
   const visibleGroups = navigationGroups

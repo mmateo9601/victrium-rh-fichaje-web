@@ -1,12 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
 import { PageHeader } from '../../../components/page-header';
 import { api, type CalendarListItem, type Company } from '../../../lib/api/generated';
-import { getAccessToken, getStoredSession } from '../../../lib/auth/session';
+import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../../lib/auth/session';
 import { formatFlexibleDurationMinutes, parseFlexibleDurationMinutes } from '../../../lib/duration';
 import { getTimezoneOptions } from '../../../lib/timezones';
 
@@ -16,6 +16,7 @@ export default function CompanySettingsPage() {
   const rawCompanyId = Array.isArray(params.id) ? params.id[0] : params.id;
   const companyId = rawCompanyId ? Number(rawCompanyId) : Number.NaN;
   const session = getStoredSession();
+  const roles = useMemo(() => getEffectiveRoles(session), [session]);
   const [company, setCompany] = useState<Company | null>(null);
   const [calendars, setCalendars] = useState<CalendarListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +40,7 @@ export default function CompanySettingsPage() {
   const [allowNightWork, setAllowNightWork] = useState(false);
   const timezoneOptions = getTimezoneOptions();
 
-  const canManageGlobally = session?.user.roles.includes('ROLE_SUPER_ADMIN') ?? false;
+  const canManageGlobally = roles.includes('ROLE_SUPER_ADMIN');
 
   useEffect(() => {
     const accessToken = getAccessToken();
@@ -169,6 +170,28 @@ export default function CompanySettingsPage() {
     }
   }
 
+  async function deleteCompany() {
+    const accessToken = getAccessToken();
+    if (!accessToken || !company) {
+      return;
+    }
+
+    if (!window.confirm(`¿Eliminar la empresa ${company.name}? Esta acción solo se permite si no tiene dependencias.`)) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    try {
+      await api.companies.delete(accessToken, company.id);
+      router.push('/companies');
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : 'No se pudo eliminar la empresa');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (loading) {
     return (
       <section className="hero">
@@ -193,7 +216,7 @@ export default function CompanySettingsPage() {
         eyebrow={canManageGlobally ? 'Super admin' : 'Empresa'}
         title={`Ajustes de ${company.name}`}
         description="Configura los parámetros operativos de la empresa, sus calendarios y su política laboral."
-        actions={
+          actions={
           <>
             <Link className="button button-secondary" href="/companies">
               Volver a empresas
@@ -203,6 +226,9 @@ export default function CompanySettingsPage() {
             </Link>
             <button className="button button-secondary" type="button" onClick={() => void toggleActive(!active)} disabled={saving}>
               {active ? 'Desactivar empresa' : 'Activar empresa'}
+            </button>
+            <button className="button button-secondary" type="button" onClick={() => void deleteCompany()} disabled={saving}>
+              Eliminar empresa
             </button>
           </>
         }

@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { WorkforceCalendar } from '../../../components/workforce-calendar';
 import { api, type Calendar, type CalendarDay } from '../../../lib/api/generated';
 import { buildCalendarEvents } from '../../../lib/calendar';
-import { getAccessToken, getStoredSession } from '../../../lib/auth/session';
+import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../../lib/auth/session';
 import { formatFlexibleDurationMinutes, parseFlexibleDurationMinutes } from '../../../lib/duration';
 
 type CalendarDayForm = Omit<CalendarDay, 'id'>;
@@ -15,10 +15,11 @@ export default function CalendarDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const session = useMemo(() => getStoredSession(), []);
+  const roles = getEffectiveRoles(session);
   const canManage =
-    session?.user.roles.includes('ROLE_COMPANY_ADMIN') ||
-    session?.user.roles.includes('ROLE_RRHH') ||
-    session?.user.roles.includes('ROLE_SUPER_ADMIN');
+    roles.includes('ROLE_COMPANY_ADMIN') ||
+    roles.includes('ROLE_RRHH') ||
+    roles.includes('ROLE_SUPER_ADMIN');
   const [calendar, setCalendar] = useState<Calendar | null>(null);
   const [name, setName] = useState('');
   const [year, setYear] = useState('');

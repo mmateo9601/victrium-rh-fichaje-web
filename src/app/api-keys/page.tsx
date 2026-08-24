@@ -4,11 +4,12 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { api, type ApiKey, type PublicUser } from '../../lib/api/generated';
-import { getAccessToken, getStoredSession } from '../../lib/auth/session';
+import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../lib/auth/session';
 
 export default function ApiKeysPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
+  const roles = getEffectiveRoles(session);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [users, setUsers] = useState<PublicUser[]>([]);
   const [search, setSearch] = useState('');
@@ -21,7 +22,7 @@ export default function ApiKeysPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const canManage = session?.user.roles.some((role) => role === 'ROLE_SUPER_ADMIN') ?? false;
+  const canManage = roles.includes('ROLE_SUPER_ADMIN');
 
   useEffect(() => {
     if (!session) {

@@ -25,7 +25,9 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('../lib/auth/session', () => ({
   useStoredSession: mocks.useStoredSession,
-  signOut: mocks.signOut
+  signOut: mocks.signOut,
+  getEffectiveRoles: (session: { user?: { roles?: string[]; admin?: boolean } } | null) =>
+    session?.user?.admin ? [...(session.user.roles ?? []), 'ROLE_SUPER_ADMIN'] : session?.user?.roles ?? []
 }));
 
 import { Topbar } from './topbar';
@@ -70,8 +72,8 @@ describe('Topbar', () => {
     );
 
     expect(screen.getByRole('link', { name: /empleados/i })).toHaveAttribute('href', '/employees');
-    expect(screen.getByRole('link', { name: /planificación/i })).toHaveAttribute('href', '/schedule');
-    expect(screen.getByRole('link', { name: /usuarios/i })).toHaveAttribute('href', '/users');
+    expect(screen.getByRole('link', { name: /^planificación$/i })).toHaveAttribute('href', '/schedule');
+    expect(screen.getByRole('link', { name: /cuentas de acceso/i })).toHaveAttribute('href', '/users');
     expect(screen.queryByRole('link', { name: /plataforma/i })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /empresas/i })).toHaveAttribute('href', '/companies');
   });

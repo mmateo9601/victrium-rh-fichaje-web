@@ -5,7 +5,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { api, type CalendarDay, type CalendarListItem } from '../../lib/api/generated';
-import { getAccessToken, getStoredSession } from '../../lib/auth/session';
+import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, downloadCsv } from '../../lib/csv';
 import { getRoleListLabel } from '../../lib/labels';
 import { formatFlexibleDurationMinutes, parseFlexibleDurationMinutes } from '../../lib/duration';
@@ -17,10 +17,8 @@ const defaultDay = (): CalendarDayForm => ({ dia: '', horaInicio: '09:00', horaF
 export default function CalendarsPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
-  const canManage =
-    session?.user.roles.includes('ROLE_COMPANY_ADMIN') ||
-    session?.user.roles.includes('ROLE_RRHH') ||
-    session?.user.roles.includes('ROLE_SUPER_ADMIN');
+  const roles = getEffectiveRoles(session);
+  const canManage = roles.includes('ROLE_COMPANY_ADMIN') || roles.includes('ROLE_RRHH') || roles.includes('ROLE_SUPER_ADMIN');
 
   const [calendars, setCalendars] = useState<CalendarListItem[]>([]);
   const [search, setSearch] = useState('');
@@ -167,7 +165,7 @@ export default function CalendarsPage() {
             <span className="muted">Días en borrador</span>
           </article>
           <article className="stat">
-            <strong>{getRoleListLabel(session?.user.roles)}</strong>
+            <strong>{getRoleListLabel(roles)}</strong>
             <span className="muted">Acceso actual</span>
           </article>
         </div>

@@ -25,7 +25,13 @@ describe('session storage helpers', () => {
   it('saves and reads the stored session', () => {
     saveSession(session);
 
-    expect(getStoredSession()).toEqual(session);
+    expect(getStoredSession()).toEqual({
+      ...session,
+      user: {
+        ...session.user,
+        roles: ['ROLE_COMPANY_ADMIN', 'ROLE_SUPER_ADMIN']
+      }
+    });
     expect(getAccessToken()).toBe('access-token');
   });
 

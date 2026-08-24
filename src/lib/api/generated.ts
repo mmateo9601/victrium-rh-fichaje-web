@@ -959,6 +959,7 @@ export const api = {
       requestJsonWithMethod<Company>('/api/v1/companies', 'POST', { token, body }),
     update: (token: string, id: number, body: UpdateCompanyRequest) =>
       requestJsonWithMethod<Company>(`/api/v1/companies/${id}`, 'PATCH', { token, body }),
+    delete: (token: string, id: number) => requestNoContent(`/api/v1/companies/${id}`, 'DELETE', { token }),
     workLocations: (token: string, id: number, query: ListQuery & { active?: string } = {}) =>
       requestJson<PaginatedResult<WorkLocation>>(`/api/v1/companies/${id}/work-locations`, { token, query })
   },
@@ -974,6 +975,7 @@ export const api = {
       requestJsonWithMethod<WorkLocation>(`/api/v1/work-locations/${id}/activate`, 'POST', { token }),
     deactivate: (token: string, id: number) =>
       requestJsonWithMethod<WorkLocation>(`/api/v1/work-locations/${id}/deactivate`, 'POST', { token }),
+    delete: (token: string, id: number) => requestNoContent(`/api/v1/work-locations/${id}`, 'DELETE', { token }),
     employees: (token: string, id: number, query: ListQuery = {}) =>
       requestJson<PaginatedResult<EmployeeLocationAssignment>>(`/api/v1/work-locations/${id}/employees`, { token, query }),
     assignments: (token: string, query: ListQuery & { employeeId?: number; workLocationId?: number } = {}) =>

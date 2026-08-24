@@ -7,12 +7,13 @@ import { useRouter } from 'next/navigation';
 import { PageHeader } from '../../components/page-header';
 import { api, type PlanningPeriod, type PlanningPeriodStatus } from '../../lib/api/generated';
 import { formatLongDate, getRoleListLabel } from '../../lib/labels';
-import { getAccessToken, getStoredSession } from '../../lib/auth/session';
+import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../lib/auth/session';
 
 export default function PlanningPeriodsPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
-  const canManage = session?.user.roles.includes('ROLE_COMPANY_ADMIN') || session?.user.roles.includes('ROLE_RRHH') || session?.user.roles.includes('ROLE_SUPER_ADMIN');
+  const roles = getEffectiveRoles(session);
+  const canManage = roles.includes('ROLE_COMPANY_ADMIN') || roles.includes('ROLE_RRHH') || roles.includes('ROLE_SUPER_ADMIN');
   const [periods, setPeriods] = useState<PlanningPeriod[]>([]);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<PlanningPeriodStatus | ''>('');
@@ -138,7 +139,7 @@ export default function PlanningPeriodsPage() {
               <span className="muted">Publicados</span>
             </article>
             <article className="stat stat--compact">
-              <strong>{getRoleListLabel(session?.user.roles)}</strong>
+              <strong>{getRoleListLabel(roles)}</strong>
               <span className="muted">Acceso actual</span>
             </article>
           </>

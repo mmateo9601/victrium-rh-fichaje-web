@@ -37,6 +37,20 @@ function normalizeSession(session: AuthSession | null): AuthSession | null {
   };
 }
 
+export function getEffectiveRoles(session: AuthSession | null) {
+  if (!session) {
+    return [] as AuthSession['user']['roles'];
+  }
+
+  const roles = Array.isArray(session.user.roles) ? session.user.roles : [];
+  const hasSuperAdminRole = roles.includes('ROLE_SUPER_ADMIN');
+  if (session.user.admin && !hasSuperAdminRole) {
+    return [...roles, 'ROLE_SUPER_ADMIN'] as AuthSession['user']['roles'];
+  }
+
+  return roles as AuthSession['user']['roles'];
+}
+
 export function getStoredSession(): AuthSession | null {
   if (typeof window === 'undefined') {
     return null;

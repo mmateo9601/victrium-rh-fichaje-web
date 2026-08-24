@@ -10,7 +10,7 @@ import {
   type Employee,
   type RoleName
 } from '../../lib/api/generated';
-import { getAccessToken, useStoredSession } from '../../lib/auth/session';
+import { getAccessToken, getEffectiveRoles, useStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
 import { getRoleLabel, getRoleListLabel } from '../../lib/labels';
 
@@ -37,15 +37,14 @@ export default function EmployeesPage() {
   const [error, setError] = useState<string | null>(null);
 
   const session = useStoredSession();
-  const canManage =
-    session?.user.roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN') ??
-    false;
+  const roles = getEffectiveRoles(session);
+  const canManage = roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN');
   const roleOptions = useMemo(
     () =>
-      session?.user.roles.includes('ROLE_SUPER_ADMIN')
+      roles.includes('ROLE_SUPER_ADMIN')
         ? baseRoleOptions
         : baseRoleOptions.filter((role) => role !== 'ROLE_SUPER_ADMIN'),
-    [session]
+    [roles]
   );
 
   useEffect(() => {
@@ -204,7 +203,7 @@ export default function EmployeesPage() {
             <span className="muted">Empresa activa</span>
           </article>
           <article className="stat">
-            <strong>{getRoleListLabel(session?.user.roles)}</strong>
+            <strong>{getRoleListLabel(roles)}</strong>
             <span className="muted">Acceso actual</span>
           </article>
         </div>
@@ -302,7 +301,7 @@ export default function EmployeesPage() {
                 setSearch(e.target.value);
               }}
             />
-            {session?.user.roles.includes('ROLE_SUPER_ADMIN') ? (
+            {roles.includes('ROLE_SUPER_ADMIN') ? (
               <select
                 className="field"
                 style={{ minWidth: '220px' }}

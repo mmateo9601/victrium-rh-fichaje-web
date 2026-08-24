@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 
 import { PageHeader } from '../../../components/page-header';
 import { api, type PlanningPeriod, type PlanningPeriodAudit } from '../../../lib/api/generated';
-import { getAccessToken, getStoredSession } from '../../../lib/auth/session';
+import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../../lib/auth/session';
 import { formatLongDate } from '../../../lib/labels';
 
 function parseId(value: string | string[] | undefined | null) {
@@ -19,7 +19,8 @@ export default function PlanningPeriodDetailPage() {
   const params = useParams<{ id: string }>();
   const periodId = useMemo(() => parseId(params.id), [params.id]);
   const session = useMemo(() => getStoredSession(), []);
-  const canManage = Boolean(session?.user.roles.some((role) => ['ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH'].includes(role)));
+  const roles = getEffectiveRoles(session);
+  const canManage = Boolean(roles.some((role) => ['ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH'].includes(role)));
   const [period, setPeriod] = useState<PlanningPeriod | null>(null);
   const [audits, setAudits] = useState<PlanningPeriodAudit[]>([]);
   const [loading, setLoading] = useState(true);
