@@ -673,6 +673,7 @@ export type UpdateEmployeeLocationAssignmentRequest = Partial<CreateEmployeeLoca
 
 export type CreateEmployeeRequest = {
   companyId?: number;
+  primaryWorkLocationId?: number;
   email: string;
   password: string;
   numero: string;

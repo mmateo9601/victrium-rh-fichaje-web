@@ -8,6 +8,7 @@ import {
   api,
   type Company,
   type Employee,
+  type WorkLocation,
   type RoleName
 } from '../../lib/api/generated';
 import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../lib/auth/session';
@@ -20,6 +21,7 @@ export default function EmployeesPage() {
   const router = useRouter();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [workLocations, setWorkLocations] = useState<WorkLocation[]>([]);
   const [pagination, setPagination] = useState({ page: 1, pageSize: 10, total: 0, totalPages: 0 });
   const [search, setSearch] = useState('');
   const [companyFilter, setCompanyFilter] = useState('');
@@ -29,6 +31,7 @@ export default function EmployeesPage() {
   const [createEmail, setCreateEmail] = useState('');
   const [createDni, setCreateDni] = useState('');
   const [createPassword, setCreatePassword] = useState('');
+  const [createPrimaryWorkLocationId, setCreatePrimaryWorkLocationId] = useState('');
   const [createRoles, setCreateRoles] = useState<RoleName[]>(['ROLE_USER']);
   const [createWorking, setCreateWorking] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
@@ -59,6 +62,49 @@ export default function EmployeesPage() {
     setSession(getStoredSession());
     setSessionReady(true);
   }, []);
+
+  const selectedCompanyId = useMemo(
+    () => (createCompanyId ? Number(createCompanyId) : session?.user.companyId ?? null),
+    [createCompanyId, session?.user.companyId]
+  );
+
+  useEffect(() => {
+    const token = getAccessToken();
+    if (!token || !sessionReady || !selectedCompanyId) {
+      setWorkLocations([]);
+      setCreatePrimaryWorkLocationId('');
+      return;
+    }
+    const authToken = token;
+
+    let cancelled = false;
+
+    async function loadWorkLocations() {
+      try {
+        const response = await api.workLocations.list(authToken, {
+          pageSize: 100,
+          companyId: selectedCompanyId ?? undefined,
+          active: 'true'
+        });
+        if (!cancelled) {
+          setWorkLocations(response.data);
+          setCreatePrimaryWorkLocationId((current) =>
+            response.data.some((location) => String(location.id) === current) ? current : ''
+          );
+        }
+      } catch {
+        if (!cancelled) {
+          setWorkLocations([]);
+        }
+      }
+    }
+
+    void loadWorkLocations();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCompanyId, sessionReady]);
 
   useEffect(() => {
     const token = getAccessToken();
@@ -117,6 +163,7 @@ export default function EmployeesPage() {
     try {
       await api.employees.create(authToken, {
         companyId: createCompanyId ? Number(createCompanyId) : undefined,
+        primaryWorkLocationId: createPrimaryWorkLocationId ? Number(createPrimaryWorkLocationId) : undefined,
         numero: createNumero,
         nombreEmpleado: createNombre,
         email: createEmail,
@@ -138,6 +185,7 @@ export default function EmployeesPage() {
       setCreateEmail('');
       setCreateDni('');
       setCreatePassword('');
+      setCreatePrimaryWorkLocationId('');
       setCreateRoles(['ROLE_USER']);
       setCreateWorking(false);
     } catch (err) {
@@ -159,12 +207,13 @@ export default function EmployeesPage() {
       router.replace('/login');
       return;
     }
+    const authToken = token;
 
     setExporting(true);
     setError(null);
     try {
       const items = await collectAllPages(
-        (query) => api.employees.list(token, { search, companyId: companyFilter ? Number(companyFilter) : undefined, ...query }),
+        (query) => api.employees.list(authToken, { search, companyId: companyFilter ? Number(companyFilter) : undefined, ...query }),
         { search, companyId: companyFilter ? Number(companyFilter) : undefined }
       );
       const csv = buildCsv(
@@ -231,7 +280,10 @@ export default function EmployeesPage() {
               <select
                 id="companyId"
                 value={createCompanyId}
-                onChange={(event) => setCreateCompanyId(event.target.value)}
+                onChange={(event) => {
+                  setCreateCompanyId(event.target.value);
+                  setCreatePrimaryWorkLocationId('');
+                }}
               >
                 <option value="">Empresa asignada</option>
                 {companies.map((company) => (
@@ -240,6 +292,23 @@ export default function EmployeesPage() {
                   </option>
                 ))}
               </select>
+            </div>
+            <div className="field">
+              <label htmlFor="primaryWorkLocationId">Centro habitual</label>
+              <select
+                id="primaryWorkLocationId"
+                value={createPrimaryWorkLocationId}
+                onChange={(event) => setCreatePrimaryWorkLocationId(event.target.value)}
+                disabled={!selectedCompanyId}
+              >
+                <option value="">Selecciona un centro</option>
+                {workLocations.map((location) => (
+                  <option key={location.id} value={location.id}>
+                    {location.name} · {location.city ?? location.code}
+                  </option>
+                ))}
+              </select>
+              <p className="meta">Obligatorio para empleados activos. Filtrado por empresa.</p>
             </div>
             <div className="field">
               <label htmlFor="numero">Número</label>

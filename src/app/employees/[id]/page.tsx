@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
 import { ScheduleGrid } from '../../../components/schedule-grid';
-import { api, type Company, type Employee, type EmployeeLocationAssignment, type Schedule, type ShiftAssignment } from '../../../lib/api/generated';
+import { api, type Company, type Employee, type EmployeeLocationAssignment, type Schedule, type ShiftAssignment, type WorkLocation } from '../../../lib/api/generated';
 import { getAccessToken } from '../../../lib/auth/session';
 import { getRoleListLabel } from '../../../lib/labels';
 
@@ -16,6 +16,8 @@ export default function EmployeeDetailPage() {
 
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [workLocations, setWorkLocations] = useState<WorkLocation[]>([]);
+  const [primaryWorkLocationId, setPrimaryWorkLocationId] = useState<number | ''>('');
   const [schedule, setSchedule] = useState<Schedule | null>(null);
   const [assignments, setAssignments] = useState<ShiftAssignment[]>([]);
   const [locationAssignments, setLocationAssignments] = useState<EmployeeLocationAssignment[]>([]);
@@ -53,6 +55,8 @@ export default function EmployeeDetailPage() {
         setAssignments(assignmentsResult);
         const locationAssignmentsResult = await api.workLocations.assignments(authToken, { employeeId: id, pageSize: 50, sort: 'validFrom', order: 'desc' });
         setLocationAssignments(locationAssignmentsResult.data);
+        const primaryAssignment = locationAssignmentsResult.data.find((assignment) => assignment.primary);
+        setPrimaryWorkLocationId(primaryAssignment ? primaryAssignment.workLocationId : '');
       } catch (err) {
         setError(err instanceof Error ? err.message : 'No se pudo cargar el detalle');
       } finally {
@@ -62,6 +66,44 @@ export default function EmployeeDetailPage() {
 
     void load();
   }, [id, router, monthRange]);
+
+  useEffect(() => {
+    const token = getAccessToken();
+    if (!token || !employee?.companyId) {
+      setWorkLocations([]);
+      return;
+    }
+    const authToken = token;
+    const companyId = employee.companyId;
+
+    let cancelled = false;
+
+    async function loadWorkLocations() {
+      try {
+        const response = await api.workLocations.list(authToken, {
+          pageSize: 100,
+          companyId,
+          active: 'true'
+        });
+        if (!cancelled) {
+          setWorkLocations(response.data);
+          setPrimaryWorkLocationId((current) =>
+            current && !response.data.some((location) => location.id === current) ? '' : current
+          );
+        }
+      } catch {
+        if (!cancelled) {
+          setWorkLocations([]);
+        }
+      }
+    }
+
+    void loadWorkLocations();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [employee?.companyId]);
 
   async function save() {
     const token = getAccessToken();
@@ -75,6 +117,7 @@ export default function EmployeeDetailPage() {
     try {
       const updated = await api.employees.update(authToken, employee.id, {
         companyId: employee.companyId ?? undefined,
+        primaryWorkLocationId: primaryWorkLocationId === '' ? undefined : primaryWorkLocationId,
         numero: employee.numero,
         nombreEmpleado: employee.nombreEmpleado,
         email: employee.email,
@@ -199,6 +242,25 @@ export default function EmployeeDetailPage() {
                   </option>
                 ))}
               </select>
+            </div>
+            <div className="field">
+              <label htmlFor="primaryWorkLocationId">Centro habitual</label>
+              <select
+                id="primaryWorkLocationId"
+                value={primaryWorkLocationId}
+                onChange={(e) =>
+                  setPrimaryWorkLocationId(e.target.value ? Number(e.target.value) : '')
+                }
+                disabled={!employee.companyId}
+              >
+                <option value="">Selecciona un centro</option>
+                {workLocations.map((location) => (
+                  <option key={location.id} value={location.id}>
+                    {location.name} · {location.city ?? location.code}
+                  </option>
+                ))}
+              </select>
+              <p className="meta">Requerido si el empleado sigue activo. Filtrado por empresa.</p>
             </div>
             <div className="field">
               <label htmlFor="working">Activo</label>
