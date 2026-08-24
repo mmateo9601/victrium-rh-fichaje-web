@@ -20,6 +20,7 @@ export default function WorkLocationsPage() {
   const [companyFilter, setCompanyFilter] = useState('');
   const [search, setSearch] = useState('');
   const [active, setActive] = useState('');
+  const [togglingId, setTogglingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState('Madrid Centro');
   const [code, setCode] = useState('MAD-CENTRO');
@@ -107,6 +108,40 @@ export default function WorkLocationsPage() {
     }
   }
 
+  async function toggleLocationActive(location: WorkLocation) {
+    const token = getAccessToken();
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+
+    setTogglingId(location.id);
+    setError(null);
+    try {
+      await api.workLocations.update(token, location.id, {
+        companyId: location.companyId ?? undefined,
+        name: location.name,
+        code: location.code,
+        timezone: location.timezone ?? null,
+        address: location.address ?? null,
+        city: location.city ?? null,
+        province: location.province ?? null,
+        postalCode: location.postalCode ?? null,
+        active: !location.active
+      });
+      const refreshed = await api.workLocations.list(token, {
+        search,
+        active,
+        companyId: session?.user.roles.includes('ROLE_SUPER_ADMIN') && companyFilter ? Number(companyFilter) : undefined
+      });
+      setLocations(refreshed.data);
+    } catch (toggleError) {
+      setError(toggleError instanceof Error ? toggleError.message : 'No se pudo cambiar el estado del centro');
+    } finally {
+      setTogglingId(null);
+    }
+  }
+
   if (loading) {
     return (
       <section className="hero">
@@ -121,7 +156,7 @@ export default function WorkLocationsPage() {
       <PageHeader
         eyebrow="Organización"
         title="Centros de trabajo"
-        description="Gestiona sedes, calendarios locales y la base para planificación multicentro."
+        description="Gestiona sedes, calendarios locales y la base para planificación multicentro. La zona horaria se elige siempre de una lista; los campos de planificación usan minutos y horas según corresponda."
         stats={
           <>
             <article className="stat stat--compact">
@@ -129,8 +164,8 @@ export default function WorkLocationsPage() {
               <span className="muted">Centros visibles</span>
             </article>
             <article className="stat stat--compact">
-              <strong>{session?.user.nombreEmpleado ?? '—'}</strong>
-              <span className="muted">Usuario actual</span>
+              <strong>{session?.user.email ?? session?.user.nombreEmpleado ?? '—'}</strong>
+              <span className="muted">Cuenta actual</span>
             </article>
           </>
         }
@@ -252,14 +287,24 @@ export default function WorkLocationsPage() {
                   <td>{location.code}</td>
                   <td>{location.city ?? '—'}</td>
                   <td>{location.timezone ?? '—'}</td>
-                  <td><span className={`badge ${location.active ? 'badge-success' : 'badge-danger'}`}>{location.active ? 'Activo' : 'Inactivo'}</span></td>
-                  <td>
-                    <Link className="button button-secondary" href={`/work-locations/${location.id}`}>
-                      Abrir
-                    </Link>
-                  </td>
-                </tr>
-              ))}
+                    <td><span className={`badge ${location.active ? 'badge-success' : 'badge-danger'}`}>{location.active ? 'Activo' : 'Inactivo'}</span></td>
+                    <td>
+                      <div className="inline-actions">
+                        <Link className="button button-secondary" href={`/work-locations/${location.id}`}>
+                          Abrir
+                        </Link>
+                        <button
+                          className="button button-secondary"
+                          type="button"
+                          onClick={() => void toggleLocationActive(location)}
+                          disabled={togglingId === location.id}
+                        >
+                          {location.active ? 'Desactivar' : 'Activar'}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
               {!locations.length ? (
                 <tr>
                   <td colSpan={6} className="muted">

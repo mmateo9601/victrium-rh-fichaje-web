@@ -184,10 +184,10 @@ export default function DashboardPage() {
         { value: String(pendingRequests), label: 'Pendientes', icon: <ShieldAlert size={16} /> }
       ]
     : [
-        { value: weeklyTargetMinutes !== null ? formatDurationLabel(weeklyTargetMinutes) : '—', label: 'Objetivo semanal', icon: <CalendarClock size={16} /> },
-        { value: formatDurationLabel(weekSummary.workedMinutes), label: 'Horas esta semana', icon: <TimerReset size={16} /> },
+        { value: weeklyTargetMinutes !== null ? formatDurationLabel(weeklyTargetMinutes) : '—', label: 'Objetivo semanal (min)', icon: <CalendarClock size={16} /> },
+        { value: formatDurationLabel(weekSummary.workedMinutes), label: 'Tiempo trabajado (h/min)', icon: <TimerReset size={16} /> },
         { value: String(weekSummary.days), label: 'Días con actividad', icon: <CalendarClock size={16} /> },
-        { value: weeklyRemainingMinutes !== null ? formatDurationLabel(weeklyRemainingMinutes) : '—', label: 'Restante', icon: <Clock3 size={16} /> }
+        { value: weeklyRemainingMinutes !== null ? formatDurationLabel(weeklyRemainingMinutes) : '—', label: 'Restante (min)', icon: <Clock3 size={16} /> }
       ];
 
   return (

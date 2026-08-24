@@ -80,7 +80,7 @@ export default function PlatformPage() {
 
       <section className="grid-3">
         {[
-          { label: 'Usuarios', value: summary?.users ?? 0 },
+          { label: 'Usuarios de acceso', value: summary?.users ?? 0 },
           { label: 'Empleados', value: summary?.employees ?? 0 },
           { label: 'Centros', value: summary?.workLocations ?? 0 },
           { label: 'Turnos', value: summary?.shifts ?? 0 },
@@ -106,11 +106,11 @@ export default function PlatformPage() {
         <div className="grid-3">
           <article className="stat">
             <strong>{formatDurationLabel(summary?.currentMonthPlannedMinutes ?? 0)}</strong>
-            <span className="muted">Planificado</span>
+            <span className="muted">Planificado (min)</span>
           </article>
           <article className="stat">
             <strong>{formatDurationLabel(summary?.currentMonthWorkedMinutes ?? 0)}</strong>
-            <span className="muted">Trabajado</span>
+            <span className="muted">Trabajado (h/min)</span>
           </article>
           <article className="stat">
             <strong>{formatNumber(summary?.currentMonthCoverageRate ?? 0)}%</strong>
@@ -138,11 +138,11 @@ export default function PlatformPage() {
           </article>
           <article className="stat">
             <strong>{formatDurationLabel(summary?.currentMonthOvertimeMinutes ?? 0)}</strong>
-            <span className="muted">Horas extra</span>
+            <span className="muted">Horas extra (min)</span>
           </article>
           <article className="stat">
             <strong>{formatDurationLabel(summary?.currentMonthNightWorkMinutes ?? 0)}</strong>
-            <span className="muted">Trabajo nocturno</span>
+            <span className="muted">Trabajo nocturno (min)</span>
           </article>
         </div>
       </section>

@@ -131,6 +131,44 @@ export default function CompanySettingsPage() {
     }
   }
 
+  async function toggleActive(nextActive: boolean) {
+    const accessToken = getAccessToken();
+    if (!accessToken || !company) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    try {
+      const updated = await api.companies.update(accessToken, company.id, {
+        name,
+        code,
+        timezone: timezone || null,
+        active: nextActive,
+        defaultCalendarId: defaultCalendarId ? Number(defaultCalendarId) : null,
+        workPolicy: {
+          weeklyTargetMinutes: parseFlexibleDurationMinutes(weeklyTargetMinutes),
+          monthlyTargetMinutes: parseFlexibleDurationMinutes(monthlyTargetMinutes),
+          maxDailyMinutes: parseFlexibleDurationMinutes(maxDailyMinutes),
+          minimumBreakMinutes: parseFlexibleDurationMinutes(minimumBreakMinutes),
+          expectedBreakMinutes: parseFlexibleDurationMinutes(expectedBreakMinutes),
+          lateThresholdMinutes: parseFlexibleDurationMinutes(lateThresholdMinutes),
+          overtimeWarningMinutes: parseFlexibleDurationMinutes(overtimeWarningMinutes),
+          nightWorkStart: nightWorkStart || null,
+          nightWorkEnd: nightWorkEnd || null,
+          allowOvertime,
+          allowNightWork
+        }
+      });
+      setCompany(updated);
+      setActive(updated.active);
+    } catch (toggleError) {
+      setError(toggleError instanceof Error ? toggleError.message : 'No se pudo cambiar el estado de la empresa');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (loading) {
     return (
       <section className="hero">
@@ -163,6 +201,9 @@ export default function CompanySettingsPage() {
             <Link className="button button-secondary" href="/work-locations">
               Ver centros
             </Link>
+            <button className="button button-secondary" type="button" onClick={() => void toggleActive(!active)} disabled={saving}>
+              {active ? 'Desactivar empresa' : 'Activar empresa'}
+            </button>
           </>
         }
         stats={
@@ -243,45 +284,45 @@ export default function CompanySettingsPage() {
         <div className="toolbar">
           <div>
             <h2 className="section-title">Política laboral</h2>
-            <p className="meta">Parámetros operativos usados por planificación, fichaje y validaciones.</p>
+            <p className="meta">Todos estos campos se guardan en minutos salvo las horas nocturnas, que se eligen como hora local.</p>
           </div>
         </div>
 
         <div className="field-grid">
           <div className="field">
-            <label htmlFor="weeklyTargetMinutes">Objetivo semanal</label>
+            <label htmlFor="weeklyTargetMinutes">Objetivo semanal (minutos)</label>
             <input id="weeklyTargetMinutes" type="text" inputMode="decimal" placeholder="480 o 8:00" value={weeklyTargetMinutes} onChange={(e) => setWeeklyTargetMinutes(e.target.value)} />
           </div>
           <div className="field">
-            <label htmlFor="monthlyTargetMinutes">Objetivo mensual</label>
+            <label htmlFor="monthlyTargetMinutes">Objetivo mensual (minutos)</label>
             <input id="monthlyTargetMinutes" type="text" inputMode="decimal" placeholder="8:00 o 480" value={monthlyTargetMinutes} onChange={(e) => setMonthlyTargetMinutes(e.target.value)} />
           </div>
           <div className="field">
-            <label htmlFor="maxDailyMinutes">Máximo diario</label>
+            <label htmlFor="maxDailyMinutes">Máximo diario (minutos)</label>
             <input id="maxDailyMinutes" type="text" inputMode="decimal" placeholder="8:30 o 510" value={maxDailyMinutes} onChange={(e) => setMaxDailyMinutes(e.target.value)} />
           </div>
           <div className="field">
-            <label htmlFor="minimumBreakMinutes">Descanso mínimo</label>
+            <label htmlFor="minimumBreakMinutes">Descanso mínimo (minutos)</label>
             <input id="minimumBreakMinutes" type="text" inputMode="decimal" placeholder="30 o 0:30" value={minimumBreakMinutes} onChange={(e) => setMinimumBreakMinutes(e.target.value)} />
           </div>
           <div className="field">
-            <label htmlFor="expectedBreakMinutes">Descanso esperado</label>
+            <label htmlFor="expectedBreakMinutes">Descanso esperado (minutos)</label>
             <input id="expectedBreakMinutes" type="text" inputMode="decimal" placeholder="30 o 0:30" value={expectedBreakMinutes} onChange={(e) => setExpectedBreakMinutes(e.target.value)} />
           </div>
           <div className="field">
-            <label htmlFor="lateThresholdMinutes">Umbral de retraso</label>
+            <label htmlFor="lateThresholdMinutes">Umbral de retraso (minutos)</label>
             <input id="lateThresholdMinutes" type="text" inputMode="decimal" placeholder="10 o 0:10" value={lateThresholdMinutes} onChange={(e) => setLateThresholdMinutes(e.target.value)} />
           </div>
           <div className="field">
-            <label htmlFor="overtimeWarningMinutes">Aviso de horas extra</label>
+            <label htmlFor="overtimeWarningMinutes">Aviso de horas extra (minutos)</label>
             <input id="overtimeWarningMinutes" type="text" inputMode="decimal" placeholder="30 o 0:30" value={overtimeWarningMinutes} onChange={(e) => setOvertimeWarningMinutes(e.target.value)} />
           </div>
           <div className="field">
-            <label htmlFor="nightWorkStart">Inicio trabajo nocturno</label>
+            <label htmlFor="nightWorkStart">Inicio trabajo nocturno (hora)</label>
             <input id="nightWorkStart" type="time" value={nightWorkStart} onChange={(e) => setNightWorkStart(e.target.value)} />
           </div>
           <div className="field">
-            <label htmlFor="nightWorkEnd">Fin trabajo nocturno</label>
+            <label htmlFor="nightWorkEnd">Fin trabajo nocturno (hora)</label>
             <input id="nightWorkEnd" type="time" value={nightWorkEnd} onChange={(e) => setNightWorkEnd(e.target.value)} />
           </div>
           <div className="field">

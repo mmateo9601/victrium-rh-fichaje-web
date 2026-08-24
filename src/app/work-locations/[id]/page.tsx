@@ -157,6 +157,11 @@ export default function WorkLocationDetailPage() {
         eyebrow="Organización"
         title={location.name}
         description="Centro de trabajo, calendario asociado y asignaciones históricas."
+        actions={
+          <button className="button button-secondary" type="button" onClick={() => void setStatus(!location.active)} disabled={saving}>
+            {location.active ? 'Desactivar centro' : 'Activar centro'}
+          </button>
+        }
         stats={
           <>
             <article className="stat stat--compact">
@@ -183,14 +188,7 @@ export default function WorkLocationDetailPage() {
             <h2 className="section-title">Editar centro</h2>
             <p className="meta">Ajusta datos, dirección y estado del centro de trabajo.</p>
           </div>
-          <div className="hero-actions" style={{ marginTop: 0 }}>
-            <button className="button button-secondary" type="button" onClick={() => void setStatus(true)} disabled={saving}>
-              Activar
-            </button>
-            <button className="button button-secondary" type="button" onClick={() => void setStatus(false)} disabled={saving}>
-              Desactivar
-            </button>
-          </div>
+          <span className={`badge ${location.active ? 'badge-success' : 'badge-danger'}`}>{location.active ? 'Activo' : 'Inactivo'}</span>
         </div>
         <div className="field-grid">
           {session?.user.roles.includes('ROLE_SUPER_ADMIN') ? (

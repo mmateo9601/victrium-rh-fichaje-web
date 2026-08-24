@@ -23,6 +23,7 @@ export default function CompaniesPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [togglingId, setTogglingId] = useState<number | null>(null);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const timezoneOptions = getTimezoneOptions();
@@ -163,6 +164,32 @@ export default function CompaniesPage() {
       setError(err instanceof Error ? err.message : 'No se pudo actualizar la empresa');
     } finally {
       setUpdating(false);
+    }
+  }
+
+  async function toggleCompanyActive(company: Company) {
+    const token = getAccessToken();
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+
+    setTogglingId(company.id);
+    setError(null);
+    try {
+      await api.companies.update(token, company.id, {
+        name: company.name,
+        code: company.code,
+        timezone: company.timezone ?? null,
+        active: !company.active,
+        workPolicy: company.workPolicy ?? null
+      });
+      const refreshed = await api.companies.list(token, { search: search || undefined, pageSize: 50 });
+      setCompanies(refreshed.data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo cambiar el estado de la empresa');
+    } finally {
+      setTogglingId(null);
     }
   }
 
@@ -343,6 +370,14 @@ export default function CompaniesPage() {
                         <Link className="button button-primary" href={`/companies/${company.id}`}>
                           Ajustes
                         </Link>
+                        <button
+                          className="button button-secondary"
+                          type="button"
+                          onClick={() => void toggleCompanyActive(company)}
+                          disabled={togglingId === company.id}
+                        >
+                          {company.active ? 'Desactivar' : 'Activar'}
+                        </button>
                       </div>
                     </td>
                   ) : null}

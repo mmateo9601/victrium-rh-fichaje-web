@@ -15,6 +15,28 @@ function notifySessionChange() {
   window.dispatchEvent(new Event(SESSION_EVENT));
 }
 
+function normalizeSession(session: AuthSession | null): AuthSession | null {
+  if (!session) {
+    return null;
+  }
+
+  const roles = Array.isArray(session.user.roles) ? session.user.roles : [];
+  const normalizedRoles =
+    session.user.admin && !roles.includes('ROLE_SUPER_ADMIN') ? [...roles, 'ROLE_SUPER_ADMIN'] : roles;
+
+  if (normalizedRoles === roles) {
+    return session;
+  }
+
+  return {
+    ...session,
+    user: {
+      ...session.user,
+      roles: normalizedRoles as AuthSession['user']['roles']
+    }
+  };
+}
+
 export function getStoredSession(): AuthSession | null {
   if (typeof window === 'undefined') {
     return null;
@@ -26,7 +48,7 @@ export function getStoredSession(): AuthSession | null {
   }
 
   try {
-    return JSON.parse(raw) as AuthSession;
+    return normalizeSession(JSON.parse(raw) as AuthSession);
   } catch {
     return null;
   }
@@ -37,7 +59,7 @@ export function saveSession(session: AuthSession) {
     return;
   }
 
-  window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  window.localStorage.setItem(SESSION_KEY, JSON.stringify(normalizeSession(session)));
   notifySessionChange();
 }
 

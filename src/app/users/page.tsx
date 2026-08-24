@@ -293,7 +293,7 @@ export default function UsersPage() {
         }
       );
       const csv = buildCsv(
-        ['Usuario', 'Email', 'Empresa', 'Rol', 'Empleado', 'Estado', 'Último acceso'],
+        ['Cuenta', 'Email', 'Empresa', 'Roles', 'Empleado vinculado', 'Estado', 'Último acceso'],
         items.map((user) => [
           user.numero,
           user.email,
@@ -324,9 +324,9 @@ export default function UsersPage() {
   return (
     <div className="stack">
       <section className="hero">
-        <span className="eyebrow">Identidad</span>
-        <h1>Usuarios</h1>
-        <p>Alta, edición y activación de accesos por empresa. El acceso de usuario y el empleado vinculado se gestionan por separado.</p>
+        <span className="eyebrow">Cuentas</span>
+        <h1>Usuarios de acceso</h1>
+        <p>Alta, edición y activación de cuentas por empresa. El acceso y el empleado vinculado son entidades distintas.</p>
         {error ? (
           <div className="notice" role="alert">
             {error}
@@ -337,8 +337,8 @@ export default function UsersPage() {
       <section className="panel stack">
         <div className="toolbar">
           <div>
-            <h2 className="section-title">Filtros</h2>
-            <p className="meta">La compañía se limita por el rol autenticado.</p>
+            <h2 className="section-title">Filtros de cuenta</h2>
+            <p className="meta">La empresa se limita por el rol autenticado.</p>
           </div>
           <div className="hero-actions" style={{ marginTop: 0 }}>
             <input className="field" placeholder="Buscar..." value={filters.search} onChange={(e) => setFilters((current) => ({ ...current, search: e.target.value }))} />
@@ -390,9 +390,9 @@ export default function UsersPage() {
       <section className="panel stack">
         <div className="toolbar">
           <div>
-            <h2 className="section-title">{selectedUser ? 'Editar usuario' : 'Crear usuario'}</h2>
+            <h2 className="section-title">{selectedUser ? 'Editar cuenta' : 'Crear cuenta'}</h2>
             <p className="meta">
-              {selectedUser ? `Editando ${selectedUser.nombreEmpleado}` : 'Define identidad, compañía y vínculo a empleado si aplica.'}
+              {selectedUser ? `Editando acceso de ${selectedUser.email}` : 'Define acceso, empresa y empleado vinculado si aplica.'}
             </p>
           </div>
           {selectedUser ? (
@@ -408,7 +408,7 @@ export default function UsersPage() {
             <input className="field" value={form.email} onChange={(e) => setForm((current) => ({ ...current, email: e.target.value }))} />
           </label>
           <label className="stack">
-            <span className="field-label">Login / número</span>
+            <span className="field-label">Login / número de acceso</span>
             <input className="field" value={form.numero} onChange={(e) => setForm((current) => ({ ...current, numero: e.target.value }))} />
           </label>
           <label className="stack">
@@ -416,7 +416,7 @@ export default function UsersPage() {
             <input className="field" value={form.dni} onChange={(e) => setForm((current) => ({ ...current, dni: e.target.value }))} />
           </label>
           <label className="stack">
-            <span className="field-label">Nombre para mostrar</span>
+            <span className="field-label">Nombre de acceso</span>
             <input className="field" value={form.nombreEmpleado} onChange={(e) => setForm((current) => ({ ...current, nombreEmpleado: e.target.value }))} />
           </label>
           <label className="stack">
@@ -429,7 +429,7 @@ export default function UsersPage() {
             />
           </label>
           <label className="stack">
-            <span className="field-label">Estado</span>
+            <span className="field-label">Estado de la cuenta</span>
             <select className="field" value={String(form.active)} onChange={(e) => setForm((current) => ({ ...current, active: e.target.value === 'true' }))}>
               <option value="true">Activo</option>
               <option value="false">Inactivo</option>
@@ -468,7 +468,7 @@ export default function UsersPage() {
         </div>
 
         <div className="stack">
-          <span className="field-label">Roles</span>
+          <span className="field-label">Roles de acceso</span>
           <div className="chips-grid">
             {ROLE_OPTIONS.map((role) => {
               const checked = form.roles.includes(role);
@@ -493,7 +493,7 @@ export default function UsersPage() {
 
         <div className="hero-actions">
           <button className="button" type="button" onClick={() => void saveUser()} disabled={saving}>
-            {saving ? 'Guardando...' : selectedUser ? 'Guardar cambios' : 'Crear usuario'}
+            {saving ? 'Guardando...' : selectedUser ? 'Guardar cambios' : 'Crear cuenta'}
           </button>
           <button className="button button-secondary" type="button" onClick={beginCreate}>
             Limpiar
@@ -504,8 +504,8 @@ export default function UsersPage() {
       <section className="panel stack">
         <div className="toolbar">
           <div>
-            <h2 className="section-title">Listado</h2>
-            <p className="meta">Usuario, empresa, rol, vínculo y acceso.</p>
+            <h2 className="section-title">Listado de cuentas</h2>
+            <p className="meta">Cuenta de acceso, empresa, roles y empleado vinculado.</p>
           </div>
         </div>
 
@@ -513,11 +513,11 @@ export default function UsersPage() {
           <table className="table">
             <thead>
               <tr>
-                <th>Usuario</th>
+                <th>Cuenta</th>
                 <th>Email</th>
                 <th>Empresa</th>
-                <th>Rol</th>
-                <th>Empleado</th>
+                <th>Roles</th>
+                <th>Empleado vinculado</th>
                 <th>Estado</th>
                 <th>Último acceso</th>
                 <th>Acciones</th>
@@ -548,7 +548,7 @@ export default function UsersPage() {
               {!users.length ? (
                 <tr>
                   <td colSpan={8} className="muted">
-                    Sin resultados.
+                    Sin cuentas de acceso.
                   </td>
                 </tr>
               ) : null}
