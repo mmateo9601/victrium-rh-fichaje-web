@@ -88,6 +88,18 @@ function defaultDays(): Omit<ShiftDay, 'id'>[] {
   ];
 }
 
+function defaultShiftFormState() {
+  return {
+    name: 'Mañana',
+    code: 'M',
+    color: '#0f766e',
+    description: 'Turno base de mañana',
+    days: defaultDays(),
+    rotationStartDate: '',
+    rotationPattern: [] as RotationPatternStep[]
+  };
+}
+
 function dayMinutes(day: ShiftDay) {
   if (day.segments.length) {
     return day.segments.reduce((total, segment) => total + (segment.workingMinutes ?? 0), 0);
@@ -105,13 +117,24 @@ export default function ShiftsPage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [active, setActive] = useState('');
-  const [name, setName] = useState('Mañana');
-  const [code, setCode] = useState('M');
-  const [color, setColor] = useState('#0f766e');
-  const [description, setDescription] = useState('Turno base de mañana');
-  const [days, setDays] = useState<Omit<ShiftDay, 'id'>[]>(defaultDays());
-  const [rotationStartDate, setRotationStartDate] = useState('');
-  const [rotationPattern, setRotationPattern] = useState<RotationPatternStep[]>([]);
+  const [name, setName] = useState(defaultShiftFormState().name);
+  const [code, setCode] = useState(defaultShiftFormState().code);
+  const [color, setColor] = useState(defaultShiftFormState().color);
+  const [description, setDescription] = useState(defaultShiftFormState().description);
+  const [days, setDays] = useState<Omit<ShiftDay, 'id'>[]>(defaultShiftFormState().days);
+  const [rotationStartDate, setRotationStartDate] = useState(defaultShiftFormState().rotationStartDate);
+  const [rotationPattern, setRotationPattern] = useState<RotationPatternStep[]>(defaultShiftFormState().rotationPattern);
+
+  function resetForm() {
+    const defaults = defaultShiftFormState();
+    setName(defaults.name);
+    setCode(defaults.code);
+    setColor(defaults.color);
+    setDescription(defaults.description);
+    setDays(defaults.days);
+    setRotationStartDate(defaults.rotationStartDate);
+    setRotationPattern(defaults.rotationPattern);
+  }
 
   useEffect(() => {
     const accessToken = getAccessToken();
@@ -165,6 +188,7 @@ export default function ShiftsPage() {
         rotationStartDate: rotationStartDate || null,
         rotationPattern
       });
+      resetForm();
       const refreshed = await api.shifts.list(token, { search, active });
       setShifts(refreshed);
     } catch (createError) {
@@ -190,9 +214,16 @@ export default function ShiftsPage() {
         title="Turnos de trabajo"
         description="Define una plantilla simple: nombre, horario semanal y patrón de rotación opcional."
         actions={
-          <a className="button button-primary" href="#nuevo-turno">
+          <button
+            className="button button-primary"
+            type="button"
+            onClick={() => {
+              resetForm();
+              globalThis.document?.getElementById('nuevo-turno')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
+          >
             Nuevo turno
-          </a>
+          </button>
         }
         stats={
           <>
