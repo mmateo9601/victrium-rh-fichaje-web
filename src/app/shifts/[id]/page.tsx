@@ -78,6 +78,8 @@ export default function ShiftDetailPage() {
   const [overrideShiftId, setOverrideShiftId] = useState('');
   const [overrideNotes, setOverrideNotes] = useState('');
   const [editOpen, setEditOpen] = useState(false);
+  const [assignmentOpen, setAssignmentOpen] = useState(false);
+  const [overrideOpen, setOverrideOpen] = useState(false);
 
   const totalMinutes = useMemo(() => days.reduce((acc, day) => acc + dayMinutes(day), 0), [days]);
   const rotationMinutesTotal = useMemo(() => rotationPattern.reduce((acc, step) => acc + rotationMinutes(step as Shift['rotationPattern'][number]), 0), [rotationPattern]);
@@ -88,6 +90,22 @@ export default function ShiftDetailPage() {
 
   function closeEdit() {
     setEditOpen(false);
+  }
+
+  function openAssignment() {
+    setAssignmentOpen(true);
+  }
+
+  function closeAssignment() {
+    setAssignmentOpen(false);
+  }
+
+  function openOverride() {
+    setOverrideOpen(true);
+  }
+
+  function closeOverride() {
+    setOverrideOpen(false);
   }
 
   useEffect(() => {
@@ -213,6 +231,7 @@ export default function ShiftDetailPage() {
       });
       await refresh();
       setAssignmentNotes('');
+      closeAssignment();
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : 'No se pudo crear la asignación');
     } finally {
@@ -237,6 +256,7 @@ export default function ShiftDetailPage() {
       });
       await refresh();
       setOverrideNotes('');
+      closeOverride();
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : 'No se pudo crear la excepción');
     } finally {
@@ -494,80 +514,176 @@ export default function ShiftDetailPage() {
       </section>
 
       <div className="grid-2">
-        <form className="panel stack" onSubmit={(event) => { event.preventDefault(); void createAssignment(); }}>
-          <h2 className="section-title">Asignar a empleado</h2>
-          <div className="field-grid">
-            <div className="field">
-              <label htmlFor="employee">Empleado</label>
-              <select id="employee" value={employeeId} onChange={(e) => setEmployeeId(e.target.value)}>
-                <option value="">Selecciona</option>
-                {employees.map((employee) => (
-                  <option key={employee.id} value={employee.id}>
-                    {employee.nombreEmpleado}
-                  </option>
-                ))}
-              </select>
+        <section className="panel stack">
+          <div className="toolbar">
+            <div>
+              <h2 className="section-title">Asignaciones</h2>
+              <p className="meta">Vigencia y notas de las asignaciones de este turno.</p>
             </div>
-            <div className="field">
-              <label htmlFor="validFrom">Desde</label>
-              <input id="validFrom" type="date" value={validFrom} onChange={(e) => setValidFrom(e.target.value)} />
-            </div>
-            <div className="field">
-              <label htmlFor="validTo">Hasta</label>
-              <input id="validTo" type="date" value={validTo} onChange={(e) => setValidTo(e.target.value)} />
-            </div>
-            <div className="field">
-              <label htmlFor="assignmentNotes">Notas</label>
-              <input id="assignmentNotes" value={assignmentNotes} onChange={(e) => setAssignmentNotes(e.target.value)} />
-            </div>
+            <button className="button button-primary" type="button" onClick={openAssignment}>
+              Nueva asignación
+            </button>
           </div>
-          <button className="button button-primary" type="submit" disabled={actioning}>
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Empleado</th>
+                  <th>Vigencia</th>
+                  <th>Notas</th>
+                </tr>
+              </thead>
+              <tbody>
+                {assignments.map((assignment) => (
+                  <tr key={assignment.id}>
+                    <td>{assignment.employeeNombre}</td>
+                    <td>
+                      {assignment.validFrom} {assignment.validTo ? `- ${assignment.validTo}` : ''}
+                    </td>
+                    <td>{assignment.notes ?? '—'}</td>
+                  </tr>
+                ))}
+                {!assignments.length ? (
+                  <tr>
+                    <td colSpan={3} className="muted">
+                      Sin asignaciones.
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="panel stack">
+          <div className="toolbar">
+            <div>
+              <h2 className="section-title">Excepciones</h2>
+              <p className="meta">Cambios puntuales por fecha para un empleado o un día libre.</p>
+            </div>
+            <button className="button button-primary" type="button" onClick={openOverride}>
+              Nueva excepción
+            </button>
+          </div>
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Empleado</th>
+                  <th>Fecha</th>
+                  <th>Tipo</th>
+                  <th>Turno</th>
+                </tr>
+              </thead>
+              <tbody>
+                {overrides.map((override) => (
+                  <tr key={override.id}>
+                    <td>{override.employeeNombre}</td>
+                    <td>{override.date}</td>
+                    <td>{override.kind === 'OFF' ? 'Libre' : 'Turno'}</td>
+                    <td>{override.shift?.name ?? 'Libre'}</td>
+                  </tr>
+                ))}
+                {!overrides.length ? (
+                  <tr>
+                    <td colSpan={4} className="muted">
+                      Sin excepciones.
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <Modal
+        open={assignmentOpen}
+        onClose={closeAssignment}
+        size="lg"
+        title="Asignar a empleado"
+        description="Vincula un empleado al turno dentro de una vigencia concreta."
+        actions={
+          <button className="button button-primary" type="button" onClick={() => void createAssignment()} disabled={actioning}>
             {actioning ? 'Guardando...' : 'Crear asignación'}
           </button>
-        </form>
-
-        <form className="panel stack" onSubmit={(event) => { event.preventDefault(); void createOverride(); }}>
-          <h2 className="section-title">Excepción puntual</h2>
-          <div className="field-grid">
-            <div className="field">
-              <label htmlFor="overrideEmployee">Empleado</label>
-              <select id="overrideEmployee" value={overrideEmployeeId} onChange={(e) => setOverrideEmployeeId(e.target.value)}>
-                <option value="">Selecciona</option>
-                {employees.map((employee) => (
-                  <option key={employee.id} value={employee.id}>
-                    {employee.nombreEmpleado}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="field">
-              <label htmlFor="overrideDate">Fecha</label>
-              <input id="overrideDate" type="date" value={overrideDate} onChange={(e) => setOverrideDate(e.target.value)} />
-            </div>
-            <div className="field">
-              <label htmlFor="overrideKind">Tipo</label>
-              <select id="overrideKind" value={overrideKind} onChange={(e) => setOverrideKind(e.target.value as 'SHIFT' | 'OFF')}>
-                <option value="SHIFT">Turno concreto</option>
-                <option value="OFF">Libre</option>
-              </select>
-            </div>
-            <div className="field">
-              <label htmlFor="overrideShift">Turno</label>
-              <select id="overrideShift" value={overrideShiftId} onChange={(e) => setOverrideShiftId(e.target.value)} disabled={overrideKind === 'OFF'}>
-                <option value="">Este turno</option>
-                {shift ? <option value={shift.id}>{shift.name}</option> : null}
-              </select>
-            </div>
-            <div className="field">
-              <label htmlFor="overrideNotes">Notas</label>
-              <input id="overrideNotes" value={overrideNotes} onChange={(e) => setOverrideNotes(e.target.value)} />
-            </div>
+        }
+      >
+        <div className="field-grid">
+          <div className="field">
+            <label htmlFor="employee">Empleado</label>
+            <select id="employee" value={employeeId} onChange={(e) => setEmployeeId(e.target.value)}>
+              <option value="">Selecciona</option>
+              {employees.map((employee) => (
+                <option key={employee.id} value={employee.id}>
+                  {employee.nombreEmpleado}
+                </option>
+              ))}
+            </select>
           </div>
-          <button className="button button-primary" type="submit" disabled={actioning}>
+          <div className="field">
+            <label htmlFor="validFrom">Desde</label>
+            <input id="validFrom" type="date" value={validFrom} onChange={(e) => setValidFrom(e.target.value)} />
+          </div>
+          <div className="field">
+            <label htmlFor="validTo">Hasta</label>
+            <input id="validTo" type="date" value={validTo} onChange={(e) => setValidTo(e.target.value)} />
+          </div>
+          <div className="field">
+            <label htmlFor="assignmentNotes">Notas</label>
+            <input id="assignmentNotes" value={assignmentNotes} onChange={(e) => setAssignmentNotes(e.target.value)} />
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={overrideOpen}
+        onClose={closeOverride}
+        size="lg"
+        title="Excepción puntual"
+        description="Registra un cambio puntual por fecha para un empleado."
+        actions={
+          <button className="button button-primary" type="button" onClick={() => void createOverride()} disabled={actioning}>
             {actioning ? 'Guardando...' : 'Crear excepción'}
           </button>
-        </form>
-      </div>
+        }
+      >
+        <div className="field-grid">
+          <div className="field">
+            <label htmlFor="overrideEmployee">Empleado</label>
+            <select id="overrideEmployee" value={overrideEmployeeId} onChange={(e) => setOverrideEmployeeId(e.target.value)}>
+              <option value="">Selecciona</option>
+              {employees.map((employee) => (
+                <option key={employee.id} value={employee.id}>
+                  {employee.nombreEmpleado}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="overrideDate">Fecha</label>
+            <input id="overrideDate" type="date" value={overrideDate} onChange={(e) => setOverrideDate(e.target.value)} />
+          </div>
+          <div className="field">
+            <label htmlFor="overrideKind">Tipo</label>
+            <select id="overrideKind" value={overrideKind} onChange={(e) => setOverrideKind(e.target.value as 'SHIFT' | 'OFF')}>
+              <option value="SHIFT">Turno concreto</option>
+              <option value="OFF">Libre</option>
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="overrideShift">Turno</label>
+            <select id="overrideShift" value={overrideShiftId} onChange={(e) => setOverrideShiftId(e.target.value)} disabled={overrideKind === 'OFF'}>
+              <option value="">Este turno</option>
+              {shift ? <option value={shift.id}>{shift.name}</option> : null}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="overrideNotes">Notas</label>
+            <input id="overrideNotes" value={overrideNotes} onChange={(e) => setOverrideNotes(e.target.value)} />
+          </div>
+        </div>
+      </Modal>
 
       <div className="grid-2">
         <section className="panel stack">
