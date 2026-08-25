@@ -1292,6 +1292,8 @@ textarea {
   z-index: 80;
   display: grid;
   place-items: center;
+  align-items: start;
+  overflow-y: auto;
   background: rgba(9, 18, 28, 0.48);
   padding: 1rem;
 }
@@ -1303,6 +1305,10 @@ textarea {
   background: var(--surface-strong);
   box-shadow: var(--shadow-lg);
   padding: 1.25rem;
+  max-height: calc(100dvh - 2rem);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .dialog-card--md {
@@ -1332,6 +1338,9 @@ textarea {
 .dialog-card__content {
   display: grid;
   gap: 1rem;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 0.25rem;
 }
 
 .dialog-card__actions {
@@ -1340,6 +1349,7 @@ textarea {
   gap: 0.75rem;
   margin-top: 1.25rem;
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .dialog-card h3 {
