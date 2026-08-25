@@ -5,7 +5,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { PageHeader } from '../../components/page-header';
-import { RotationPatternEditor, createRotationPatternStep, type RotationPatternStep } from '../../components/rotation-pattern-editor';
+import { RotationPatternEditor, type RotationPatternStep } from '../../components/rotation-pattern-editor';
 import { api, type Shift, type ShiftDay } from '../../lib/api/generated';
 import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../lib/auth/session';
 import { getRoleListLabel } from '../../lib/labels';
@@ -111,11 +111,7 @@ export default function ShiftsPage() {
   const [description, setDescription] = useState('Turno base de mañana');
   const [days, setDays] = useState<Omit<ShiftDay, 'id'>[]>(defaultDays());
   const [rotationStartDate, setRotationStartDate] = useState('');
-  const [rotationPattern, setRotationPattern] = useState<RotationPatternStep[]>([
-    createRotationPatternStep(),
-    { ...createRotationPatternStep(), startTime: '16:00:00', endTime: '00:00:00', crossesMidnight: true },
-    { ...createRotationPatternStep(), working: false, startTime: null, endTime: null, breakMinutes: 0, workingMinutes: 0, crossesMidnight: false }
-  ]);
+  const [rotationPattern, setRotationPattern] = useState<RotationPatternStep[]>([]);
 
   useEffect(() => {
     const accessToken = getAccessToken();

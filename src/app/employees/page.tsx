@@ -308,7 +308,6 @@ export default function EmployeesPage() {
                   </option>
                 ))}
               </select>
-              <p className="meta">Obligatorio para empleados activos. Filtrado por empresa.</p>
             </div>
             <div className="field">
               <label htmlFor="numero">Número</label>
