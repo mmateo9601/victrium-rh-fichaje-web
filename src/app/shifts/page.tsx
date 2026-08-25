@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { Modal } from '../../components/modal';
 import { PageHeader } from '../../components/page-header';
 import { RotationPatternEditor, type RotationPatternStep } from '../../components/rotation-pattern-editor';
 import { api, type Shift, type ShiftDay } from '../../lib/api/generated';
@@ -124,6 +125,7 @@ export default function ShiftsPage() {
   const [days, setDays] = useState<Omit<ShiftDay, 'id'>[]>(defaultShiftFormState().days);
   const [rotationStartDate, setRotationStartDate] = useState(defaultShiftFormState().rotationStartDate);
   const [rotationPattern, setRotationPattern] = useState<RotationPatternStep[]>(defaultShiftFormState().rotationPattern);
+  const [createOpen, setCreateOpen] = useState(false);
 
   function resetForm() {
     const defaults = defaultShiftFormState();
@@ -134,6 +136,15 @@ export default function ShiftsPage() {
     setDays(defaults.days);
     setRotationStartDate(defaults.rotationStartDate);
     setRotationPattern(defaults.rotationPattern);
+  }
+
+  function openCreate() {
+    resetForm();
+    setCreateOpen(true);
+  }
+
+  function closeCreate() {
+    setCreateOpen(false);
   }
 
   useEffect(() => {
@@ -189,6 +200,7 @@ export default function ShiftsPage() {
         rotationPattern
       });
       resetForm();
+      closeCreate();
       const refreshed = await api.shifts.list(token, { search, active });
       setShifts(refreshed);
     } catch (createError) {
@@ -214,14 +226,7 @@ export default function ShiftsPage() {
         title="Turnos de trabajo"
         description="Define una plantilla simple: nombre, horario semanal y patrón de rotación opcional."
         actions={
-          <button
-            className="button button-primary"
-            type="button"
-            onClick={() => {
-              resetForm();
-              globalThis.document?.getElementById('nuevo-turno')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }}
-          >
+          <button className="button button-primary" type="button" onClick={openCreate}>
             Nuevo turno
           </button>
         }
@@ -241,126 +246,129 @@ export default function ShiftsPage() {
 
       {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
 
-      <form className="panel stack" id="nuevo-turno" onSubmit={submit}>
-        <div className="toolbar">
-          <div>
-            <h2 className="section-title">Nuevo turno</h2>
-            <p className="meta">Usa horario semanal para turnos fijos y patrón de rotación solo cuando el ciclo cambia por pasos.</p>
-          </div>
-          <button className="button button-primary" type="submit" disabled={creating}>
+      <Modal
+        open={createOpen}
+        onClose={closeCreate}
+        size="xl"
+        title="Nuevo turno"
+        description="Usa horario semanal para turnos fijos y patrón de rotación solo cuando el ciclo cambia por pasos."
+        actions={
+          <button className="button button-primary" type="submit" form="shift-create-form" disabled={creating}>
             {creating ? 'Guardando...' : 'Guardar turno'}
           </button>
-        </div>
-
-        <section className="rotation-editor__section">
-          <div className="toolbar">
-            <div>
-              <h3 className="section-title">Datos básicos</h3>
-              <p className="meta">Identifica el turno sin detalles técnicos innecesarios.</p>
+        }
+      >
+        <form id="shift-create-form" className="stack" onSubmit={submit}>
+          <section className="rotation-editor__section">
+            <div className="toolbar">
+              <div>
+                <h3 className="section-title">Datos básicos</h3>
+                <p className="meta">Identifica el turno sin detalles técnicos innecesarios.</p>
+              </div>
+              <span className="badge badge-info">Horario semanal + patrón opcional</span>
             </div>
-            <span className="badge badge-info">Horario semanal + patrón opcional</span>
-          </div>
-          <div className="grid grid--2">
-          <div className="field">
-            <label htmlFor="name">Nombre del turno</label>
-            <input id="name" value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
-          <div className="field">
-            <label htmlFor="code">Código corto</label>
-            <input id="code" value={code} onChange={(e) => setCode(e.target.value)} />
-          </div>
-          <div className="field">
-            <label htmlFor="color">Color</label>
-            <input id="color" type="color" value={color} onChange={(e) => setColor(e.target.value)} />
-          </div>
-          <div className="field">
-            <label htmlFor="description">Descripción</label>
-            <input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
-          </div>
-          <div className="field">
-            <label htmlFor="rotationStartDate">Fecha de inicio de rotación</label>
-            <input id="rotationStartDate" type="date" value={rotationStartDate} onChange={(e) => setRotationStartDate(e.target.value)} />
-          </div>
-          </div>
-        </section>
-
-        <RotationPatternEditor
-          value={rotationPattern}
-          onChange={setRotationPattern}
-          title="Patrón de rotación"
-          description="Añade pasos solo si el turno cambia con el tiempo. Si el turno es fijo, deja el patrón vacío."
-        />
-
-        <section className="rotation-editor__section">
-          <div className="toolbar">
-            <div>
-              <h3 className="section-title">Horario semanal</h3>
-              <p className="meta">Completa las franjas fijas por día. Si un día no se trabaja, márcalo como no laborable.</p>
+            <div className="grid grid--2">
+            <div className="field">
+              <label htmlFor="name">Nombre del turno</label>
+              <input id="name" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
-          </div>
-          <div className="stack">
-            {days.map((day, index) => (
-              <div className="rotation-step rotation-step--compact" key={day.dayOfWeek}>
-                <div className="rotation-step__header">
-                  <div>
-                    <strong>{weekLabels[day.dayOfWeek]}</strong>
-                    <p className="meta">{day.working ? 'Día laborable' : 'Día no laborable'}</p>
+            <div className="field">
+              <label htmlFor="code">Código corto</label>
+              <input id="code" value={code} onChange={(e) => setCode(e.target.value)} />
+            </div>
+            <div className="field">
+              <label htmlFor="color">Color</label>
+              <input id="color" type="color" value={color} onChange={(e) => setColor(e.target.value)} />
+            </div>
+            <div className="field">
+              <label htmlFor="description">Descripción</label>
+              <input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
+            </div>
+            <div className="field">
+              <label htmlFor="rotationStartDate">Fecha de inicio de rotación</label>
+              <input id="rotationStartDate" type="date" value={rotationStartDate} onChange={(e) => setRotationStartDate(e.target.value)} />
+            </div>
+            </div>
+          </section>
+
+          <RotationPatternEditor
+            value={rotationPattern}
+            onChange={setRotationPattern}
+            title="Patrón de rotación"
+            description="Añade pasos solo si el turno cambia con el tiempo. Si el turno es fijo, deja el patrón vacío."
+          />
+
+          <section className="rotation-editor__section">
+            <div className="toolbar">
+              <div>
+                <h3 className="section-title">Horario semanal</h3>
+                <p className="meta">Completa las franjas fijas por día. Si un día no se trabaja, márcalo como no laborable.</p>
+              </div>
+            </div>
+            <div className="stack">
+              {days.map((day, index) => (
+                <div className="rotation-step rotation-step--compact" key={day.dayOfWeek}>
+                  <div className="rotation-step__header">
+                    <div>
+                      <strong>{weekLabels[day.dayOfWeek]}</strong>
+                      <p className="meta">{day.working ? 'Día laborable' : 'Día no laborable'}</p>
+                    </div>
+                    <span className={`badge ${day.working ? 'badge-success' : 'badge-neutral'}`}>{day.working ? 'Trabaja' : 'Libre'}</span>
                   </div>
-                  <span className={`badge ${day.working ? 'badge-success' : 'badge-neutral'}`}>{day.working ? 'Trabaja' : 'Libre'}</span>
+                <div className="field-grid">
+                  <div className="field">
+                    <label>Día</label>
+                    <div className="schedule-day__badge">{weekLabels[day.dayOfWeek]}</div>
+                  </div>
+                  <div className="field">
+                    <label>Trabaja</label>
+                    <select value={String(day.working)} onChange={(e) => updateDay(index, { working: e.target.value === 'true' })}>
+                      <option value="true">Sí</option>
+                      <option value="false">No</option>
+                    </select>
+                  </div>
+                  <div className="field">
+                    <label>Inicio</label>
+                    <input type="time" value={day.startTime ?? ''} onChange={(e) => updateDay(index, { startTime: e.target.value ? `${e.target.value}:00` : null })} />
+                  </div>
+                  <div className="field">
+                    <label>Fin</label>
+                    <input type="time" value={day.endTime ?? ''} onChange={(e) => updateDay(index, { endTime: e.target.value ? `${e.target.value}:00` : null })} />
+                  </div>
+                  <div className="field">
+                    <label>Descanso</label>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="30 o 0:30"
+                      value={formatFlexibleDurationMinutes(day.breakMinutes)}
+                      onChange={(e) => updateDay(index, { breakMinutes: parseFlexibleDurationMinutes(e.target.value) ?? 0 })}
+                    />
+                  </div>
+                  <div className="field">
+                    <label>Min. útiles</label>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="480 o 8:00"
+                      value={formatFlexibleDurationMinutes(day.workingMinutes)}
+                      onChange={(e) => updateDay(index, { workingMinutes: parseFlexibleDurationMinutes(e.target.value) ?? 0 })}
+                    />
+                  </div>
+                  <div className="field">
+                    <label>Medianoche</label>
+                    <select value={String(day.crossesMidnight)} onChange={(e) => updateDay(index, { crossesMidnight: e.target.value === 'true' })}>
+                      <option value="false">No</option>
+                      <option value="true">Sí</option>
+                    </select>
+                  </div>
                 </div>
-              <div className="field-grid">
-                <div className="field">
-                  <label>Día</label>
-                  <div className="schedule-day__badge">{weekLabels[day.dayOfWeek]}</div>
                 </div>
-                <div className="field">
-                  <label>Trabaja</label>
-                  <select value={String(day.working)} onChange={(e) => updateDay(index, { working: e.target.value === 'true' })}>
-                    <option value="true">Sí</option>
-                    <option value="false">No</option>
-                  </select>
-                </div>
-                <div className="field">
-                  <label>Inicio</label>
-                  <input type="time" value={day.startTime ?? ''} onChange={(e) => updateDay(index, { startTime: e.target.value ? `${e.target.value}:00` : null })} />
-                </div>
-                <div className="field">
-                  <label>Fin</label>
-                  <input type="time" value={day.endTime ?? ''} onChange={(e) => updateDay(index, { endTime: e.target.value ? `${e.target.value}:00` : null })} />
-                </div>
-                <div className="field">
-                  <label>Descanso</label>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="30 o 0:30"
-                    value={formatFlexibleDurationMinutes(day.breakMinutes)}
-                    onChange={(e) => updateDay(index, { breakMinutes: parseFlexibleDurationMinutes(e.target.value) ?? 0 })}
-                  />
-                </div>
-                <div className="field">
-                  <label>Min. útiles</label>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="480 o 8:00"
-                    value={formatFlexibleDurationMinutes(day.workingMinutes)}
-                    onChange={(e) => updateDay(index, { workingMinutes: parseFlexibleDurationMinutes(e.target.value) ?? 0 })}
-                  />
-                </div>
-                <div className="field">
-                  <label>Medianoche</label>
-                  <select value={String(day.crossesMidnight)} onChange={(e) => updateDay(index, { crossesMidnight: e.target.value === 'true' })}>
-                    <option value="false">No</option>
-                    <option value="true">Sí</option>
-                  </select>
-                </div>
-              </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      </form>
+              ))}
+            </div>
+          </section>
+        </form>
+      </Modal>
 
       <section className="panel stack">
         <div className="toolbar">

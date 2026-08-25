@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { Modal } from '../../components/modal';
 import { api, type CalendarDay, type CalendarListItem } from '../../lib/api/generated';
 import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, downloadCsv } from '../../lib/csv';
@@ -30,10 +31,19 @@ export default function CalendarsPage() {
   const [createMinMenos, setCreateMinMenos] = useState(formatFlexibleDurationMinutes(0));
   const [createActive, setCreateActive] = useState(false);
   const [createDays, setCreateDays] = useState<CalendarDayForm[]>([defaultDay()]);
+  const [createOpen, setCreateOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function openCreate() {
+    setCreateOpen(true);
+  }
+
+  function closeCreate() {
+    setCreateOpen(false);
+  }
 
   useEffect(() => {
     const token = getAccessToken();
@@ -102,6 +112,7 @@ export default function CalendarsPage() {
       setCreateMinMenos(formatFlexibleDurationMinutes(0));
       setCreateActive(false);
       setCreateDays([defaultDay()]);
+      closeCreate();
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo crear el calendario');
@@ -155,6 +166,13 @@ export default function CalendarsPage() {
           Gestiona los calendarios laborales y sus días con una interfaz más clara y preparada para edición directa.
         </p>
         {error ? <div className="notice" role="alert">{error}</div> : null}
+        {canManage ? (
+          <div className="hero-actions" style={{ marginTop: '1rem' }}>
+            <button className="button button-primary" type="button" onClick={openCreate}>
+              Nuevo calendario
+            </button>
+          </div>
+        ) : null}
         <div className="grid-3" style={{ marginTop: '1.5rem' }}>
           <article className="stat">
             <strong>{calendars.length}</strong>
@@ -171,9 +189,19 @@ export default function CalendarsPage() {
         </div>
       </section>
 
-      {canManage ? (
-        <form className="panel stack" onSubmit={submitCalendar}>
-          <h2 className="section-title">Nuevo calendario</h2>
+      <Modal
+        open={createOpen && canManage}
+        onClose={closeCreate}
+        size="xl"
+        title="Nuevo calendario"
+        description="Crea un calendario laboral con días y ajustes de minutos."
+        actions={
+          <button className="button button-primary" type="submit" form="calendar-create-form" disabled={creating}>
+            {creating ? 'Guardando...' : 'Crear calendario'}
+          </button>
+        }
+      >
+        <form id="calendar-create-form" className="stack" onSubmit={submitCalendar}>
           <div className="field-grid">
             <div className="field">
               <label htmlFor="nombre">Nombre</label>
@@ -240,11 +268,8 @@ export default function CalendarsPage() {
             ))}
           </div>
 
-          <button className="button button-primary" type="submit" disabled={creating}>
-            {creating ? 'Guardando...' : 'Crear calendario'}
-          </button>
         </form>
-      ) : null}
+      </Modal>
 
       <section className="panel stack">
         <div className="toolbar">

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { Modal } from '../../components/modal';
 import { PageHeader } from '../../components/page-header';
 import { api, type PlanningPeriod, type PlanningPeriodStatus } from '../../lib/api/generated';
 import { formatLongDate, getRoleListLabel } from '../../lib/labels';
@@ -26,6 +27,15 @@ export default function PlanningPeriodsPage() {
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState('Periodo de planificación inicial');
+  const [createOpen, setCreateOpen] = useState(false);
+
+  function openCreate() {
+    setCreateOpen(true);
+  }
+
+  function closeCreate() {
+    setCreateOpen(false);
+  }
 
   useEffect(() => {
     const token = getAccessToken();
@@ -82,6 +92,7 @@ export default function PlanningPeriodsPage() {
         endDate,
         notes
       });
+      closeCreate();
       await refresh();
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : 'No se pudo crear el periodo');
@@ -128,6 +139,13 @@ export default function PlanningPeriodsPage() {
         eyebrow="Organización"
         title="Periodos de planificación"
         description="Agrupa los turnos por ventana de trabajo y publica o revierte el estado del periodo."
+        actions={
+          canManage ? (
+            <button className="button button-primary" type="button" onClick={openCreate}>
+              Nuevo periodo
+            </button>
+          ) : undefined
+        }
         stats={
           <>
             <article className="stat stat--compact">
@@ -148,18 +166,19 @@ export default function PlanningPeriodsPage() {
 
       {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
 
-      {canManage ? (
-        <form className="panel stack" onSubmit={submit}>
-          <div className="toolbar">
-            <div>
-              <h2 className="section-title">Nuevo periodo</h2>
-              <p className="meta">Crea una ventana de planificación antes de publicarla.</p>
-            </div>
-            <button className="button button-primary" type="submit" disabled={saving}>
-              {saving ? 'Guardando...' : 'Crear periodo'}
-            </button>
-          </div>
-
+      <Modal
+        open={createOpen && canManage}
+        onClose={closeCreate}
+        size="lg"
+        title="Nuevo periodo"
+        description="Crea una ventana de planificación antes de publicarla."
+        actions={
+          <button className="button button-primary" type="submit" form="planning-period-create-form" disabled={saving}>
+            {saving ? 'Guardando...' : 'Crear periodo'}
+          </button>
+        }
+      >
+        <form id="planning-period-create-form" className="stack" onSubmit={submit}>
           <div className="field-grid">
             <div className="field">
               <label htmlFor="companyId">Empresa</label>
@@ -184,7 +203,7 @@ export default function PlanningPeriodsPage() {
             <input id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
         </form>
-      ) : null}
+      </Modal>
 
       <section className="panel stack">
         <div className="toolbar">

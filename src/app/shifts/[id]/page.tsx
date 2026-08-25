@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
+import { Modal } from '../../../components/modal';
 import { PageHeader } from '../../../components/page-header';
 import { RotationPatternEditor, type RotationPatternStep } from '../../../components/rotation-pattern-editor';
 import {
@@ -76,9 +77,18 @@ export default function ShiftDetailPage() {
   const [overrideKind, setOverrideKind] = useState<'SHIFT' | 'OFF'>('SHIFT');
   const [overrideShiftId, setOverrideShiftId] = useState('');
   const [overrideNotes, setOverrideNotes] = useState('');
+  const [editOpen, setEditOpen] = useState(false);
 
   const totalMinutes = useMemo(() => days.reduce((acc, day) => acc + dayMinutes(day), 0), [days]);
   const rotationMinutesTotal = useMemo(() => rotationPattern.reduce((acc, step) => acc + rotationMinutes(step as Shift['rotationPattern'][number]), 0), [rotationPattern]);
+
+  function openEdit() {
+    setEditOpen(true);
+  }
+
+  function closeEdit() {
+    setEditOpen(false);
+  }
 
   useEffect(() => {
     const accessToken = getAccessToken();
@@ -249,6 +259,11 @@ export default function ShiftDetailPage() {
         eyebrow="Organización"
         title={shift.name}
         description={shift.description ?? 'Detalle del turno y sus asignaciones.'}
+        actions={
+          <button className="button button-primary" type="button" onClick={openEdit}>
+            Editar turno
+          </button>
+        }
         stats={
           <>
             <article className="stat stat--compact">
@@ -273,22 +288,26 @@ export default function ShiftDetailPage() {
 
       {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
 
-      <form className="panel stack" onSubmit={(event) => { event.preventDefault(); void saveShift(); }}>
-        <div className="toolbar">
-          <div>
-            <h2 className="section-title">Editar turno</h2>
-            <p className="meta">Ajusta nombre, color, estado y horario semanal del turno.</p>
-          </div>
-          <div className="hero-actions" style={{ marginTop: 0 }}>
+      <Modal
+        open={editOpen}
+        onClose={closeEdit}
+        size="xl"
+        title="Editar turno"
+        description="Ajusta nombre, color, estado y horario semanal del turno."
+        actions={
+          <>
             <button className="button button-secondary" type="button" onClick={() => void setShiftStatus(true)} disabled={saving}>
               Activar
             </button>
             <button className="button button-secondary" type="button" onClick={() => void setShiftStatus(false)} disabled={saving}>
               Desactivar
             </button>
-          </div>
-        </div>
-
+            <button className="button button-primary" type="button" onClick={() => void saveShift()} disabled={saving}>
+              {saving ? 'Guardando...' : 'Guardar cambios'}
+            </button>
+          </>
+        }
+      >
         <div className="field-grid">
           <div className="field">
             <label htmlFor="shiftName">Nombre</label>
@@ -378,11 +397,7 @@ export default function ShiftDetailPage() {
             </div>
           ))}
         </div>
-
-        <button className="button button-primary" type="submit" disabled={saving}>
-          {saving ? 'Guardando...' : 'Guardar cambios'}
-        </button>
-      </form>
+      </Modal>
 
       <section className="panel stack">
         <div className="toolbar">

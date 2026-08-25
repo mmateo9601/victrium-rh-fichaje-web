@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { Modal } from '../../components/modal';
 import { PageHeader } from '../../components/page-header';
 import { api, type Company, type WorkLocation } from '../../lib/api/generated';
 import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../lib/auth/session';
@@ -13,6 +14,7 @@ export default function WorkLocationsPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
   const roles = useMemo(() => getEffectiveRoles(session), [session]);
+  const canManage = roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN');
   const [locations, setLocations] = useState<WorkLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -21,6 +23,7 @@ export default function WorkLocationsPage() {
   const [companyFilter, setCompanyFilter] = useState('');
   const [search, setSearch] = useState('');
   const [active, setActive] = useState('');
+  const [createOpen, setCreateOpen] = useState(false);
   const [togglingId, setTogglingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState('Madrid Centro');
@@ -32,6 +35,14 @@ export default function WorkLocationsPage() {
   const [postalCode, setPostalCode] = useState('28013');
   const timezoneOptions = getTimezoneOptions();
 
+  function openCreate() {
+    setCreateOpen(true);
+  }
+
+  function closeCreate() {
+    setCreateOpen(false);
+  }
+
   useEffect(() => {
     const accessToken = getAccessToken();
     if (!accessToken) {
@@ -39,7 +50,6 @@ export default function WorkLocationsPage() {
       return;
     }
     const isSuperAdmin = roles.includes('ROLE_SUPER_ADMIN');
-    const canManage = roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN');
     if (!canManage) {
       router.replace('/forbidden');
       return;
@@ -94,6 +104,7 @@ export default function WorkLocationsPage() {
         province,
         postalCode
       });
+      closeCreate();
       const refreshed = await api.workLocations.list(token, {
         search,
         active,
@@ -184,6 +195,13 @@ export default function WorkLocationsPage() {
         eyebrow="Organización"
         title="Centros de trabajo"
         description="Gestiona sedes, calendarios locales y la base para planificación multicentro. La zona horaria se elige siempre de una lista; los campos de planificación usan minutos y horas según corresponda."
+        actions={
+          canManage ? (
+            <button className="button button-primary" type="button" onClick={openCreate}>
+              Nuevo centro
+            </button>
+          ) : undefined
+        }
         stats={
           <>
             <article className="stat stat--compact">
@@ -200,17 +218,19 @@ export default function WorkLocationsPage() {
 
       {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
 
-      <form className="panel stack" onSubmit={submit}>
-        <div className="toolbar">
-          <div>
-            <h2 className="section-title">Nuevo centro</h2>
-            <p className="meta">Crea una sede con zona horaria, dirección y código interno.</p>
-          </div>
-          <button className="button button-primary" type="submit" disabled={creating}>
+      <Modal
+        open={createOpen && canManage}
+        onClose={closeCreate}
+        size="lg"
+        title="Nuevo centro"
+        description="Crea una sede con zona horaria, dirección y código interno."
+        actions={
+          <button className="button button-primary" type="submit" form="work-location-create-form" disabled={creating}>
             {creating ? 'Guardando...' : 'Crear centro'}
           </button>
-        </div>
-
+        }
+      >
+        <form id="work-location-create-form" className="stack" onSubmit={submit}>
           <div className="field-grid">
           {roles.includes('ROLE_SUPER_ADMIN') ? (
             <div className="field">
@@ -265,9 +285,10 @@ export default function WorkLocationsPage() {
           <div className="field">
             <label htmlFor="postalCode">Código postal</label>
             <input id="postalCode" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
+            </div>
           </div>
-        </div>
-      </form>
+        </form>
+      </Modal>
 
       <section className="panel stack">
         <div className="toolbar">

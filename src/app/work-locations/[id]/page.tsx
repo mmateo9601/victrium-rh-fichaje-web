@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
+import { Modal } from '../../../components/modal';
 import { PageHeader } from '../../../components/page-header';
 import { api, type Company, type EmployeeLocationAssignment, type WorkLocation } from '../../../lib/api/generated';
 import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../../lib/auth/session';
@@ -38,7 +39,16 @@ export default function WorkLocationDetailPage() {
   const [postalCode, setPostalCode] = useState('');
   const [active, setActive] = useState(true);
   const [companyId, setCompanyId] = useState('');
+  const [editOpen, setEditOpen] = useState(false);
   const timezoneOptions = getTimezoneOptions();
+
+  function openEdit() {
+    setEditOpen(true);
+  }
+
+  function closeEdit() {
+    setEditOpen(false);
+  }
 
   useEffect(() => {
     const accessToken = getAccessToken();
@@ -182,6 +192,9 @@ export default function WorkLocationDetailPage() {
         description="Centro de trabajo, calendario asociado y asignaciones históricas."
         actions={
           <>
+            <button className="button button-primary" type="button" onClick={openEdit}>
+              Editar centro
+            </button>
             <button className="button button-secondary" type="button" onClick={() => void setStatus(!location.active)} disabled={saving}>
               {location.active ? 'Desactivar centro' : 'Activar centro'}
             </button>
@@ -210,14 +223,18 @@ export default function WorkLocationDetailPage() {
 
       {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
 
-      <form className="panel stack" onSubmit={(event) => { event.preventDefault(); void save(); }}>
-        <div className="toolbar">
-          <div>
-            <h2 className="section-title">Editar centro</h2>
-            <p className="meta">Ajusta datos, dirección y estado del centro de trabajo.</p>
-          </div>
-          <span className={`badge ${location.active ? 'badge-success' : 'badge-danger'}`}>{location.active ? 'Activo' : 'Inactivo'}</span>
-        </div>
+      <Modal
+        open={editOpen}
+        onClose={closeEdit}
+        size="xl"
+        title="Editar centro"
+        description="Ajusta datos, dirección y estado del centro de trabajo."
+        actions={
+          <button className="button button-primary" type="button" onClick={() => void save()} disabled={saving}>
+            {saving ? 'Guardando...' : 'Guardar cambios'}
+          </button>
+        }
+      >
         <div className="field-grid">
           {roles.includes('ROLE_SUPER_ADMIN') ? (
             <div className="field">
@@ -281,10 +298,7 @@ export default function WorkLocationDetailPage() {
             </select>
           </div>
         </div>
-        <button className="button button-primary" type="submit" disabled={saving}>
-          {saving ? 'Guardando...' : 'Guardar cambios'}
-        </button>
-      </form>
+      </Modal>
 
       <section className="panel stack">
         <div className="toolbar">
