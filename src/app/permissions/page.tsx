@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { Modal } from '../../components/modal';
 import { WorkforceCalendar } from '../../components/workforce-calendar';
 import { api, type Permission, type PermissionMonthlyStat, type PermissionUserStat } from '../../lib/api/generated';
 import { buildPermissionEvents } from '../../lib/calendar';
@@ -34,6 +35,7 @@ export default function PermissionsPage() {
   const [horaInicio, setHoraInicio] = useState('09:00');
   const [horaFin, setHoraFin] = useState('10:00');
   const [descripcion, setDescripcion] = useState('');
+  const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [exportingMine, setExportingMine] = useState(false);
   const [exportingAll, setExportingAll] = useState(false);
@@ -125,6 +127,7 @@ export default function PermissionsPage() {
       setHoraInicio('09:00');
       setHoraFin('10:00');
       setDescripcion('');
+      setCreateOpen(false);
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo crear el permiso');
@@ -255,6 +258,11 @@ export default function PermissionsPage() {
           interfaz. El usuario siempre crea sobre su propio contexto salvo que tenga rol de gestión.
         </p>
         {error ? <div className="notice" role="alert">{error}</div> : null}
+        <div className="hero-actions" style={{ marginTop: '1.5rem' }}>
+          <button className="button button-primary" type="button" onClick={() => setCreateOpen(true)}>
+            Nuevo permiso
+          </button>
+        </div>
         <div className="grid-3" style={{ marginTop: '1.5rem' }}>
           <article className="stat">
             <strong>{mine.length}</strong>
@@ -271,8 +279,24 @@ export default function PermissionsPage() {
         </div>
       </section>
 
-      <form className="panel stack" onSubmit={submitPermission}>
-        <h2 className="section-title">Nuevo permiso</h2>
+      <Modal
+        open={createOpen}
+        title="Nuevo permiso"
+        description="Registra una solicitud de permiso con día, horario y descripción."
+        size="lg"
+        onClose={() => setCreateOpen(false)}
+        actions={
+          <>
+            <button className="button button-secondary" type="button" onClick={() => setCreateOpen(false)}>
+              Cancelar
+            </button>
+            <button className="button button-primary" type="submit" form="permission-create-form" disabled={creating}>
+              {creating ? 'Enviando...' : 'Solicitar permiso'}
+            </button>
+          </>
+        }
+      >
+      <form id="permission-create-form" className="stack" onSubmit={submitPermission}>
         <div className="field-grid">
           <div className="field">
             <label htmlFor="dia">Día</label>
@@ -291,10 +315,8 @@ export default function PermissionsPage() {
             <textarea id="descripcion" value={descripcion} onChange={(event) => setDescripcion(event.target.value)} />
           </div>
         </div>
-        <button className="button button-primary" type="submit" disabled={creating}>
-          {creating ? 'Enviando...' : 'Solicitar permiso'}
-        </button>
       </form>
+      </Modal>
 
       <WorkforceCalendar
         title="Calendario de permisos"

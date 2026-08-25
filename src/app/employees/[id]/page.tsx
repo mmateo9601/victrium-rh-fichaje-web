@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
+import { Modal } from '../../../components/modal';
 import { ScheduleGrid } from '../../../components/schedule-grid';
 import { api, type Company, type Employee, type EmployeeLocationAssignment, type Schedule, type ShiftAssignment, type WorkLocation } from '../../../lib/api/generated';
 import { getAccessToken } from '../../../lib/auth/session';
@@ -23,6 +24,7 @@ export default function EmployeeDetailPage() {
   const [locationAssignments, setLocationAssignments] = useState<EmployeeLocationAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const monthRange = useMemo(() => {
     const today = new Date();
@@ -129,6 +131,7 @@ export default function EmployeeDetailPage() {
         horasGeneradas: employee.horasGeneradas ?? undefined
       });
       setEmployee(updated);
+      setEditOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo guardar el empleado');
     } finally {
@@ -182,6 +185,11 @@ export default function EmployeeDetailPage() {
           usuario ni con la empresa.
         </p>
         {error ? <div className="notice" role="alert">{error}</div> : null}
+        <div className="hero-actions" style={{ marginTop: '1.5rem' }}>
+          <button className="button button-primary" type="button" onClick={() => setEditOpen(true)}>
+            Editar empleado
+          </button>
+        </div>
         <div className="grid-3" style={{ marginTop: '1.5rem' }}>
           <article className="stat">
             <strong>{employee.numero}</strong>
@@ -199,8 +207,31 @@ export default function EmployeeDetailPage() {
       </section>
 
       <section className="two-col">
-        <form className="panel stack" onSubmit={(event) => { event.preventDefault(); void save(); }}>
-          <h2 className="section-title">Editar empleado</h2>
+        <Modal
+          open={editOpen}
+          title="Editar empleado"
+          description="Ajusta los datos laborales del empleado y conserva la trazabilidad de empresa y centro."
+          size="xl"
+          onClose={() => setEditOpen(false)}
+          actions={
+            <>
+              <button className="button button-secondary" type="button" onClick={() => setEditOpen(false)}>
+                Cancelar
+              </button>
+              <button className="button button-primary" type="submit" form="employee-edit-form" disabled={saving}>
+                {saving ? 'Guardando...' : 'Guardar cambios'}
+              </button>
+            </>
+          }
+        >
+        <form
+          id="employee-edit-form"
+          className="stack"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void save();
+          }}
+        >
           <div className="field-grid">
             <div className="field">
               <label htmlFor="numero">Número</label>
@@ -296,11 +327,8 @@ export default function EmployeeDetailPage() {
               </select>
             </div>
           </div>
-
-          <button className="button button-primary" type="submit" disabled={saving}>
-            {saving ? 'Guardando...' : 'Guardar cambios'}
-          </button>
         </form>
+        </Modal>
 
         <aside className="panel stack">
           <h2 className="section-title">Acciones</h2>

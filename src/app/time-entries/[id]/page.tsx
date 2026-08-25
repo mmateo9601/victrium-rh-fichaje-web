@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
+import { Modal } from '../../../components/modal';
 import { api, type TimeEntry, type TimeEntryAudit, type TimeEntryType } from '../../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../../lib/auth/session';
 
@@ -35,6 +36,7 @@ export default function TimeEntryDetailPage() {
   const [motivo, setMotivo] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -118,6 +120,7 @@ export default function TimeEntryDetailPage() {
       setHora(updated.hora);
       setTipo(updated.tipo);
       setMotivo('');
+      setEditOpen(false);
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo corregir el fichaje');
@@ -154,6 +157,13 @@ export default function TimeEntryDetailPage() {
           {entry.dia} - {entry.hora} - {entry.tipo}
         </p>
         {error ? <div className="notice" role="alert">{error}</div> : null}
+        {canManage ? (
+          <div className="hero-actions" style={{ marginTop: '1.5rem' }}>
+            <button className="button button-primary" type="button" onClick={() => setEditOpen(true)}>
+              Corregir fichaje
+            </button>
+          </div>
+        ) : null}
         <div className="grid-3" style={{ marginTop: '1.5rem' }}>
           <article className="stat">
             <strong>{entry.usuarioNumero}</strong>
@@ -215,10 +225,26 @@ export default function TimeEntryDetailPage() {
         </section>
 
         {canManage ? (
-          <form className="panel stack" onSubmit={submitCorrection}>
-            <h2 className="section-title">Corrección controlada</h2>
+          <Modal
+            open={editOpen}
+            title="Corrección controlada"
+            description="Solo RRHH y administración pueden ajustar día, hora o tipo con trazabilidad completa."
+            size="lg"
+            onClose={() => setEditOpen(false)}
+            actions={
+              <>
+                <button className="button button-secondary" type="button" onClick={() => setEditOpen(false)}>
+                  Cancelar
+                </button>
+                <button className="button button-primary" type="submit" form="time-entry-correction-form" disabled={saving}>
+                  {saving ? 'Guardando...' : 'Aplicar corrección'}
+                </button>
+              </>
+            }
+          >
+          <form id="time-entry-correction-form" className="stack" onSubmit={submitCorrection}>
             <p className="meta">
-              Solo RRHH y administración pueden ajustar día, hora o tipo. Cada cambio deja trazabilidad y exige versión.
+              Cada cambio deja trazabilidad y exige versión.
             </p>
             <div className="field-grid">
               <div className="field">
@@ -250,10 +276,8 @@ export default function TimeEntryDetailPage() {
                 />
               </div>
             </div>
-            <button className="button button-primary" type="submit" disabled={saving}>
-              {saving ? 'Guardando...' : 'Aplicar corrección'}
-            </button>
           </form>
+          </Modal>
         ) : (
           <section className="panel stack">
             <h2 className="section-title">Corrección controlada</h2>

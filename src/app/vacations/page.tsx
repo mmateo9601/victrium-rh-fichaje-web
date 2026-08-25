@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { Modal } from '../../components/modal';
 import { WorkforceCalendar } from '../../components/workforce-calendar';
 import { api, type Vacation } from '../../lib/api/generated';
 import { buildVacationEvents } from '../../lib/calendar';
@@ -28,6 +29,7 @@ export default function VacationsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [inicio, setInicio] = useState('');
   const [fin, setFin] = useState('');
+  const [createOpen, setCreateOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [exportingMine, setExportingMine] = useState(false);
@@ -99,6 +101,7 @@ export default function VacationsPage() {
       await api.vacations.create(authToken, { inicio, fin });
       setInicio('');
       setFin('');
+      setCreateOpen(false);
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo crear la vacación');
@@ -229,6 +232,11 @@ export default function VacationsPage() {
           también puedes revisar y resolver las de tu empresa.
         </p>
         {error ? <div className="notice" role="alert">{error}</div> : null}
+        <div className="hero-actions" style={{ marginTop: '1.5rem' }}>
+          <button className="button button-primary" type="button" onClick={() => setCreateOpen(true)}>
+            Nueva solicitud
+          </button>
+        </div>
         <div className="grid-3" style={{ marginTop: '1.5rem' }}>
           <article className="stat">
             <strong>{mine.length}</strong>
@@ -245,8 +253,24 @@ export default function VacationsPage() {
         </div>
       </section>
 
-      <form className="panel stack" onSubmit={submitVacation}>
-        <h2 className="section-title">Nueva solicitud</h2>
+      <Modal
+        open={createOpen}
+        title="Nueva solicitud"
+        description="Solicita vacaciones seleccionando únicamente las fechas de inicio y fin."
+        size="md"
+        onClose={() => setCreateOpen(false)}
+        actions={
+          <>
+            <button className="button button-secondary" type="button" onClick={() => setCreateOpen(false)}>
+              Cancelar
+            </button>
+            <button className="button button-primary" type="submit" form="vacation-create-form" disabled={creating}>
+              {creating ? 'Enviando...' : 'Solicitar vacaciones'}
+            </button>
+          </>
+        }
+      >
+      <form id="vacation-create-form" className="stack" onSubmit={submitVacation}>
         <div className="field-grid">
           <div className="field">
             <label htmlFor="inicio">Inicio</label>
@@ -257,10 +281,8 @@ export default function VacationsPage() {
             <input id="fin" type="date" value={fin} onChange={(event) => setFin(event.target.value)} />
           </div>
         </div>
-        <button className="button button-primary" type="submit" disabled={creating}>
-          {creating ? 'Enviando...' : 'Solicitar vacaciones'}
-        </button>
       </form>
+      </Modal>
 
       <WorkforceCalendar
         title="Calendario de vacaciones"

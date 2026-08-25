@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { Modal } from '../../components/modal';
 import { api, type ApiKey, type PublicUser } from '../../lib/api/generated';
 import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../lib/auth/session';
 
@@ -18,6 +19,7 @@ export default function ApiKeysPage() {
   const [description, setDescription] = useState('');
   const [expiresInDays, setExpiresInDays] = useState('');
   const [plainApiKey, setPlainApiKey] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,6 +86,7 @@ export default function ApiKeysPage() {
       setDescription('');
       setExpiresInDays('');
       setUserId('');
+      setCreateOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo crear la API key');
     } finally {
@@ -148,10 +151,31 @@ export default function ApiKeysPage() {
             Clave creada: <code>{plainApiKey}</code>
           </div>
         ) : null}
+        <div className="hero-actions" style={{ marginTop: '1.5rem' }}>
+          <button className="button button-primary" type="button" onClick={() => setCreateOpen(true)}>
+            Nueva clave
+          </button>
+        </div>
       </section>
 
-      <form className="panel stack" onSubmit={createApiKey}>
-        <h2 className="section-title">Crear clave</h2>
+      <Modal
+        open={createOpen}
+        title="Crear clave"
+        description="Genera una nueva clave de integración para un usuario autorizado."
+        size="lg"
+        onClose={() => setCreateOpen(false)}
+        actions={
+          <>
+            <button className="button button-secondary" type="button" onClick={() => setCreateOpen(false)}>
+              Cancelar
+            </button>
+            <button className="button button-primary" type="submit" form="api-key-create-form" disabled={saving}>
+              {saving ? 'Creando...' : 'Crear clave'}
+            </button>
+          </>
+        }
+      >
+      <form id="api-key-create-form" className="stack" onSubmit={createApiKey}>
         <div className="field-grid">
           <div className="field">
             <label htmlFor="name">Nombre</label>
@@ -183,10 +207,8 @@ export default function ApiKeysPage() {
             />
           </div>
         </div>
-        <button className="button button-primary" type="submit" disabled={saving}>
-          {saving ? 'Creando...' : 'Crear clave'}
-        </button>
       </form>
+      </Modal>
 
       <section className="panel stack">
         <div className="toolbar">

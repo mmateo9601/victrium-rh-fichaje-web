@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { Modal } from '../../components/modal';
 import { api, type Incident, type IncidentMonthlyStat, type IncidentTopSummary, type IncidentUserStat } from '../../lib/api/generated';
 import { getAccessToken, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
@@ -28,6 +29,7 @@ export default function IncidentsPage() {
   const [createResumen, setCreateResumen] = useState('');
   const [createDia, setCreateDia] = useState('');
   const [createExplicacion, setCreateExplicacion] = useState('');
+  const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [exportingMine, setExportingMine] = useState(false);
   const [exportingAll, setExportingAll] = useState(false);
@@ -123,6 +125,7 @@ export default function IncidentsPage() {
       setCreateResumen('');
       setCreateDia('');
       setCreateExplicacion('');
+      setCreateOpen(false);
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo crear la incidencia');
@@ -221,6 +224,11 @@ export default function IncidentsPage() {
           puede revisar el conjunto de la empresa y ver sus métricas.
         </p>
         {error ? <div className="notice" role="alert">{error}</div> : null}
+        <div className="hero-actions" style={{ marginTop: '1.5rem' }}>
+          <button className="button button-primary" type="button" onClick={() => setCreateOpen(true)}>
+            Nueva incidencia
+          </button>
+        </div>
         <div className="grid-3" style={{ marginTop: '1.5rem' }}>
           <article className="stat">
             <strong>{mine.length}</strong>
@@ -237,8 +245,24 @@ export default function IncidentsPage() {
         </div>
       </section>
 
-      <form className="panel stack" onSubmit={submitIncident}>
-        <h2 className="section-title">Nueva incidencia</h2>
+      <Modal
+        open={createOpen}
+        title="Nueva incidencia"
+        description="Registra una incidencia con descripción, resumen, fecha y explicación opcional."
+        size="lg"
+        onClose={() => setCreateOpen(false)}
+        actions={
+          <>
+            <button className="button button-secondary" type="button" onClick={() => setCreateOpen(false)}>
+              Cancelar
+            </button>
+            <button className="button button-primary" type="submit" form="incident-create-form" disabled={creating}>
+              {creating ? 'Guardando...' : 'Crear incidencia'}
+            </button>
+          </>
+        }
+      >
+        <form id="incident-create-form" className="stack" onSubmit={submitIncident}>
         <div className="field-grid">
           <div className="field">
             <label htmlFor="descripcion">Descripción</label>
@@ -261,10 +285,8 @@ export default function IncidentsPage() {
             />
           </div>
         </div>
-        <button className="button button-primary" type="submit" disabled={creating}>
-          {creating ? 'Guardando...' : 'Crear incidencia'}
-        </button>
-      </form>
+        </form>
+      </Modal>
 
       <section className="panel stack">
         <div className="toolbar">

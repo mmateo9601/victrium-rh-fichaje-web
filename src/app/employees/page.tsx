@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { Modal } from '../../components/modal';
 import {
   api,
   type Company,
@@ -34,6 +35,7 @@ export default function EmployeesPage() {
   const [createPrimaryWorkLocationId, setCreatePrimaryWorkLocationId] = useState('');
   const [createRoles, setCreateRoles] = useState<RoleName[]>(['ROLE_USER']);
   const [createWorking, setCreateWorking] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -188,6 +190,7 @@ export default function EmployeesPage() {
       setCreatePrimaryWorkLocationId('');
       setCreateRoles(['ROLE_USER']);
       setCreateWorking(false);
+      setCreateOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo crear el empleado');
     } finally {
@@ -255,6 +258,13 @@ export default function EmployeesPage() {
           Listado, alta, detalle y activación o desactivación de empleados con alcance por empresa.
         </p>
         {error ? <div className="notice" role="alert">{error}</div> : null}
+        {canManage ? (
+          <div className="hero-actions" style={{ marginTop: '1.5rem' }}>
+            <button className="button button-primary" type="button" onClick={() => setCreateOpen(true)}>
+              Nuevo empleado
+            </button>
+          </div>
+        ) : null}
         <div className="grid-3" style={{ marginTop: '1.5rem' }}>
           <article className="stat">
             <strong>{pagination.total}</strong>
@@ -272,8 +282,24 @@ export default function EmployeesPage() {
       </section>
 
       {canManage ? (
-        <form className="panel stack" onSubmit={createEmployee}>
-          <h2 className="section-title">Crear empleado</h2>
+        <Modal
+          open={createOpen}
+          title="Crear empleado"
+          description="Da de alta un empleado, vincúlalo a una empresa y asigna roles de acceso."
+          size="xl"
+          onClose={() => setCreateOpen(false)}
+          actions={
+            <>
+              <button className="button button-secondary" type="button" onClick={() => setCreateOpen(false)}>
+                Cancelar
+              </button>
+              <button className="button button-primary" type="submit" form="employee-create-form" disabled={createLoading}>
+                {createLoading ? 'Creando...' : 'Crear empleado'}
+              </button>
+            </>
+          }
+        >
+        <form id="employee-create-form" className="stack" onSubmit={createEmployee}>
           <div className="field-grid">
             <div className="field">
               <label htmlFor="companyId">Empresa</label>
@@ -354,15 +380,12 @@ export default function EmployeesPage() {
                   onClick={() => toggleRole(role)}
                 >
                   {getRoleLabel([role])}
-                </button>
-              ))}
-            </div>
+              </button>
+            ))}
           </div>
-
-          <button className="button button-primary" type="submit" disabled={createLoading}>
-            {createLoading ? 'Creando...' : 'Crear empleado'}
-          </button>
+        </div>
         </form>
+        </Modal>
       ) : null}
 
       <section className="panel stack">

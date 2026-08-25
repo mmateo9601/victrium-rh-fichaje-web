@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { Modal } from '../../components/modal';
 import { api, type PublicUser } from '../../lib/api/generated';
 import { clearSession, getAccessToken, getStoredSession } from '../../lib/auth/session';
 import { getRoleListLabel } from '../../lib/labels';
@@ -14,6 +15,7 @@ export default function ProfilePage() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [editOpen, setEditOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,6 +65,7 @@ export default function ProfilePage() {
       });
       clearSession();
       setMessage('Contraseña actualizada. Vuelve a iniciar sesión.');
+      setEditOpen(false);
       router.replace('/login');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo cambiar la contraseña');
@@ -88,6 +91,11 @@ export default function ProfilePage() {
         <p>Datos visibles de tu usuario autenticado y cambio de contraseña.</p>
         {error ? <div className="notice" role="alert">{error}</div> : null}
         {message ? <div className="notice" role="status">{message}</div> : null}
+        <div className="hero-actions" style={{ marginTop: '1.5rem' }}>
+          <button className="button button-primary" type="button" onClick={() => setEditOpen(true)}>
+            Cambiar contraseña
+          </button>
+        </div>
         {user ? (
           <div className="grid-3" style={{ marginTop: '1.5rem' }}>
             <article className="stat">
@@ -106,8 +114,24 @@ export default function ProfilePage() {
         ) : null}
       </section>
 
-      <form className="panel stack" onSubmit={onSubmit}>
-        <h2 className="section-title">Cambiar contraseña</h2>
+      <Modal
+        open={editOpen}
+        title="Cambiar contraseña"
+        description="Actualiza tu acceso con tu contraseña actual y una nueva contraseña confirmada."
+        size="md"
+        onClose={() => setEditOpen(false)}
+        actions={
+          <>
+            <button className="button button-secondary" type="button" onClick={() => setEditOpen(false)}>
+              Cancelar
+            </button>
+            <button className="button button-primary" type="submit" form="profile-password-form" disabled={saving}>
+              {saving ? 'Guardando...' : 'Actualizar contraseña'}
+            </button>
+          </>
+        }
+      >
+      <form id="profile-password-form" className="stack" onSubmit={onSubmit}>
         <div className="field-grid">
           <div className="field">
             <label htmlFor="currentPassword">Contraseña actual</label>
@@ -143,11 +167,8 @@ export default function ProfilePage() {
             />
           </div>
         </div>
-
-        <button className="button button-primary" type="submit" disabled={saving}>
-          {saving ? 'Guardando...' : 'Actualizar contraseña'}
-        </button>
       </form>
+      </Modal>
     </div>
   );
 }

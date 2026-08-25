@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
+import { Modal } from '../../../components/modal';
 import { PageHeader } from '../../../components/page-header';
 import { api, type CalendarListItem, type Company } from '../../../lib/api/generated';
 import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../../lib/auth/session';
@@ -38,6 +39,7 @@ export default function CompanySettingsPage() {
   const [nightWorkEnd, setNightWorkEnd] = useState('');
   const [allowOvertime, setAllowOvertime] = useState(true);
   const [allowNightWork, setAllowNightWork] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const timezoneOptions = getTimezoneOptions();
 
   const canManageGlobally = roles.includes('ROLE_SUPER_ADMIN');
@@ -125,6 +127,7 @@ export default function CompanySettingsPage() {
       });
 
       setCompany(updated);
+      setEditOpen(false);
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : 'No se pudo guardar la configuración');
     } finally {
@@ -216,8 +219,11 @@ export default function CompanySettingsPage() {
         eyebrow={canManageGlobally ? 'Super admin' : 'Empresa'}
         title={`Ajustes de ${company.name}`}
         description="Configura los parámetros operativos de la empresa, sus calendarios y su política laboral."
-          actions={
+        actions={
           <>
+            <button className="button button-primary" type="button" onClick={() => setEditOpen(true)}>
+              Editar empresa
+            </button>
             <Link className="button button-secondary" href="/companies">
               Volver a empresas
             </Link>
@@ -248,8 +254,26 @@ export default function CompanySettingsPage() {
 
       {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
 
+      <Modal
+        open={editOpen}
+        title="Editar empresa"
+        description="Ajusta los datos base y la política laboral en una sola pantalla."
+        size="xl"
+        onClose={() => setEditOpen(false)}
+        actions={
+          <>
+            <button className="button button-secondary" type="button" onClick={() => setEditOpen(false)}>
+              Cancelar
+            </button>
+            <button className="button button-primary" type="submit" form="company-settings-form" disabled={saving}>
+              {saving ? 'Guardando...' : 'Guardar cambios'}
+            </button>
+          </>
+        }
+      >
       <form
-        className="panel stack"
+        id="company-settings-form"
+        className="stack"
         onSubmit={(event) => {
           event.preventDefault();
           void save();
@@ -257,12 +281,9 @@ export default function CompanySettingsPage() {
       >
         <div className="toolbar">
           <div>
-            <h2 className="section-title">Datos base</h2>
-            <p className="meta">Información general de la empresa y calendario por defecto.</p>
+            <h2 className="section-title">Datos base y política laboral</h2>
+            <p className="meta">Todos los valores de duración se guardan en minutos. Las horas nocturnas se eligen como hora local.</p>
           </div>
-          <button className="button button-primary" type="submit" disabled={saving}>
-            {saving ? 'Guardando...' : 'Guardar cambios'}
-          </button>
         </div>
 
         <div className="field-grid">
@@ -303,18 +324,6 @@ export default function CompanySettingsPage() {
               <option value="false">Inactiva</option>
             </select>
           </div>
-        </div>
-      </form>
-
-      <section className="panel stack">
-        <div className="toolbar">
-          <div>
-            <h2 className="section-title">Política laboral</h2>
-            <p className="meta">Todos estos campos se guardan en minutos salvo las horas nocturnas, que se eligen como hora local.</p>
-          </div>
-        </div>
-
-        <div className="field-grid">
           <div className="field">
             <label htmlFor="weeklyTargetMinutes">Objetivo semanal (minutos)</label>
             <input id="weeklyTargetMinutes" type="text" inputMode="decimal" placeholder="480 o 8:00" value={weeklyTargetMinutes} onChange={(e) => setWeeklyTargetMinutes(e.target.value)} />
@@ -366,7 +375,8 @@ export default function CompanySettingsPage() {
             </select>
           </div>
         </div>
-      </section>
+      </form>
+      </Modal>
 
       <section className="panel stack">
         <div className="toolbar">
