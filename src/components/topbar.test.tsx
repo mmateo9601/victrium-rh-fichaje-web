@@ -26,8 +26,7 @@ vi.mock('next/navigation', () => ({
 vi.mock('../lib/auth/session', () => ({
   useStoredSession: mocks.useStoredSession,
   signOut: mocks.signOut,
-  getEffectiveRoles: (session: { user?: { roles?: string[]; admin?: boolean } } | null) =>
-    session?.user?.admin ? [...(session.user.roles ?? []), 'ROLE_SUPER_ADMIN'] : session?.user?.roles ?? []
+  getEffectiveRoles: (session: { user?: { roles?: string[] } } | null) => session?.user?.roles ?? []
 }));
 
 import { Topbar } from './topbar';

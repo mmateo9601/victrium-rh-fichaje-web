@@ -21,10 +21,7 @@ function normalizeSession(session: AuthSession | null): AuthSession | null {
   }
 
   const roles = Array.isArray(session.user.roles) ? session.user.roles : [];
-  const normalizedRoles =
-    session.user.admin && !roles.includes('ROLE_SUPER_ADMIN') ? [...roles, 'ROLE_SUPER_ADMIN'] : roles;
-
-  if (normalizedRoles === roles) {
+  if (roles === session.user.roles) {
     return session;
   }
 
@@ -32,7 +29,7 @@ function normalizeSession(session: AuthSession | null): AuthSession | null {
     ...session,
     user: {
       ...session.user,
-      roles: normalizedRoles as AuthSession['user']['roles']
+      roles: roles as AuthSession['user']['roles']
     }
   };
 }
@@ -43,11 +40,6 @@ export function getEffectiveRoles(session: AuthSession | null) {
   }
 
   const roles = Array.isArray(session.user.roles) ? session.user.roles : [];
-  const hasSuperAdminRole = roles.includes('ROLE_SUPER_ADMIN');
-  if (session.user.admin && !hasSuperAdminRole) {
-    return [...roles, 'ROLE_SUPER_ADMIN'] as AuthSession['user']['roles'];
-  }
-
   return roles as AuthSession['user']['roles'];
 }
 
