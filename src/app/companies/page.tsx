@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { PageHeader } from '../../components/page-header';
+import { Modal } from '../../components/modal';
 import { api, type Company } from '../../lib/api/generated';
 import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
@@ -21,6 +22,8 @@ export default function CompaniesPage() {
   const [timezone, setTimezone] = useState('');
   const [active, setActive] = useState(true);
   const [allowOvertime, setAllowOvertime] = useState(true);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -40,6 +43,7 @@ export default function CompaniesPage() {
     setTimezone(company.timezone ?? '');
     setActive(company.active);
     setAllowOvertime((company.workPolicy as Record<string, unknown> | null | undefined)?.allowOvertime !== false);
+    setEditOpen(true);
   }
 
   function clearEdit() {
@@ -49,6 +53,26 @@ export default function CompaniesPage() {
     setTimezone('');
     setActive(true);
     setAllowOvertime(true);
+    setEditOpen(false);
+  }
+
+  function beginCreate() {
+    setSelectedCompany(null);
+    setName('');
+    setCode('');
+    setTimezone('');
+    setActive(true);
+    setAllowOvertime(true);
+    setCreateOpen(true);
+  }
+
+  function clearCreate() {
+    setName('');
+    setCode('');
+    setTimezone('');
+    setActive(true);
+    setAllowOvertime(true);
+    setCreateOpen(false);
   }
 
   useEffect(() => {
@@ -233,7 +257,16 @@ export default function CompaniesPage() {
         eyebrow="Organización"
         title="Empresas"
         description="Gestiona las empresas disponibles y su información básica para la organización."
-        actions={companyMe ? <Link className="button button-secondary" href={`/companies/${companyMe.id}`}>Ajustes de empresa</Link> : undefined}
+        actions={
+          <div className="hero-actions" style={{ marginTop: 0 }}>
+            {companyMe ? <Link className="button button-secondary" href={`/companies/${companyMe.id}`}>Ajustes de empresa</Link> : null}
+            {canManage ? (
+              <button className="button button-primary" type="button" onClick={beginCreate}>
+                Nueva empresa
+              </button>
+            ) : null}
+          </div>
+        }
         stats={
           <>
             <article className="stat stat--compact">
@@ -252,9 +285,19 @@ export default function CompaniesPage() {
 
       {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
 
-      {canManage ? (
-        <form className="panel stack" onSubmit={onCreate}>
-          <h2 className="section-title">Crear empresa</h2>
+      <Modal
+        open={createOpen && canManage}
+        onClose={clearCreate}
+        size="lg"
+        title="Nueva empresa"
+        description="Crea una empresa con su zona horaria y política operativa."
+        actions={
+          <button className="button button-primary" type="submit" form="company-create-form" disabled={saving}>
+            {saving ? 'Guardando...' : 'Crear empresa'}
+          </button>
+        }
+      >
+        <form id="company-create-form" className="stack" onSubmit={onCreate}>
           <div className="field-grid">
             <div className="field">
               <label htmlFor="company-name">Nombre</label>
@@ -290,23 +333,22 @@ export default function CompaniesPage() {
               </select>
             </div>
           </div>
-          <button className="button button-primary" type="submit" disabled={saving}>
-            {saving ? 'Guardando...' : 'Crear empresa'}
-          </button>
         </form>
-      ) : null}
+      </Modal>
 
-      {canManage && selectedCompany ? (
-        <form className="panel stack" onSubmit={onUpdate}>
-          <div className="toolbar">
-            <div>
-              <h2 className="section-title">Editar empresa</h2>
-              <p className="meta">Actualiza los datos base de la empresa seleccionada.</p>
-            </div>
-            <button className="button button-secondary" type="button" onClick={clearEdit}>
-              Cancelar
-            </button>
-          </div>
+      <Modal
+        open={editOpen && canManage && Boolean(selectedCompany)}
+        onClose={clearEdit}
+        size="lg"
+        title="Editar empresa"
+        description="Actualiza los datos base de la empresa seleccionada."
+        actions={
+          <button className="button button-primary" type="submit" form="company-edit-form" disabled={updating}>
+            {updating ? 'Actualizando...' : 'Guardar cambios'}
+          </button>
+        }
+      >
+        <form id="company-edit-form" className="stack" onSubmit={onUpdate}>
           <div className="field-grid">
             <div className="field">
               <label htmlFor="edit-company-name">Nombre</label>
@@ -346,11 +388,8 @@ export default function CompaniesPage() {
               </select>
             </div>
           </div>
-          <button className="button button-primary" type="submit" disabled={updating}>
-            {updating ? 'Actualizando...' : 'Guardar cambios'}
-          </button>
         </form>
-      ) : null}
+      </Modal>
 
       <section className="panel stack">
           <div className="toolbar">

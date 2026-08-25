@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { PageHeader } from '../../components/page-header';
+import { Modal } from '../../components/modal';
 import { api, type Company, type Employee, type PublicUser, type RoleName } from '../../lib/api/generated';
 import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
@@ -72,6 +73,7 @@ export default function UsersPage() {
   });
   const [form, setForm] = useState<UserFormState>(emptyForm(fixedCompanyId));
   const [selectedUser, setSelectedUser] = useState<PublicUser | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -168,6 +170,7 @@ export default function UsersPage() {
   function beginCreate() {
     setSelectedUser(null);
     setForm(emptyForm(fixedCompanyId));
+    setEditorOpen(true);
   }
 
   function beginEdit(user: PublicUser) {
@@ -183,6 +186,13 @@ export default function UsersPage() {
       roles: user.roles,
       active: user.active
     });
+    setEditorOpen(true);
+  }
+
+  function closeEditor() {
+    setSelectedUser(null);
+    setForm(emptyForm(fixedCompanyId));
+    setEditorOpen(false);
   }
 
   async function saveUser() {
@@ -222,7 +232,7 @@ export default function UsersPage() {
         });
       }
 
-      beginCreate();
+      closeEditor();
       const refreshed = await api.users.list(token, {
         search: filters.search || undefined,
         role: filters.role || undefined,
@@ -401,21 +411,25 @@ export default function UsersPage() {
         </div>
       </section>
 
-      <section className="panel stack">
-        <div className="toolbar">
-          <div>
-            <h2 className="section-title">{selectedUser ? 'Editar acceso' : 'Crear acceso'}</h2>
-            <p className="meta">
-              {selectedUser ? `Editando acceso de ${selectedUser.email}` : 'Define el correo, la contraseña inicial y los datos internos si aplican.'}
-            </p>
-          </div>
-          {selectedUser ? (
-            <button className="button button-secondary" type="button" onClick={beginCreate}>
-              Cancelar edición
+      <Modal
+        open={editorOpen}
+        onClose={closeEditor}
+        size="xl"
+        title={selectedUser ? 'Editar acceso' : 'Crear acceso'}
+        description={selectedUser ? `Editando acceso de ${selectedUser.email}` : 'Define el correo, la contraseña inicial y los datos internos si aplican.'}
+        actions={
+          <>
+            {selectedUser ? (
+              <button className="button button-secondary" type="button" onClick={closeEditor}>
+                Cancelar edición
+              </button>
+            ) : null}
+            <button className="button button-primary" type="button" onClick={() => void saveUser()} disabled={saving}>
+              {saving ? 'Guardando...' : selectedUser ? 'Guardar cambios' : 'Crear cuenta'}
             </button>
-          ) : null}
-        </div>
-
+          </>
+        }
+      >
         <div className="grid grid--2">
           <label className="stack">
             <span className="field-label">Email</span>
@@ -504,16 +518,7 @@ export default function UsersPage() {
             })}
           </div>
         </div>
-
-        <div className="hero-actions">
-          <button className="button" type="button" onClick={() => void saveUser()} disabled={saving}>
-            {saving ? 'Guardando...' : selectedUser ? 'Guardar cambios' : 'Crear cuenta'}
-          </button>
-          <button className="button button-secondary" type="button" onClick={beginCreate}>
-            Limpiar
-          </button>
-        </div>
-      </section>
+      </Modal>
 
       <section className="panel stack">
         <div className="toolbar">
