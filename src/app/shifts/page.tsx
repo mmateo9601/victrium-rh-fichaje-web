@@ -231,8 +231,9 @@ export default function ShiftsPage() {
               <h3 className="section-title">Datos básicos</h3>
               <p className="meta">Identifica el turno sin detalles técnicos innecesarios.</p>
             </div>
+            <span className="badge badge-info">Horario semanal + patrón opcional</span>
           </div>
-        <div className="field-grid">
+          <div className="grid grid--2">
           <div className="field">
             <label htmlFor="name">Nombre del turno</label>
             <input id="name" value={name} onChange={(e) => setName(e.target.value)} />
@@ -253,7 +254,7 @@ export default function ShiftsPage() {
             <label htmlFor="rotationStartDate">Fecha de inicio de rotación</label>
             <input id="rotationStartDate" type="date" value={rotationStartDate} onChange={(e) => setRotationStartDate(e.target.value)} />
           </div>
-        </div>
+          </div>
         </section>
 
         <RotationPatternEditor
@@ -272,7 +273,15 @@ export default function ShiftsPage() {
           </div>
           <div className="stack">
             {days.map((day, index) => (
-              <div className="field-grid" key={day.dayOfWeek}>
+              <div className="rotation-step rotation-step--compact" key={day.dayOfWeek}>
+                <div className="rotation-step__header">
+                  <div>
+                    <strong>{weekLabels[day.dayOfWeek]}</strong>
+                    <p className="meta">{day.working ? 'Día laborable' : 'Día no laborable'}</p>
+                  </div>
+                  <span className={`badge ${day.working ? 'badge-success' : 'badge-neutral'}`}>{day.working ? 'Trabaja' : 'Libre'}</span>
+                </div>
+              <div className="field-grid">
                 <div className="field">
                   <label>Día</label>
                   <div className="schedule-day__badge">{weekLabels[day.dayOfWeek]}</div>
@@ -319,6 +328,7 @@ export default function ShiftsPage() {
                     <option value="true">Sí</option>
                   </select>
                 </div>
+              </div>
               </div>
             ))}
           </div>

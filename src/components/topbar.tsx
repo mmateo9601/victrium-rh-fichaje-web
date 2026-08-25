@@ -103,6 +103,7 @@ export function Topbar({ children }: TopbarProps) {
     setLoggingOut(true);
     try {
       await signOut();
+      closeMobileNavigation();
       router.push('/login');
     } finally {
       setLoggingOut(false);
@@ -198,11 +199,6 @@ export function Topbar({ children }: TopbarProps) {
                 Acceder
               </Link>
             )}
-            {session && mobileOpen ? (
-              <button className="sidebar__logout button button-ghost button-full" type="button" onClick={() => void logout()} disabled={loggingOut}>
-                {loggingOut ? 'Saliendo...' : 'Cerrar sesión'}
-              </button>
-            ) : null}
           </div>
         </div>
       </aside>
@@ -240,6 +236,9 @@ export function Topbar({ children }: TopbarProps) {
                 <Link className="button button-secondary app-topbar__profile-button" href="/profile">
                   Perfil
                 </Link>
+                <button className="button button-ghost app-topbar__logout-button" type="button" onClick={() => void logout()} disabled={loggingOut}>
+                  {loggingOut ? 'Saliendo...' : 'Cerrar sesión'}
+                </button>
               </>
             ) : (
               <Link className="button button-secondary" href="/login">

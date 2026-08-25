@@ -72,7 +72,7 @@ describe('Topbar', () => {
     );
 
     expect(screen.getByRole('link', { name: /empleados/i })).toHaveAttribute('href', '/employees');
-    expect(screen.getByRole('link', { name: /^planificación$/i })).toHaveAttribute('href', '/schedule');
+    expect(screen.getByRole('link', { name: /planificación/i })).toHaveAttribute('href', '/schedule');
     expect(screen.getByRole('link', { name: /cuentas de acceso/i })).toHaveAttribute('href', '/users');
     expect(screen.queryByRole('link', { name: /plataforma/i })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /empresas/i })).toHaveAttribute('href', '/companies');

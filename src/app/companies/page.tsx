@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { PageHeader } from '../../components/page-header';
 import { api, type Company } from '../../lib/api/generated';
 import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
@@ -228,22 +229,28 @@ export default function CompaniesPage() {
 
   return (
     <div className="stack">
-      <section className="hero">
-        <span className="eyebrow">Organización</span>
-        <h1>Empresas</h1>
-        <p>Gestiona las empresas disponibles y su información básica para la organización.</p>
-        {companyMe ? (
-          <div className="notice">
-            Empresa actual: {companyMe.name} ({companyMe.code})
-            <div style={{ marginTop: '0.75rem' }}>
-              <Link className="button button-secondary" href={`/companies/${companyMe.id}`}>
-                Ajustes de empresa
-              </Link>
-            </div>
-          </div>
-        ) : null}
-        {error ? <div className="notice" role="alert">{error}</div> : null}
-      </section>
+      <PageHeader
+        eyebrow="Organización"
+        title="Empresas"
+        description="Gestiona las empresas disponibles y su información básica para la organización."
+        actions={companyMe ? <Link className="button button-secondary" href={`/companies/${companyMe.id}`}>Ajustes de empresa</Link> : undefined}
+        stats={
+          <>
+            <article className="stat stat--compact">
+              <strong>{companies.length}</strong>
+              <span className="muted">Empresas visibles</span>
+            </article>
+            {companyMe ? (
+              <article className="stat stat--compact">
+                <strong>{companyMe.code}</strong>
+                <span className="muted">Empresa actual</span>
+              </article>
+            ) : null}
+          </>
+        }
+      />
+
+      {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
 
       {canManage ? (
         <form className="panel stack" onSubmit={onCreate}>

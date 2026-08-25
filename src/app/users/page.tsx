@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { PageHeader } from '../../components/page-header';
 import { api, type Company, type Employee, type PublicUser, type RoleName } from '../../lib/api/generated';
 import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../lib/auth/session';
 import { buildCsv, collectAllPages, downloadCsv } from '../../lib/csv';
@@ -323,16 +324,29 @@ export default function UsersPage() {
 
   return (
     <div className="stack">
-      <section className="hero">
-        <span className="eyebrow">Cuentas</span>
-        <h1>Usuarios de acceso</h1>
-        <p>El acceso solo usa correo y contraseña. El número, el DNI y el nombre visible son datos internos de la cuenta, no credenciales.</p>
-        {error ? (
-          <div className="notice" role="alert">
-            {error}
-          </div>
-        ) : null}
-      </section>
+      <PageHeader
+        eyebrow="Cuentas"
+        title="Usuarios de acceso"
+        description="El acceso solo usa correo y contraseña. El número, el DNI y el nombre visible son datos internos de la cuenta, no credenciales."
+        stats={
+          <>
+            <article className="stat stat--compact">
+              <strong>{users.length}</strong>
+              <span className="muted">Usuarios visibles</span>
+            </article>
+            <article className="stat stat--compact">
+              <strong>{companies.length}</strong>
+              <span className="muted">Empresas cargadas</span>
+            </article>
+            <article className="stat stat--compact">
+              <strong>{getRoleListLabel(roles)}</strong>
+              <span className="muted">Acceso actual</span>
+            </article>
+          </>
+        }
+      />
+
+      {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
 
       <section className="panel stack">
         <div className="toolbar">
