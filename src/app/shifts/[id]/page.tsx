@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 import { Modal } from '../../../components/modal';
 import { PageHeader } from '../../../components/page-header';
@@ -279,10 +280,18 @@ export default function ShiftDetailPage() {
         eyebrow="Organización"
         title={shift.name}
         description={shift.description ?? 'Detalle del turno y sus asignaciones.'}
+        breadcrumbs={[
+          { href: '/shifts', label: 'Turnos' }
+        ]}
         actions={
-          <button className="button button-primary" type="button" onClick={openEdit}>
-            Editar turno
-          </button>
+          <>
+            <Link className="button button-secondary" href="/shifts">
+              Volver a turnos
+            </Link>
+            <button className="button button-primary" type="button" onClick={openEdit}>
+              Editar turno
+            </button>
+          </>
         }
         stats={
           <>
@@ -299,14 +308,41 @@ export default function ShiftDetailPage() {
               <span className="muted">Asignaciones</span>
             </article>
             <article className="stat stat--compact">
-              <strong>{shift.rotationPattern.length ? shift.rotationPattern.length : 'Semanal'}</strong>
-              <span className="muted">Rotación</span>
+              <strong>{shift.rotationPattern.length ? `${shift.rotationPattern.length} pasos` : 'Fijo'}</strong>
+              <span className="muted">Tipo de turno</span>
+            </article>
+            <article className="stat stat--compact">
+              <strong>{shift.active ? 'Activo' : 'Inactivo'}</strong>
+              <span className="muted">Estado</span>
             </article>
           </>
         }
       />
 
       {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
+
+      <section className="panel stack">
+        <div className="toolbar">
+          <div>
+            <h2 className="section-title">Resumen operativo</h2>
+            <p className="meta">Horario fijo, rotación y asignaciones conviven sin mezclar la edición con la lectura.</p>
+          </div>
+        </div>
+        <div className="grid-3">
+          <article className="stat">
+            <strong>{rotationPattern.length ? 'Rotativo' : 'Fijo'}</strong>
+            <span className="muted">Configuración base</span>
+          </article>
+          <article className="stat">
+            <strong>{formatFlexibleDurationMinutes(rotationMinutesTotal)}</strong>
+            <span className="muted">Ciclo total</span>
+          </article>
+          <article className="stat">
+            <strong>{shift.rotationStartDate ?? 'Sin fecha'}</strong>
+            <span className="muted">Inicio de rotación</span>
+          </article>
+        </div>
+      </section>
 
       <Modal
         open={editOpen}

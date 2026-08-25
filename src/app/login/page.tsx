@@ -45,8 +45,8 @@ export default function LoginPage() {
           <span className="eyebrow">Victrium RH</span>
           <h1>Accede a tu espacio de trabajo.</h1>
           <p>
-            La pantalla de acceso está pensada para entrar rápido, sin ruido y con una jerarquía visual muy
-            clara.
+            Acceso corporativo con correo electrónico y contraseña. Sin pasos extra, sin distracciones y
+            con una jerarquía visual clara.
           </p>
         </div>
 
@@ -68,6 +68,11 @@ export default function LoginPage() {
           </article>
         </div>
 
+        <div className="notice">
+          <strong>Acceso único</strong>
+          <div className="meta">El sistema solo solicita correo y contraseña para mantener una experiencia clara y homogénea.</div>
+        </div>
+
         <Link className="button button-secondary" href="/">
           Volver a la portada
         </Link>
@@ -78,7 +83,7 @@ export default function LoginPage() {
           <div className="stack">
             <span className="eyebrow">Inicio de sesión</span>
             <h2 className="section-title">Acceso a Victrium RH</h2>
-            <p className="meta">Introduce tus credenciales para continuar.</p>
+            <p className="meta">Introduce tus credenciales para continuar con el mismo acceso de siempre.</p>
           </div>
 
           <div className="field">

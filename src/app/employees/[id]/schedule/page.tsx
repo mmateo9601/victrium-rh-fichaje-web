@@ -1,8 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
+import { PageHeader } from '../../../../components/page-header';
 import { ScheduleGrid } from '../../../../components/schedule-grid';
 import { WorkforceCalendar } from '../../../../components/workforce-calendar';
 import { api, type Employee, type Schedule } from '../../../../lib/api/generated';
@@ -26,6 +28,16 @@ export default function EmployeeSchedulePage() {
   const [schedule, setSchedule] = useState<Schedule | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const employeeLabel = employee?.nombreEmpleado ?? 'Calendario del empleado';
+
+  function setCurrentMonth() {
+    setRange(initialRange);
+  }
+
+  function setTodayRange() {
+    const today = formatInputDate(new Date());
+    setRange({ from: today, to: today });
+  }
 
   useEffect(() => {
     const accessToken = getAccessToken();
@@ -71,33 +83,25 @@ export default function EmployeeSchedulePage() {
 
   return (
     <div className="stack">
-      {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
-
-      <WorkforceCalendar
-        title={employee?.nombreEmpleado ?? 'Calendario del empleado'}
-        description="Histórico, vigencia y planificación mensual individual."
-        events={events}
-        loading={loading}
-        emptyLabel="No hay planificación para este empleado en el rango seleccionado."
-        initialView="timeGridWeek"
-        initialDate={range.from}
-        legend={[
-          { label: 'Turno', tone: 'primary' },
-          { label: 'Vacaciones', tone: 'info' },
-          { label: 'Permiso', tone: 'warning' },
-          { label: 'Festivo', tone: 'danger' }
+      <PageHeader
+        eyebrow="Empleado"
+        title={employeeLabel}
+        description="Calendario individual con planificación mensual, rendimiento y contexto de actividad."
+        breadcrumbs={[
+          { href: '/employees', label: 'Empleados' }
         ]}
-        filters={
-          <div className="field-grid">
-            <div className="field">
-              <label htmlFor="from">Desde</label>
-              <input id="from" type="date" value={range.from} onChange={(e) => setRange((current) => ({ ...current, from: e.target.value }))} />
-            </div>
-            <div className="field">
-              <label htmlFor="to">Hasta</label>
-              <input id="to" type="date" value={range.to} onChange={(e) => setRange((current) => ({ ...current, to: e.target.value }))} />
-            </div>
-          </div>
+        actions={
+          <>
+            <Link className="button button-secondary" href={`/employees/${employeeId}`}>
+              Volver al empleado
+            </Link>
+            <button className="button button-secondary" type="button" onClick={setTodayRange}>
+              Hoy
+            </button>
+            <button className="button button-primary" type="button" onClick={setCurrentMonth}>
+              Mes actual
+            </button>
+          </>
         }
         stats={
           <>
@@ -110,20 +114,66 @@ export default function EmployeeSchedulePage() {
               <span className="muted">Empresa</span>
             </article>
             <article className="stat stat--compact">
-              <strong>{formatLongDate(range.from)}</strong>
-              <span className="muted">Desde</span>
-            </article>
-            <article className="stat stat--compact">
-              <strong>{formatLongDate(range.to)}</strong>
-              <span className="muted">Hasta</span>
-            </article>
-            <article className="stat stat--compact">
               <strong>{schedule ? formatNumber(schedule.summary.plannedDays) : 0}</strong>
               <span className="muted">Días planificados</span>
             </article>
             <article className="stat stat--compact">
               <strong>{schedule ? formatNumber(schedule.summary.workedDays) : 0}</strong>
               <span className="muted">Días con actividad</span>
+            </article>
+          </>
+        }
+      />
+
+      {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
+
+      <section className="panel stack">
+        <div className="toolbar">
+          <div>
+            <h2 className="section-title">Rango de consulta</h2>
+            <p className="meta">Ajusta las fechas para explorar otra parte del calendario sin perder el contexto.</p>
+          </div>
+          <div className="hero-actions" style={{ marginTop: 0 }}>
+            <button className="button button-secondary" type="button" onClick={setCurrentMonth}>
+              Volver al mes actual
+            </button>
+          </div>
+        </div>
+        <div className="field-grid">
+          <div className="field">
+            <label htmlFor="from">Desde</label>
+            <input id="from" type="date" value={range.from} onChange={(e) => setRange((current) => ({ ...current, from: e.target.value }))} />
+          </div>
+          <div className="field">
+            <label htmlFor="to">Hasta</label>
+            <input id="to" type="date" value={range.to} onChange={(e) => setRange((current) => ({ ...current, to: e.target.value }))} />
+          </div>
+        </div>
+      </section>
+
+      <WorkforceCalendar
+        title={employeeLabel}
+        description="Histórico, vigencia y planificación mensual individual."
+        events={events}
+        loading={loading}
+        emptyLabel="No hay planificación para este empleado en el rango seleccionado."
+        initialView="timeGridWeek"
+        initialDate={range.from}
+        legend={[
+          { label: 'Turno', tone: 'primary' },
+          { label: 'Vacaciones', tone: 'info' },
+          { label: 'Permiso', tone: 'warning' },
+          { label: 'Festivo', tone: 'danger' }
+        ]}
+        stats={
+          <>
+            <article className="stat stat--compact">
+              <strong>{formatLongDate(range.from)}</strong>
+              <span className="muted">Desde</span>
+            </article>
+            <article className="stat stat--compact">
+              <strong>{formatLongDate(range.to)}</strong>
+              <span className="muted">Hasta</span>
             </article>
           </>
         }
