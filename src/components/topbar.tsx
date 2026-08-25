@@ -57,6 +57,7 @@ export function Topbar({ children }: TopbarProps) {
   const roles = getEffectiveRoles(session) as RoleName[];
   const isPublicRoute = routeIsPublic(pathname);
   const identityLabel = session?.user.email ?? session?.user.numero ?? session?.user.nombreEmpleado ?? 'Usuario';
+  const companyLabel = session?.user.companyName ?? (session?.user.companyId ? `Empresa ${session.user.companyId}` : 'Plataforma');
   const visibleGroups = navigationGroups
     .map((group) => ({
       ...group,
@@ -140,7 +141,10 @@ export function Topbar({ children }: TopbarProps) {
         <nav className="sidebar__nav" aria-label="Secciones">
           {visibleGroups.map((group) => (
             <section key={group.label} className="sidebar-group">
-              <h2>{group.label}</h2>
+              <div className="sidebar-group__header">
+                <h2>{group.label}</h2>
+                <span className="sidebar-group__count">{group.items.length}</span>
+              </div>
               <ul>
                 {group.items.map((item) => {
                   const active = isActive(pathname, item.href);
@@ -153,7 +157,10 @@ export function Topbar({ children }: TopbarProps) {
                         onClick={closeMobileNavigation}
                       >
                         <Icon aria-hidden="true" size={18} strokeWidth={1.9} />
-                        <strong>{item.label}</strong>
+                        <span>
+                          <strong>{item.label}</strong>
+                          <small>{group.label}</small>
+                        </span>
                       </Link>
                     </li>
                   );
@@ -169,7 +176,7 @@ export function Topbar({ children }: TopbarProps) {
               <span className="profile-chip__avatar">{identityLabel.charAt(0).toUpperCase()}</span>
               <div>
                 <strong>{identityLabel}</strong>
-                <small>{session.user.employeeName ? `${session.user.employeeName} · ${getRoleLabel(session.user.roles as RoleName[])}` : getRoleLabel(session.user.roles as RoleName[])}</small>
+                <small>{companyLabel} · {session.user.employeeName ? `${session.user.employeeName} · ` : ''}{getRoleLabel(session.user.roles as RoleName[])}</small>
               </div>
             </div>
           ) : (
@@ -226,11 +233,14 @@ export function Topbar({ children }: TopbarProps) {
           </div>
 
           <div className="app-topbar__right">
-            {session ? <span className="session-pill">{getRoleLabel(roles)}</span> : null}
             {session ? (
-              <button className="app-topbar__logout button button-secondary" type="button" onClick={() => void logout()} disabled={loggingOut}>
-                {loggingOut ? 'Saliendo...' : 'Cerrar sesión'}
-              </button>
+              <>
+                <span className="session-pill session-pill--soft">{companyLabel}</span>
+                <span className="session-pill">{getRoleLabel(roles)}</span>
+                <Link className="button button-secondary app-topbar__profile-button" href="/profile">
+                  Perfil
+                </Link>
+              </>
             ) : (
               <Link className="button button-secondary" href="/login">
                 Entrar

@@ -21,23 +21,20 @@ export type NavigationGroup = {
 
 export const navigationGroups: NavigationGroup[] = [
   {
-    label: 'Inicio',
+    label: 'Operación',
     items: [
       { href: '/dashboard', label: 'Inicio', icon: 'home' },
       { href: '/time-entries', label: 'Mi jornada', icon: 'clock' },
-      { href: '/my-calendar', label: 'Mi calendario', icon: 'calendar' }
+      { href: '/my-calendar', label: 'Mi calendario', icon: 'calendar' },
+      { href: '/schedule', label: 'Planificación', icon: 'layout-grid', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN', 'ROLE_MANAGER'] },
+      { href: '/shifts', label: 'Turnos', icon: 'sparkles', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN', 'ROLE_MANAGER'] }
     ]
   },
   {
     label: 'Personas',
     items: [
       { href: '/employees', label: 'Empleados', icon: 'users', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN'] },
-      { href: '/users', label: 'Cuentas de acceso', icon: 'user', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN'] }
-    ]
-  },
-  {
-    label: 'Ausencias',
-    items: [
+      { href: '/users', label: 'Cuentas de acceso', icon: 'user', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN'] },
       { href: '/vacations', label: 'Vacaciones', icon: 'calendar', roles: ['ROLE_USER', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN', 'ROLE_MANAGER'] },
       { href: '/permissions', label: 'Permisos', icon: 'shield', roles: ['ROLE_USER', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN', 'ROLE_MANAGER'] },
       { href: '/incidents', label: 'Incidencias', icon: 'briefcase', roles: ['ROLE_USER', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN', 'ROLE_MANAGER'] }
@@ -49,9 +46,7 @@ export const navigationGroups: NavigationGroup[] = [
       { href: '/companies', label: 'Empresas', icon: 'building', roles: ['ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN'] },
       { href: '/work-locations', label: 'Centros', icon: 'building', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN'] },
       { href: '/calendars', label: 'Calendarios', icon: 'calendar', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN'] },
-      { href: '/planning-periods', label: 'Periodos de planificación', icon: 'layout-grid', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN', 'ROLE_MANAGER'] },
-      { href: '/shifts', label: 'Turnos', icon: 'sparkles', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN', 'ROLE_MANAGER'] },
-      { href: '/schedule', label: 'Planificación', icon: 'layout-grid', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN', 'ROLE_MANAGER'] },
+      { href: '/planning-periods', label: 'Periodos', icon: 'layout-grid', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN', 'ROLE_MANAGER'] },
       { href: '/reports', label: 'Informes', icon: 'layout-grid', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN'] },
       { href: '/platform', label: 'Configuración', icon: 'sparkles', roles: ['ROLE_SUPER_ADMIN'] },
       { href: '/api-keys', label: 'Claves', icon: 'shield', roles: ['ROLE_SUPER_ADMIN'] }
@@ -71,6 +66,8 @@ export function getNavigationTitle(pathname: string) {
   if (pathname === '/dashboard') return 'Inicio';
   if (pathname.startsWith('/time-entries')) return 'Mi jornada';
   if (pathname.startsWith('/my-calendar')) return 'Mi calendario';
+  if (pathname.startsWith('/schedule')) return 'Planificación';
+  if (pathname.startsWith('/shifts')) return 'Turnos';
   if (pathname.startsWith('/employees')) return 'Empleados';
   if (pathname.startsWith('/users')) return 'Cuentas de acceso';
   if (pathname.startsWith('/vacations')) return 'Vacaciones';
@@ -78,11 +75,9 @@ export function getNavigationTitle(pathname: string) {
   if (pathname.startsWith('/incidents')) return 'Incidencias';
   if (pathname.startsWith('/calendars')) return 'Calendarios';
   if (pathname.startsWith('/work-locations')) return 'Centros de trabajo';
-  if (pathname.startsWith('/planning-periods')) return 'Periodos de planificación';
-  if (pathname.startsWith('/shifts')) return 'Turnos';
+  if (pathname.startsWith('/planning-periods')) return 'Periodos';
   if (pathname.startsWith('/reports')) return 'Informes';
   if (pathname.startsWith('/platform')) return 'Configuración';
-  if (pathname.startsWith('/schedule')) return 'Planificación';
   if (pathname.startsWith('/companies')) return 'Empresas';
   if (pathname.startsWith('/api-keys')) return 'Claves';
   if (pathname.startsWith('/profile')) return 'Perfil';

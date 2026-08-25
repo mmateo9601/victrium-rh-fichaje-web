@@ -177,6 +177,12 @@ export default function DashboardPage() {
   const mainDescription = isManager
     ? 'Resumen operativo de la jornada, ausencias y trabajo pendiente.'
     : 'Todo lo importante para empezar tu día con claridad.';
+  const primaryAction = isManager
+    ? { href: '/schedule', label: 'Abrir planificación' }
+    : { href: '/my-calendar', label: 'Abrir calendario' };
+  const secondaryAction = isManager
+    ? { href: '/employees', label: 'Gestionar equipo' }
+    : { href: '/vacations', label: 'Mis solicitudes' };
   const pageStats = isManager
     ? [
         { value: String(activeEmployees), label: 'Empleados activos', icon: <Users2 size={16} /> },
@@ -198,6 +204,12 @@ export default function DashboardPage() {
         description={`${mainDescription} ${formatLongDate(new Date())}.`}
         actions={
           <>
+            <Link className="button button-secondary" href={secondaryAction.href}>
+              {secondaryAction.label}
+            </Link>
+            <Link className="button button-primary" href={primaryAction.href}>
+              {primaryAction.label}
+            </Link>
             <Link className="button button-secondary" href="/time-entries">
               Ver fichajes
             </Link>
@@ -214,16 +226,49 @@ export default function DashboardPage() {
 
       {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
 
-      <div className="dashboard-layout__primary">
-        {token ? <WorkTimer token={token} /> : null}
-        <AnalyticsChart
-          title="Horas trabajadas esta semana"
-          description={`Del ${formatLongDate(weekRange.from)} al ${formatLongDate(weekRange.to)}.`}
-          data={chartData}
-          valueLabel="Horas"
-          emptyLabel="Todavía no hay suficientes fichajes para mostrar la evolución."
-        />
-      </div>
+      <section className="dashboard-executive">
+        <div className="dashboard-executive__main">
+          {token ? <WorkTimer token={token} /> : null}
+        </div>
+
+        <aside className="dashboard-executive__rail stack">
+          <AnalyticsChart
+            title="Horas trabajadas esta semana"
+            description={`Del ${formatLongDate(weekRange.from)} al ${formatLongDate(weekRange.to)}.`}
+            data={chartData}
+            valueLabel="Horas"
+            emptyLabel="Todavía no hay suficientes fichajes para mostrar la evolución."
+          />
+
+          <section className="panel stack dashboard-signal">
+            <div className="toolbar">
+              <div className="stack" style={{ gap: '0.35rem' }}>
+                <span className="eyebrow">Resumen ejecutivo</span>
+                <h2 className="section-title">{isManager ? 'Salud operativa' : 'Estado de tu jornada'}</h2>
+              </div>
+            </div>
+
+            <div className="dashboard-signal__metrics">
+              <article className="stat stat--compact">
+                <strong>{company?.name ?? 'Empresa general'}</strong>
+                <span className="muted">Contexto activo</span>
+              </article>
+              <article className="stat stat--compact">
+                <strong>{roleLabel}</strong>
+                <span className="muted">Perfil de acceso</span>
+              </article>
+              <article className="stat stat--compact">
+                <strong>{weeklyTargetMinutes !== null ? formatDurationLabel(weeklyTargetMinutes) : '—'}</strong>
+                <span className="muted">Objetivo semanal</span>
+              </article>
+              <article className="stat stat--compact">
+                <strong>{formatDurationLabel(weekSummary.workedMinutes)}</strong>
+                <span className="muted">Tiempo realizado</span>
+              </article>
+            </div>
+          </section>
+        </aside>
+      </section>
 
       <div className="dashboard-grid">
         <section className="panel stack">
