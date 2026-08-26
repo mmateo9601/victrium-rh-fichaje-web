@@ -191,9 +191,14 @@ export function Topbar({ children }: TopbarProps) {
           )}
           <div className="sidebar__actions">
             {session ? (
-              <Link className="button button-secondary button-full" href="/profile" onClick={closeMobileNavigation}>
-                Perfil
-              </Link>
+              <>
+                <Link className="button button-secondary button-full" href="/profile" onClick={closeMobileNavigation}>
+                  Perfil
+                </Link>
+                <button className="button button-ghost button-full sidebar__logout" type="button" onClick={() => void logout()} disabled={loggingOut}>
+                  {loggingOut ? 'Saliendo...' : 'Cerrar sesión'}
+                </button>
+              </>
             ) : (
               <Link className="button button-secondary button-full" href="/login" onClick={closeMobileNavigation}>
                 Acceder
@@ -233,12 +238,6 @@ export function Topbar({ children }: TopbarProps) {
               <>
                 <span className="session-pill session-pill--soft">{companyLabel}</span>
                 <span className="session-pill">{getRoleLabel(roles)}</span>
-                <Link className="button button-secondary app-topbar__profile-button" href="/profile">
-                  Perfil
-                </Link>
-                <button className="button button-ghost app-topbar__logout-button" type="button" onClick={() => void logout()} disabled={loggingOut}>
-                  {loggingOut ? 'Saliendo...' : 'Cerrar sesión'}
-                </button>
               </>
             ) : (
               <Link className="button button-secondary" href="/login">
