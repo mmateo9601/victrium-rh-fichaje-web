@@ -11,6 +11,7 @@ Frontend Next.js para consumir `victrium-rh-fichaje-api` de forma independiente.
 - Soporte de detalle y edición de empleados
 - Responsive
 - Sin Docker
+- Roles vigentes: `ROLE_SUPER_ADMIN`, `ROLE_COMPANY_ADMIN`, `ROLE_RRHH`, `ROLE_MANAGER`, `ROLE_USER`, `ROLE_AUDITOR`, `ROLE_WORKFORCE_REPRESENTATIVE`
 
 ## Requisitos
 
@@ -66,19 +67,6 @@ npm run lint
 npm test
 npm run build
 ```
-
-## Produccion
-
-```bash
-npm ci
-npm run build
-npm run start
-```
-
-## Comando de build
-
-- `npm ci`
-- `npm run build`
 
 ## Node
 

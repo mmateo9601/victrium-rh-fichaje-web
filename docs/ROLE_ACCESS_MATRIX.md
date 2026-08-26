@@ -5,7 +5,6 @@ This matrix summarizes the backend role vocabulary used by the workforce app.
 | Backend role | Scope | Main capabilities |
 | --- | --- | --- |
 | `ROLE_SUPER_ADMIN` | All tenants | Create and manage companies, users, employees, calendars, schedules, policies, and operational data across tenants |
-| `ROLE_ADMIN` | Own tenant | Manage company-wide configuration, employees, locations, schedules, and operational monitoring |
 | `ROLE_COMPANY_ADMIN` | Own tenant | Manage operational data for the company, including employees, locations, schedules, and planning |
 | `ROLE_RRHH` | Own tenant | HR operations, employee records, absences, permissions, incidents, and reporting |
 | `ROLE_USER` | Own profile | Self service, time entries, schedule view, personal absences and employee context |
