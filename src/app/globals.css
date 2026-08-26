@@ -2059,9 +2059,10 @@ textarea {
     position: sticky;
     top: 0;
     z-index: 1;
-    padding-bottom: 0.25rem;
-    background: linear-gradient(180deg, rgba(250, 252, 253, 0.98), rgba(250, 252, 253, 0.9));
+    padding-bottom: 0.5rem;
+    background: linear-gradient(180deg, rgba(13, 23, 39, 0.99), rgba(18, 32, 51, 0.96));
     backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   }
 
   .sidebar__close {
