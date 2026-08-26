@@ -35,6 +35,7 @@ export default function CompaniesPage() {
   const session = useMemo(() => getStoredSession(), []);
   const roles = useMemo(() => getEffectiveRoles(session), [session]);
   const canManage = roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_SUPER_ADMIN');
+  const canCreateCompany = roles.includes('ROLE_SUPER_ADMIN');
 
   function beginEdit(company: Company) {
     setSelectedCompany(company);
@@ -260,7 +261,7 @@ export default function CompaniesPage() {
         actions={
           <div className="hero-actions" style={{ marginTop: 0 }}>
             {companyMe ? <Link className="button button-secondary" href={`/companies/${companyMe.id}`}>Ajustes de empresa</Link> : null}
-            {canManage ? (
+            {canCreateCompany ? (
               <button className="button button-primary" type="button" onClick={beginCreate}>
                 Nueva empresa
               </button>
@@ -286,7 +287,7 @@ export default function CompaniesPage() {
       {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
 
       <Modal
-        open={createOpen && canManage}
+        open={createOpen && canCreateCompany}
         onClose={clearCreate}
         size="lg"
         title="Nueva empresa"

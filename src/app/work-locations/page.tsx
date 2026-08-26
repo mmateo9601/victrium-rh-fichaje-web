@@ -14,7 +14,8 @@ export default function WorkLocationsPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
   const roles = useMemo(() => getEffectiveRoles(session), [session]);
-  const canManage = roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN');
+  const canView = roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN');
+  const canManage = roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_SUPER_ADMIN');
   const [locations, setLocations] = useState<WorkLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -50,7 +51,7 @@ export default function WorkLocationsPage() {
       return;
     }
     const isSuperAdmin = roles.includes('ROLE_SUPER_ADMIN');
-    if (!canManage) {
+    if (!canView) {
       router.replace('/forbidden');
       return;
     }
@@ -341,22 +342,26 @@ export default function WorkLocationsPage() {
                         <Link className="button button-secondary" href={`/work-locations/${location.id}`}>
                           Abrir
                         </Link>
-                        <button
-                          className="button button-secondary"
-                          type="button"
-                          onClick={() => void toggleLocationActive(location)}
-                          disabled={togglingId === location.id}
-                        >
-                          {location.active ? 'Desactivar' : 'Activar'}
-                        </button>
-                        <button
-                          className="button button-secondary"
-                          type="button"
-                          onClick={() => void deleteLocation(location)}
-                          disabled={togglingId === location.id}
-                        >
-                          Eliminar
-                        </button>
+                        {canManage ? (
+                          <>
+                            <button
+                              className="button button-secondary"
+                              type="button"
+                              onClick={() => void toggleLocationActive(location)}
+                              disabled={togglingId === location.id}
+                            >
+                              {location.active ? 'Desactivar' : 'Activar'}
+                            </button>
+                            <button
+                              className="button button-secondary"
+                              type="button"
+                              onClick={() => void deleteLocation(location)}
+                              disabled={togglingId === location.id}
+                            >
+                              Eliminar
+                            </button>
+                          </>
+                        ) : null}
                       </div>
                     </td>
                   </tr>

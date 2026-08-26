@@ -41,6 +41,7 @@ export default function WorkLocationDetailPage() {
   const [companyId, setCompanyId] = useState('');
   const [editOpen, setEditOpen] = useState(false);
   const timezoneOptions = getTimezoneOptions();
+  const canManage = roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_SUPER_ADMIN');
 
   function openEdit() {
     setEditOpen(true);
@@ -97,7 +98,7 @@ export default function WorkLocationDetailPage() {
 
   async function save() {
     const token = getAccessToken();
-    if (!token || !location) {
+    if (!token || !location || !canManage) {
       return;
     }
 
@@ -125,7 +126,7 @@ export default function WorkLocationDetailPage() {
 
   async function setStatus(nextActive: boolean) {
     const token = getAccessToken();
-    if (!token || !location) {
+    if (!token || !location || !canManage) {
       return;
     }
 
@@ -146,7 +147,7 @@ export default function WorkLocationDetailPage() {
 
   async function deleteLocation() {
     const token = getAccessToken();
-    if (!token || !location) {
+    if (!token || !location || !canManage) {
       return;
     }
 
@@ -192,15 +193,19 @@ export default function WorkLocationDetailPage() {
         description="Centro de trabajo, calendario asociado y asignaciones históricas."
         actions={
           <>
-            <button className="button button-primary" type="button" onClick={openEdit}>
-              Editar centro
-            </button>
-            <button className="button button-secondary" type="button" onClick={() => void setStatus(!location.active)} disabled={saving}>
-              {location.active ? 'Desactivar centro' : 'Activar centro'}
-            </button>
-            <button className="button button-secondary" type="button" onClick={() => void deleteLocation()} disabled={saving}>
-              Eliminar centro
-            </button>
+            {canManage ? (
+              <>
+                <button className="button button-primary" type="button" onClick={openEdit}>
+                  Editar centro
+                </button>
+                <button className="button button-secondary" type="button" onClick={() => void setStatus(!location.active)} disabled={saving}>
+                  {location.active ? 'Desactivar centro' : 'Activar centro'}
+                </button>
+                <button className="button button-secondary" type="button" onClick={() => void deleteLocation()} disabled={saving}>
+                  Eliminar centro
+                </button>
+              </>
+            ) : null}
           </>
         }
         stats={
@@ -224,7 +229,7 @@ export default function WorkLocationDetailPage() {
       {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
 
       <Modal
-        open={editOpen}
+        open={editOpen && canManage}
         onClose={closeEdit}
         size="xl"
         title="Editar centro"
