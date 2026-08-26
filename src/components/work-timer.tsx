@@ -32,16 +32,38 @@ export function WorkTimer({ token }: WorkTimerProps) {
   async function loadCurrent() {
     try {
       const today = new Date().toISOString().slice(0, 10);
-      const [state, shift, currentCompany] = await Promise.all([
+      const [stateResult, shiftResult, companyResult] = await Promise.allSettled([
         api.timeEntries.current(token),
         api.shifts.me(token, { date: today }),
         api.companies.mine(token).catch(() => null)
       ]);
-      setCurrent(state);
-      setTodayShift(shift);
-      setCompany(currentCompany);
+
+      if (stateResult.status === 'fulfilled') {
+        setCurrent(stateResult.value);
+      } else {
+        setCurrent(null);
+      }
+
+      if (shiftResult.status === 'fulfilled') {
+        setTodayShift(shiftResult.value);
+      } else {
+        setTodayShift(null);
+      }
+
+      setCompany(companyResult.status === 'fulfilled' ? companyResult.value : null);
       snapshotAtRef.current = Date.now();
-      setError(null);
+      const warning =
+        stateResult.status === 'rejected'
+          ? stateResult.reason
+          : shiftResult.status === 'rejected'
+            ? shiftResult.reason
+            : null;
+      if (warning instanceof Error) {
+        const message = warning.message;
+        setError(message === 'Unexpected error' ? 'No hemos podido resolver tu jornada de hoy.' : message);
+      } else {
+        setError(null);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo cargar el estado de la jornada');
     } finally {

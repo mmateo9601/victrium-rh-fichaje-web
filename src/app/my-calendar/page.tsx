@@ -23,7 +23,7 @@ export default function MyCalendarPage() {
   const [range, setRange] = useState<WorkforceCalendarRange>(initialRange);
   const [schedule, setSchedule] = useState<Schedule | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     const accessToken = getAccessToken();
@@ -35,10 +35,16 @@ export default function MyCalendarPage() {
 
     async function load() {
       try {
+        setNotice(null);
         const result = await api.schedule.me(token, range);
         setSchedule(result);
       } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar tu calendario');
+        setSchedule(null);
+        setNotice(
+          loadError instanceof Error && loadError.message !== 'Unexpected error'
+            ? loadError.message
+            : 'No hay planificación disponible para este periodo.'
+        );
       } finally {
         setLoading(false);
       }
@@ -51,7 +57,7 @@ export default function MyCalendarPage() {
 
   return (
     <div className="stack">
-      {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
+      {notice ? <div className="notice notice--soft" role="status">{notice}</div> : null}
 
       <WorkforceCalendar
         title="Mi calendario"
