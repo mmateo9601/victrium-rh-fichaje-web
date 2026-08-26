@@ -2145,6 +2145,15 @@ textarea {
   .login-hero {
     min-height: auto;
   }
+
+  .login-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .login-footer .button {
+    width: 100%;
+  }
 }
 
 @media (max-width: 760px) {
