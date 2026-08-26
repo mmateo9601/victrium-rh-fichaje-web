@@ -1,58 +1,44 @@
 # victrium-rh-fichaje-web
 
-Frontend Next.js para consumir `victrium-rh-fichaje-api` de forma independiente.
+Frontend Next.js de `Victrium RH` para operar con `victrium-rh-fichaje-api`.
 
-## Estado actual
+## Resumen
 
 - Next.js + React + TypeScript
 - App Router
-- Cliente tipado para la API
-- Login, dashboard, companies, users, employees, vacations, incidents y calendars
-- Soporte de detalle y edición de empleados
-- Responsive
-- Sin Docker
-- Roles vigentes: `ROLE_SUPER_ADMIN`, `ROLE_COMPANY_ADMIN`, `ROLE_RRHH`, `ROLE_MANAGER`, `ROLE_USER`, `ROLE_AUDITOR`, `ROLE_WORKFORCE_REPRESENTATIVE`
+- Cliente de API tipado y generado localmente
+- Interfaz corporativa, responsive y sin Docker
+- Integración exclusiva con la API por `NEXT_PUBLIC_API_URL`
+- Roles soportados: `ROLE_SUPER_ADMIN`, `ROLE_COMPANY_ADMIN`, `ROLE_RRHH`, `ROLE_MANAGER`, `ROLE_USER`, `ROLE_AUDITOR`, `ROLE_WORKFORCE_REPRESENTATIVE`
 
 ## Requisitos
 
 - Node.js 20 o superior
 - npm
 
-## Variables de entorno
+## Entorno
 
-Usa `.env.example` como referencia y cópialo a `.env.local` para desarrollo local.
-En producción, Hostinger/Sites debe inyectar la misma variable.
+1. Copia `.env.example` a `.env.local` para desarrollo.
+2. Configura la URL base de la API.
+3. En producción, inyecta la misma variable desde el hosting.
 
-- `NEXT_PUBLIC_API_URL=https://api.example.com`
+Variable disponible:
 
-La configuración tipada vive en [`src/lib/config/env.ts`](src/lib/config/env.ts).
-La URL se consume como origen de API y el cliente añade internamente la ruta `/api/v1`.
-Como variable `NEXT_PUBLIC_*`, queda embebida en el bundle en build time.
+- `NEXT_PUBLIC_API_URL`
 
-## Cliente API
+Notas:
 
-El cliente tipado se genera localmente con:
-
-```bash
-npm run api
-```
-
-El alias `api` ejecuta:
-
-```bash
-npm run api:generate
-```
-
-El script escribe [`src/lib/api/generated.ts`](src/lib/api/generated.ts) a partir del template incluido en el repositorio.
+- La ruta `/api/v1` la añade el cliente automáticamente.
+- `NEXT_PUBLIC_*` se embebe en el bundle en tiempo de build.
 
 ## Desarrollo
 
 ```bash
-npm ci
+npm install
 npm run dev
 ```
 
-## Produccion
+## Producción
 
 ```bash
 npm ci
@@ -60,7 +46,7 @@ npm run build
 npm run start
 ```
 
-## Verificacion
+## Verificación
 
 ```bash
 npm run lint
@@ -68,12 +54,31 @@ npm test
 npm run build
 ```
 
-## Node
+## Cliente API
 
-- Validado con Node.js 24 en este entorno.
-- Soporte declarado en `package.json`: `>=20`.
+Generación local del cliente tipado:
 
-## Rutas principales
+```bash
+npm run api
+```
+
+Alias disponible:
+
+```bash
+npm run api:generate
+```
+
+## Estructura principal
+
+- `src/app`
+- `src/components`
+- `src/lib`
+- `src/hooks`
+- `src/styles`
+- `public`
+- `docs`
+
+## Páginas principales
 
 - `/`
 - `/login`
@@ -88,8 +93,11 @@ npm run build
 - `/calendars`
 - `/calendars/[id]`
 
-## Integracion
+## Documentación
 
-- La API base se define por `NEXT_PUBLIC_API_URL`.
-- La ruta `/api/v1` la añade el cliente tipado.
-- Las pantallas de calendario, turnos y fichajes asumen que el backend ya expone Swagger y el cliente generado.
+- [Frontend production env](docs/FRONTEND_PRODUCTION_ENV.md)
+
+## Notas de entrega
+
+- No contiene infraestructura Docker.
+- El diseño prioriza claridad, jerarquía visual y uso corporativo en escritorio y móvil.

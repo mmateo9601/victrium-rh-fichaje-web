@@ -1,25 +1,21 @@
 # Role Access Matrix
 
-This matrix summarizes the backend role vocabulary used by the workforce app.
+This matrix summarizes the role vocabulary used by the workforce app in the frontend.
 
 | Backend role | Scope | Main capabilities |
 | --- | --- | --- |
-| `ROLE_SUPER_ADMIN` | All tenants | Create and manage companies, users, employees, calendars, schedules, policies, and operational data across tenants |
-| `ROLE_COMPANY_ADMIN` | Own tenant | Manage operational data for the company, including employees, locations, schedules, and planning |
+| `ROLE_SUPER_ADMIN` | All tenants | Full administration of companies, users, employees, locations, calendars, schedules, policies, reports, and platform settings |
+| `ROLE_COMPANY_ADMIN` | Own tenant | Operational management of the company, including employees, locations, users, schedules, and configuration |
 | `ROLE_RRHH` | Own tenant | HR operations, employee records, absences, permissions, incidents, and reporting |
-| `ROLE_USER` | Own profile | Self service, time entries, schedule view, personal absences and employee context |
+| `ROLE_MANAGER` | Assigned scope | Read/write access limited to the operational scope assigned by the backend |
+| `ROLE_USER` | Own profile | Self service, time entries, schedule view, and personal requests |
+| `ROLE_AUDITOR` | Read-only assigned scope | Auditing, traceability, and reporting without write access |
+| `ROLE_WORKFORCE_REPRESENTATIVE` | Read-only assigned scope | Workforce representation and consultation without write access |
 
-## Guard rules already enforced
+## Frontend rules
 
-- tenant scoping is always applied before data access
-- `ROLE_SUPER_ADMIN` cannot be assigned by non-super-admin actors
-- employee and company resources are resolved against the authenticated tenant
-- self-service endpoints remain available to the authenticated employee context
-
-## Frontend alignment
-
-The web navigation must be filtered by role and scope so that each user only sees:
-
-- the modules they can actually access
-- the actions they can perform in the current tenant
-- the correct mobile and desktop navigation state
+- Navigation must be filtered by role and current scope.
+- The UI must never expose actions the backend would reject.
+- Company-specific selectors must come from scoped API responses, not from browser-side filtering of global lists.
+- Mobile and desktop navigation should share the same authorization rules.
+- Empty states and forbidden states must remain readable and consistent with the selected role.
