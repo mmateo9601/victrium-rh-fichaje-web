@@ -12,8 +12,7 @@ const session = {
     nombreEmpleado: 'Ada Admin',
     companyId: 1,
     employeeId: 1,
-    roles: ['ROLE_COMPANY_ADMIN'],
-    admin: true
+    roles: ['ROLE_COMPANY_ADMIN']
   }
 } as any;
 

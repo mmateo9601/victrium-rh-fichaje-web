@@ -92,7 +92,7 @@ export default function LoginPage() {
               id="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="admin@victrium.local"
+              placeholder="superadmin@victrium.local"
               autoComplete="username"
               inputMode="email"
               required

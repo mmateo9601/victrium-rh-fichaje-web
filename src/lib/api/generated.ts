@@ -47,7 +47,6 @@ export type PublicUser = {
   companyName: string | null;
   employeeName: string | null;
   roles: RoleName[];
-  admin: boolean;
   active: boolean;
   lastLoginAt: string | null;
 };
