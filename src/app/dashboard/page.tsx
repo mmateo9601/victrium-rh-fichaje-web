@@ -17,7 +17,7 @@ import {
   type TimeEntry,
   type Vacation
 } from '../../lib/api/generated';
-import { clearSession, getAccessToken, getStoredSession, isAuthError } from '../../lib/auth/session';
+import { clearSession, getAccessToken, getStoredSession, isAuthError, useStoredSession } from '../../lib/auth/session';
 import {
   formatDurationLabel,
   formatInputDate,
@@ -45,7 +45,8 @@ function timeEntryLabel(entry: TimeEntry) {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const token = getAccessToken();
+  const session = useStoredSession();
+  const token = session?.accessToken ?? getAccessToken();
   const [sessionUser, setSessionUser] = useState<PublicUser | null>(null);
   const [scope, setScope] = useState<DashboardScope>('employee');
   const [weeklyEntries, setWeeklyEntries] = useState<TimeEntry[]>([]);
@@ -74,8 +75,8 @@ export default function DashboardPage() {
   );
 
   useEffect(() => {
-    const session = getStoredSession();
-    if (!session) {
+    const storedSession = getStoredSession();
+    if (!storedSession) {
       router.replace('/login');
       return;
     }
@@ -155,7 +156,7 @@ export default function DashboardPage() {
     }
 
     void load();
-  }, [router, weekRange.from, weekRange.to]);
+  }, [router, session, token, weekRange.from, weekRange.to]);
 
   if (loading) {
     return (
