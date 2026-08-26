@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, Pause, Play, SquareCheckBig, TimerReset } from 'lucide-react';
 
-import { api, type Company, type ScheduleCell, type WorkTimerCurrent } from '../lib/api/generated';
+import { ApiClientError, api, type Company, type ScheduleCell, type WorkTimerCurrent } from '../lib/api/generated';
 import { formatClock, formatDateTime, formatDurationLabel } from '../lib/labels';
 
 type WorkTimerProps = {
@@ -14,6 +14,10 @@ function formatNowTime(value: number) {
   return new Intl.DateTimeFormat('es-ES', {
     timeStyle: 'short'
   }).format(new Date(value));
+}
+
+function isPermissionLikeError(error: unknown) {
+  return error instanceof ApiClientError && error.status === 403;
 }
 
 export function WorkTimer({ token }: WorkTimerProps) {
@@ -53,9 +57,9 @@ export function WorkTimer({ token }: WorkTimerProps) {
       setCompany(companyResult.status === 'fulfilled' ? companyResult.value : null);
       snapshotAtRef.current = Date.now();
       const warning =
-        stateResult.status === 'rejected'
+        stateResult.status === 'rejected' && !isPermissionLikeError(stateResult.reason)
           ? stateResult.reason
-          : shiftResult.status === 'rejected'
+          : shiftResult.status === 'rejected' && !isPermissionLikeError(shiftResult.reason)
             ? shiftResult.reason
             : null;
       if (warning instanceof Error) {

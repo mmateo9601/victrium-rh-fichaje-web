@@ -138,10 +138,15 @@ export default function TimeEntriesPage() {
       return;
     }
 
+    if (!currentState) {
+      setError('No se pudo comprobar tu jornada actual. Recarga la página e inténtalo de nuevo.');
+      return;
+    }
+
     setClocking(true);
     setError(null);
     try {
-      if (currentState?.state === 'NOT_STARTED' && currentState.eligibility && !currentState.eligibility.canStart) {
+      if (currentState.state === 'NOT_STARTED' && currentState.eligibility && !currentState.eligibility.canStart) {
         setError(currentState.eligibility.message ?? 'La jornada aún no puede iniciarse');
         return;
       }
@@ -240,11 +245,10 @@ export default function TimeEntriesPage() {
 
   const roleLabel = getRoleLabel(session?.user.roles);
   const canClockNow =
-    currentState === null
-      ? true
-      : currentState.state === 'NOT_STARTED'
-        ? Boolean(currentState.eligibility?.canStart)
-        : currentState.state === 'WORKING' || currentState.state === 'PAUSED';
+    currentState !== null &&
+    (currentState.state === 'NOT_STARTED'
+      ? Boolean(currentState.eligibility?.canStart)
+      : currentState.state === 'WORKING' || currentState.state === 'PAUSED');
 
   return (
     <div className="stack">
