@@ -83,16 +83,41 @@ export function getAccessToken() {
   return getStoredSession()?.accessToken ?? null;
 }
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string') {
+      return message;
+    }
+  }
+
+  return '';
+}
+
 export function isAuthError(error: unknown) {
-  if (!(error instanceof ApiClientError)) {
-    return false;
+  if (error instanceof ApiClientError) {
+    if (error.status === 401 || error.status === 403) {
+      return true;
+    }
+
+    const responseMessage = error.response.message.toLowerCase();
+    return (
+      responseMessage.includes('invalid or expired token') ||
+      responseMessage.includes('token expired') ||
+      responseMessage.includes('jwt expired') ||
+      responseMessage.includes('unauthorized')
+    );
   }
 
-  if (error.status === 401 || error.status === 403) {
-    return true;
-  }
-
-  const message = error.response.message.toLowerCase();
+  const message = getErrorMessage(error).toLowerCase();
   return (
     message.includes('invalid or expired token') ||
     message.includes('token expired') ||
