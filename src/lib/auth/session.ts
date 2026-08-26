@@ -84,7 +84,21 @@ export function getAccessToken() {
 }
 
 export function isAuthError(error: unknown) {
-  return error instanceof ApiClientError && (error.status === 401 || error.status === 403);
+  if (!(error instanceof ApiClientError)) {
+    return false;
+  }
+
+  if (error.status === 401 || error.status === 403) {
+    return true;
+  }
+
+  const message = error.response.message.toLowerCase();
+  return (
+    message.includes('invalid or expired token') ||
+    message.includes('token expired') ||
+    message.includes('jwt expired') ||
+    message.includes('unauthorized')
+  );
 }
 
 export async function signOut() {
