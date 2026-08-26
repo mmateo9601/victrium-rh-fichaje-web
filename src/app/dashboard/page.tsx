@@ -17,7 +17,7 @@ import {
   type TimeEntry,
   type Vacation
 } from '../../lib/api/generated';
-import { getAccessToken, getStoredSession } from '../../lib/auth/session';
+import { clearSession, getAccessToken, getStoredSession, isAuthError } from '../../lib/auth/session';
 import {
   formatDurationLabel,
   formatInputDate,
@@ -143,6 +143,11 @@ export default function DashboardPage() {
           setOpenIncidents(incidentOpen.pagination.total);
         }
       } catch (loadError) {
+        if (isAuthError(loadError)) {
+          clearSession();
+          router.replace('/login');
+          return;
+        }
         setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar el panel');
       } finally {
         setLoading(false);

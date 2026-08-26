@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AlertCircle, Pause, Play, SquareCheckBig, TimerReset } from 'lucide-react';
 
 import { ApiClientError, api, type Company, type ScheduleCell, type WorkTimerCurrent } from '../lib/api/generated';
+import { clearSession, isAuthError } from '../lib/auth/session';
 import { formatClock, formatDateTime, formatDurationLabel } from '../lib/labels';
 
 type WorkTimerProps = {
@@ -21,6 +23,7 @@ function isPermissionLikeError(error: unknown) {
 }
 
 export function WorkTimer({ token }: WorkTimerProps) {
+  const router = useRouter();
   const [current, setCurrent] = useState<WorkTimerCurrent | null>(null);
   const [loading, setLoading] = useState(true);
   const [actioning, setActioning] = useState(false);
@@ -56,6 +59,21 @@ export function WorkTimer({ token }: WorkTimerProps) {
 
       setCompany(companyResult.status === 'fulfilled' ? companyResult.value : null);
       snapshotAtRef.current = Date.now();
+      const authFailure =
+        stateResult.status === 'rejected' && isAuthError(stateResult.reason)
+          ? stateResult.reason
+          : shiftResult.status === 'rejected' && isAuthError(shiftResult.reason)
+            ? shiftResult.reason
+            : companyResult.status === 'rejected' && isAuthError(companyResult.reason)
+              ? companyResult.reason
+              : null;
+
+      if (authFailure) {
+        clearSession();
+        router.replace('/login');
+        return;
+      }
+
       const warning =
         stateResult.status === 'rejected' && !isPermissionLikeError(stateResult.reason)
           ? stateResult.reason

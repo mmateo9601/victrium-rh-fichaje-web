@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
+import { ApiClientError } from '../api/generated';
 import type { AuthSession } from '../api/generated';
 
 const SESSION_KEY = 'victrium-rh-fichaje.session';
@@ -80,6 +81,10 @@ export function clearSession() {
 
 export function getAccessToken() {
   return getStoredSession()?.accessToken ?? null;
+}
+
+export function isAuthError(error: unknown) {
+  return error instanceof ApiClientError && (error.status === 401 || error.status === 403);
 }
 
 export async function signOut() {
