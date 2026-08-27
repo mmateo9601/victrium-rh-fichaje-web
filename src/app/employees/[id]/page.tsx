@@ -6,9 +6,10 @@ import { useParams, useRouter } from 'next/navigation';
 
 import { Modal } from '../../../components/modal';
 import { ScheduleGrid } from '../../../components/schedule-grid';
-import { api, type Company, type Employee, type EmployeeLocationAssignment, type Schedule, type ShiftAssignment, type WorkLocation } from '../../../lib/api/generated';
+import { api, type Company, type Employee, type EmployeeLocationAssignment, type Schedule, type Shift, type ShiftAssignment, type WorkLocation } from '../../../lib/api/generated';
 import { getAccessToken } from '../../../lib/auth/session';
 import { getRoleListLabel } from '../../../lib/labels';
+import { buildFallbackEmployeeSchedule } from '../../../lib/schedule-fallback';
 
 export default function EmployeeDetailPage() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function EmployeeDetailPage() {
   const [workLocations, setWorkLocations] = useState<WorkLocation[]>([]);
   const [primaryWorkLocationId, setPrimaryWorkLocationId] = useState<number | ''>('');
   const [schedule, setSchedule] = useState<Schedule | null>(null);
+  const [scheduleNotice, setScheduleNotice] = useState<string | null>(null);
   const [assignments, setAssignments] = useState<ShiftAssignment[]>([]);
   const [locationAssignments, setLocationAssignments] = useState<EmployeeLocationAssignment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,22 +45,40 @@ export default function EmployeeDetailPage() {
 
     async function load() {
       try {
-        const [detail, companyList] = await Promise.all([
+        const [detail, companyList, locationAssignmentsResult] = await Promise.all([
           api.employees.byId(authToken, id),
-          api.companies.list(authToken, { pageSize: 50 })
+          api.companies.list(authToken, { pageSize: 50 }),
+          api.workLocations.assignments(authToken, { employeeId: id, pageSize: 50, sort: 'validFrom', order: 'desc' })
         ]);
         setEmployee(detail);
         setCompanies(companyList.data);
-        const [scheduleResult, assignmentsResult] = await Promise.all([
-          api.schedule.employee(authToken, id, monthRange),
-          api.schedule.employeeAssignments(authToken, id)
-        ]);
-        setSchedule(scheduleResult);
-        setAssignments(assignmentsResult);
-        const locationAssignmentsResult = await api.workLocations.assignments(authToken, { employeeId: id, pageSize: 50, sort: 'validFrom', order: 'desc' });
         setLocationAssignments(locationAssignmentsResult.data);
         const primaryAssignment = locationAssignmentsResult.data.find((assignment) => assignment.primary);
         setPrimaryWorkLocationId(primaryAssignment ? primaryAssignment.workLocationId : '');
+
+        const assignmentsResult = await api.schedule.employeeAssignments(authToken, id).catch(() => []);
+        setAssignments(assignmentsResult);
+
+        const uniqueShiftIds = Array.from(new Set(assignmentsResult.map((assignment) => assignment.shift.id)));
+        const resolvedShifts = await Promise.all(
+          uniqueShiftIds.map(async (shiftId) => {
+            try {
+              return await api.shifts.byId(authToken, shiftId);
+            } catch {
+              return null;
+            }
+          })
+        );
+        const shifts = resolvedShifts.filter((shift): shift is Shift => Boolean(shift));
+
+        try {
+          const scheduleResult = await api.schedule.employee(authToken, id, monthRange);
+          setSchedule(scheduleResult);
+          setScheduleNotice(null);
+        } catch {
+          setSchedule(buildFallbackEmployeeSchedule(detail, monthRange, assignmentsResult, shifts));
+          setScheduleNotice('La planificación detallada no se pudo cargar, por eso se muestra una versión derivada de los turnos asignados.');
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'No se pudo cargar el detalle');
       } finally {
@@ -185,6 +205,7 @@ export default function EmployeeDetailPage() {
           usuario ni con la empresa.
         </p>
         {error ? <div className="notice" role="alert">{error}</div> : null}
+        {scheduleNotice ? <div className="notice notice--warning" role="status">{scheduleNotice}</div> : null}
         <div className="hero-actions" style={{ marginTop: '1.5rem' }}>
           <button className="button button-primary" type="button" onClick={() => setEditOpen(true)}>
             Editar empleado

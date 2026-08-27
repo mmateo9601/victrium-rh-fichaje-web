@@ -11,6 +11,7 @@ import { api, type Employee, type Schedule } from '../../../../lib/api/generated
 import { getAccessToken } from '../../../../lib/auth/session';
 import { buildScheduleEvents, type WorkforceCalendarRange } from '../../../../lib/calendar';
 import { formatInputDate, formatLongDate, formatNumber } from '../../../../lib/labels';
+import { buildFallbackEmployeeSchedule } from '../../../../lib/schedule-fallback';
 
 function monthRange(date: Date) {
   const from = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
@@ -26,8 +27,8 @@ export default function EmployeeSchedulePage() {
   const [range, setRange] = useState<WorkforceCalendarRange>(initialRange);
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [schedule, setSchedule] = useState<Schedule | null>(null);
+  const [scheduleNotice, setScheduleNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const employeeLabel = employee?.nombreEmpleado ?? 'Calendario del empleado';
 
   function setCurrentMonth() {
@@ -47,21 +48,69 @@ export default function EmployeeSchedulePage() {
     }
     const token = accessToken;
     if (Number.isNaN(employeeId)) {
-      setError('Empleado no válido');
+      setScheduleNotice('El identificador del empleado no es válido.');
+      setEmployee(null);
+      setSchedule(null);
       setLoading(false);
       return;
     }
 
     async function load() {
+      const fallbackEmployee: Employee = {
+        id: employeeId,
+        numero: '—',
+        nombreEmpleado: `Empleado ${employeeId}`,
+        email: '',
+        dni: '',
+        companyId: null,
+        companyName: null,
+        userId: null,
+        diasVacaciones: null,
+        horasGeneradas: null,
+        working: null,
+        enVacaciones: null,
+        deBaja: null,
+        ultimoFichaje: null,
+        roles: [],
+        active: true
+      };
+
       try {
-        const [employeeResult, scheduleResult] = await Promise.all([
-          api.employees.byId(token, employeeId),
-          api.schedule.employee(token, employeeId, range)
+        const [employeeResult, assignmentsResult] = await Promise.all([
+          api.employees.byId(token, employeeId).catch(() => null),
+          api.schedule.employeeAssignments(token, employeeId).catch(() => [])
         ]);
-        setEmployee(employeeResult);
-        setSchedule(scheduleResult);
-      } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar la planificación');
+
+        const uniqueShiftIds = Array.from(new Set(assignmentsResult.map((assignment) => assignment.shift.id)));
+        const resolvedShifts = await Promise.all(
+          uniqueShiftIds.map(async (shiftId) => {
+            try {
+              return await api.shifts.byId(token, shiftId);
+            } catch {
+              return null;
+            }
+          })
+        );
+        const shifts = resolvedShifts.filter((shift): shift is NonNullable<typeof shift> => Boolean(shift));
+
+        setEmployee(employeeResult ?? fallbackEmployee);
+
+        try {
+          const scheduleResult = await api.schedule.employee(token, employeeId, range);
+          setSchedule(scheduleResult);
+          setScheduleNotice(null);
+        } catch {
+          setSchedule(buildFallbackEmployeeSchedule(employeeResult ?? fallbackEmployee, range, assignmentsResult, shifts));
+          setScheduleNotice(
+            employeeResult
+              ? 'La planificación detallada no se pudo cargar, por eso se muestra una vista derivada de los turnos asignados.'
+              : 'No se pudo cargar el perfil completo del empleado; se muestra una vista de respaldo.'
+          );
+        }
+      } catch {
+        setEmployee(fallbackEmployee);
+        setSchedule(buildFallbackEmployeeSchedule(fallbackEmployee, range, [], []));
+        setScheduleNotice('No se pudo resolver la planificación completa; se muestra una vista de respaldo.');
       } finally {
         setLoading(false);
       }
@@ -125,7 +174,7 @@ export default function EmployeeSchedulePage() {
         }
       />
 
-      {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
+      {scheduleNotice ? <div className="notice notice--warning" role="status">{scheduleNotice}</div> : null}
 
       <section className="panel stack">
         <div className="toolbar">
