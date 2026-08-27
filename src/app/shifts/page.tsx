@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Modal } from '../../components/modal';
 import { PageHeader } from '../../components/page-header';
 import { RotationPatternEditor, type RotationPatternStep } from '../../components/rotation-pattern-editor';
-import { api, type Shift, type ShiftDay } from '../../lib/api/generated';
+import { api, type Company, type Shift, type ShiftDay } from '../../lib/api/generated';
 import { getAccessToken, getEffectiveRoles, getStoredSession } from '../../lib/auth/session';
 import { getRoleListLabel } from '../../lib/labels';
 import { formatFlexibleDurationMinutes, parseFlexibleDurationMinutes } from '../../lib/duration';
@@ -112,12 +112,16 @@ export default function ShiftsPage() {
   const router = useRouter();
   const session = useMemo(() => getStoredSession(), []);
   const roles = getEffectiveRoles(session);
+  const canManageGlobally = roles.includes('ROLE_SUPER_ADMIN');
+  const fixedCompanyId = !canManageGlobally ? String(session?.user.companyId ?? '') : '';
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [active, setActive] = useState('');
+  const [companyId, setCompanyId] = useState(fixedCompanyId);
   const [name, setName] = useState(defaultShiftFormState().name);
   const [code, setCode] = useState(defaultShiftFormState().code);
   const [color, setColor] = useState(defaultShiftFormState().color);
@@ -129,6 +133,7 @@ export default function ShiftsPage() {
 
   function resetForm() {
     const defaults = defaultShiftFormState();
+    setCompanyId(fixedCompanyId);
     setName(defaults.name);
     setCode(defaults.code);
     setColor(defaults.color);
@@ -156,23 +161,88 @@ export default function ShiftsPage() {
     const canManage = roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN' || role === 'ROLE_MANAGER');
     if (!canManage) {
       router.replace('/forbidden');
+    }
+  }, [router, roles]);
+
+  useEffect(() => {
+    const accessToken = getAccessToken();
+    if (!accessToken) {
       return;
     }
-    const token = accessToken;
+    const token = accessToken as string;
 
-    async function load() {
+    let cancelled = false;
+
+    async function loadShifts() {
       try {
-        const items = await api.shifts.list(token, { search, active });
-        setShifts(items);
+        const filters: { search?: string; active?: string } = {};
+        if (search.trim()) {
+          filters.search = search.trim();
+        }
+        if (active) {
+          filters.active = active;
+        }
+        const items = await api.shifts.list(token, filters);
+        if (!cancelled) {
+          setShifts(items);
+        }
       } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar los turnos');
+        if (!cancelled) {
+          setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar los turnos');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
-    void load();
-  }, [router, search, active, roles, session]);
+    void loadShifts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [search, active]);
+
+  useEffect(() => {
+    const accessToken = getAccessToken();
+    if (!accessToken) {
+      return;
+    }
+    const token = accessToken as string;
+
+    let cancelled = false;
+
+    async function loadCompanies() {
+      try {
+        const companyResult = canManageGlobally
+          ? await api.companies.list(token, { pageSize: 100 })
+          : { data: [await api.companies.mine(token)] };
+
+        if (cancelled) {
+          return;
+        }
+
+        setCompanies(companyResult.data);
+
+        if (!canManageGlobally) {
+          setCompanyId((current) => current || (companyResult.data[0] ? String(companyResult.data[0].id) : current));
+        } else if (companyResult.data.length === 1) {
+          setCompanyId((current) => current || String(companyResult.data[0].id));
+        }
+      } catch (loadError) {
+        if (!cancelled) {
+          setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar las empresas');
+        }
+      }
+    }
+
+    void loadCompanies();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [canManageGlobally]);
 
   function updateDay(index: number, patch: Partial<Omit<ShiftDay, 'id'>>) {
     setDays((current) => current.map((day, currentIndex) => (currentIndex === index ? { ...day, ...patch } : day)));
@@ -189,7 +259,13 @@ export default function ShiftsPage() {
     setCreating(true);
     setError(null);
     try {
+      const normalizedCompanyId = companyId.trim();
+      if (!normalizedCompanyId) {
+        throw new Error('Selecciona una empresa antes de guardar el turno');
+      }
+
       await api.shifts.create(token, {
+        companyId: Number(normalizedCompanyId),
         name,
         code,
         color,
@@ -201,7 +277,14 @@ export default function ShiftsPage() {
       });
       resetForm();
       closeCreate();
-      const refreshed = await api.shifts.list(token, { search, active });
+      const refreshedFilters: { search?: string; active?: string } = {};
+      if (search.trim()) {
+        refreshedFilters.search = search.trim();
+      }
+      if (active) {
+        refreshedFilters.active = active;
+      }
+      const refreshed = await api.shifts.list(token, refreshedFilters);
       setShifts(refreshed);
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : 'No se pudo crear el turno');
@@ -268,6 +351,22 @@ export default function ShiftsPage() {
               <span className="badge badge-info">Horario semanal + patrón opcional</span>
             </div>
             <div className="grid grid--2">
+            <div className="field">
+              <label htmlFor="companyId">Empresa</label>
+              <select
+                id="companyId"
+                value={companyId}
+                onChange={(e) => setCompanyId(e.target.value)}
+                disabled={!canManageGlobally}
+              >
+                <option value="">{canManageGlobally ? 'Selecciona una empresa' : 'Empresa del contexto'}</option>
+                {companies.map((company) => (
+                  <option key={company.id} value={company.id}>
+                    {company.name}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="field">
               <label htmlFor="name">Nombre del turno</label>
               <input id="name" value={name} onChange={(e) => setName(e.target.value)} />
