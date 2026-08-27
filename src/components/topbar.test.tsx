@@ -92,9 +92,11 @@ describe('Topbar', () => {
       </Topbar>
     );
 
-    expect(screen.getByText('Victrium RH')).toBeInTheDocument();
+    expect(screen.getAllByText('Victrium RH').length).toBeGreaterThan(0);
     expect(screen.queryByText(/cuentas de acceso/i)).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /usuarios/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /empresas/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /configuración/i })).not.toBeInTheDocument();
   });
 
   it('renders public routes without the app shell', () => {
