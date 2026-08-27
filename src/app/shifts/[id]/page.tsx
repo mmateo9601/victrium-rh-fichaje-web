@@ -601,6 +601,20 @@ export default function ShiftDetailPage() {
               Nueva excepción
             </button>
           </div>
+          <div className="page-stats">
+            <article className="stat stat--compact">
+              <strong>{overrides.length}</strong>
+              <span className="muted">Excepciones registradas</span>
+            </article>
+            <article className="stat stat--compact">
+              <strong>{overrides.filter((override) => override.kind === 'OFF').length}</strong>
+              <span className="muted">Días libres</span>
+            </article>
+            <article className="stat stat--compact">
+              <strong>{overrides.filter((override) => override.kind !== 'OFF').length}</strong>
+              <span className="muted">Turnos concretos</span>
+            </article>
+          </div>
           <div className="table-wrap">
             <table className="table">
               <thead>
@@ -609,6 +623,7 @@ export default function ShiftDetailPage() {
                   <th>Fecha</th>
                   <th>Tipo</th>
                   <th>Turno</th>
+                  <th>Notas</th>
                 </tr>
               </thead>
               <tbody>
@@ -618,11 +633,12 @@ export default function ShiftDetailPage() {
                     <td>{override.date}</td>
                     <td>{override.kind === 'OFF' ? 'Libre' : 'Turno'}</td>
                     <td>{override.shift?.name ?? 'Libre'}</td>
+                    <td>{override.notes ?? '—'}</td>
                   </tr>
                 ))}
                 {!overrides.length ? (
                   <tr>
-                    <td colSpan={4} className="muted">
+                    <td colSpan={5} className="muted">
                       Sin excepciones.
                     </td>
                   </tr>
@@ -720,74 +736,6 @@ export default function ShiftDetailPage() {
           </div>
         </div>
       </Modal>
-
-      <div className="grid-2">
-        <section className="panel stack">
-          <h2 className="section-title">Asignaciones</h2>
-          <div className="table-wrap">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Empleado</th>
-                  <th>Vigencia</th>
-                  <th>Notas</th>
-                </tr>
-              </thead>
-              <tbody>
-                {assignments.map((assignment) => (
-                  <tr key={assignment.id}>
-                    <td>{assignment.employeeNombre}</td>
-                    <td>
-                      {assignment.validFrom} {assignment.validTo ? `- ${assignment.validTo}` : ''}
-                    </td>
-                    <td>{assignment.notes ?? '—'}</td>
-                  </tr>
-                ))}
-                {!assignments.length ? (
-                  <tr>
-                    <td colSpan={3} className="muted">
-                      Sin asignaciones.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <section className="panel stack">
-          <h2 className="section-title">Excepciones</h2>
-          <div className="table-wrap">
-            <table className="table">
-              <thead>
-              <tr>
-                <th>Empleado</th>
-                <th>Fecha</th>
-                <th>Tipo</th>
-                <th>Turno</th>
-                </tr>
-              </thead>
-              <tbody>
-                {overrides.map((override) => (
-                  <tr key={override.id}>
-                    <td>{override.employeeNombre}</td>
-                    <td>{override.date}</td>
-                    <td>{override.kind === 'OFF' ? 'Libre' : 'Turno'}</td>
-                    <td>{override.shift?.name ?? 'Libre'}</td>
-                  </tr>
-                ))}
-                {!overrides.length ? (
-                  <tr>
-                      <td colSpan={4} className="muted">
-                        Sin excepciones.
-                      </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </div>
     </div>
   );
 }
