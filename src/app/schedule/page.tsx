@@ -41,6 +41,7 @@ export default function SchedulePage() {
   const [creatingLocationAssignment, setCreatingLocationAssignment] = useState(false);
   const [creatingOverride, setCreatingOverride] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [assignmentEmployeeId, setAssignmentEmployeeId] = useState('');
   const [assignmentShiftId, setAssignmentShiftId] = useState('');
   const [assignmentLocationId, setAssignmentLocationId] = useState('');
@@ -68,7 +69,7 @@ export default function SchedulePage() {
 
     async function load() {
       try {
-        const [employeesResult, shiftsResult, workLocationsResult, planningPeriodsResult, scheduleResult] = await Promise.all([
+        const [employeesResult, shiftsResult, workLocationsResult, planningPeriodsResult, scheduleResult] = await Promise.allSettled([
           api.employees.list(token, { pageSize: 100 }),
           api.shifts.list(token, { pageSize: 100 }),
           api.workLocations.list(token, { pageSize: 100, active: 'true' }),
@@ -80,13 +81,18 @@ export default function SchedulePage() {
             shiftId: shiftId ? Number(shiftId) : undefined
           })
         ]);
-        setEmployees(employeesResult.data);
-        setShifts(shiftsResult);
-        setLocations(workLocationsResult.data);
-        setPlanningPeriods(planningPeriodsResult.data);
-        setSchedule(scheduleResult);
-      } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar la planificación');
+
+        setEmployees(employeesResult.status === 'fulfilled' ? employeesResult.value.data : []);
+        setShifts(shiftsResult.status === 'fulfilled' ? shiftsResult.value : []);
+        setLocations(workLocationsResult.status === 'fulfilled' ? workLocationsResult.value.data : []);
+        setPlanningPeriods(planningPeriodsResult.status === 'fulfilled' ? planningPeriodsResult.value.data : []);
+        setSchedule(scheduleResult.status === 'fulfilled' ? scheduleResult.value : null);
+        setNotice(
+          [employeesResult, shiftsResult, workLocationsResult, planningPeriodsResult, scheduleResult].some((result) => result.status === 'rejected')
+            ? 'No se han podido cargar todos los datos de planificación; la pantalla sigue operativa con la información disponible.'
+            : null
+        );
+        setError(null);
       } finally {
         setLoading(false);
       }
@@ -133,8 +139,9 @@ export default function SchedulePage() {
       setShifts(shiftsResult);
       setLocations(workLocationsResult.data);
       setPlanningPeriods(planningPeriodsResult.data);
+      setNotice(null);
     } catch (refreshError) {
-      setError(refreshError instanceof Error ? refreshError.message : 'No se pudo actualizar la planificación');
+      setNotice(refreshError instanceof Error ? refreshError.message : 'No se pudo actualizar la planificación');
     } finally {
       setRefreshing(false);
     }
@@ -154,6 +161,7 @@ export default function SchedulePage() {
 
     setCreatingAssignment(true);
     setError(null);
+    setNotice(null);
     try {
       await api.shiftAssignments.create(token, {
         employeeId: Number(assignmentEmployeeId),
@@ -185,6 +193,7 @@ export default function SchedulePage() {
 
     setCreatingLocationAssignment(true);
     setError(null);
+    setNotice(null);
     try {
       await api.workLocations.createAssignment(token, {
         employeeId: Number(assignmentEmployeeId),
@@ -215,6 +224,7 @@ export default function SchedulePage() {
 
     setCreatingOverride(true);
     setError(null);
+    setNotice(null);
     try {
       await api.shiftAssignments.createOverride(token, {
         employeeId: Number(overrideEmployeeId),
@@ -293,6 +303,7 @@ export default function SchedulePage() {
       </section>
 
       {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
+      {notice ? <div className="notice notice--warning" role="status">{notice}</div> : null}
 
       <section className="panel stack">
         <div className="toolbar">
