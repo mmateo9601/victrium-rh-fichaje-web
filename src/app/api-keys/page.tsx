@@ -25,6 +25,11 @@ export default function ApiKeysPage() {
   const [error, setError] = useState<string | null>(null);
 
   const canManage = roles.includes('ROLE_SUPER_ADMIN');
+  const accessDenied = Boolean(session) && !canManage;
+
+  if (accessDenied) {
+    return null;
+  }
 
   useEffect(() => {
     if (!session) {
@@ -33,7 +38,7 @@ export default function ApiKeysPage() {
     }
 
     if (!canManage) {
-      router.replace('/forbidden');
+      router.replace('/dashboard');
       return;
     }
 

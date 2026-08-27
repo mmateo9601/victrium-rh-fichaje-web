@@ -113,6 +113,8 @@ export default function ShiftsPage() {
   const session = useMemo(() => getStoredSession(), []);
   const roles = getEffectiveRoles(session);
   const canManageGlobally = roles.includes('ROLE_SUPER_ADMIN');
+  const canManage = roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN' || role === 'ROLE_MANAGER');
+  const accessDenied = Boolean(session) && !canManage;
   const fixedCompanyId = !canManageGlobally ? String(session?.user.companyId ?? '') : '';
   const [companies, setCompanies] = useState<Company[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
@@ -158,11 +160,14 @@ export default function ShiftsPage() {
       router.replace('/login');
       return;
     }
-    const canManage = roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN' || role === 'ROLE_MANAGER');
     if (!canManage) {
-      router.replace('/forbidden');
+      router.replace('/dashboard');
     }
   }, [router, roles]);
+
+  if (accessDenied) {
+    return null;
+  }
 
   useEffect(() => {
     const accessToken = getAccessToken();

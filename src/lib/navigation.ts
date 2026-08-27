@@ -19,6 +19,12 @@ export type NavigationGroup = {
   items: NavigationItem[];
 };
 
+type RouteDefinition = {
+  href: string;
+  title: string;
+  roles?: RoleName[];
+};
+
 export const navigationGroups: NavigationGroup[] = [
   {
     label: 'Operación',
@@ -54,6 +60,27 @@ export const navigationGroups: NavigationGroup[] = [
   }
 ];
 
+const routeDefinitions: RouteDefinition[] = [
+  { href: '/dashboard', title: 'Inicio' },
+  { href: '/time-entries', title: 'Mi jornada' },
+  { href: '/my-calendar', title: 'Mi calendario' },
+  { href: '/schedule', title: 'Planificación', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN', 'ROLE_MANAGER'] },
+  { href: '/shifts', title: 'Turnos', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN', 'ROLE_MANAGER'] },
+  { href: '/employees', title: 'Empleados', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN'] },
+  { href: '/users', title: 'Cuentas de acceso', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN'] },
+  { href: '/vacations', title: 'Vacaciones', roles: ['ROLE_USER', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN', 'ROLE_MANAGER'] },
+  { href: '/permissions', title: 'Permisos', roles: ['ROLE_USER', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN', 'ROLE_MANAGER'] },
+  { href: '/incidents', title: 'Incidencias', roles: ['ROLE_USER', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN', 'ROLE_MANAGER'] },
+  { href: '/companies', title: 'Empresas', roles: ['ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN'] },
+  { href: '/work-locations', title: 'Centros de trabajo', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN'] },
+  { href: '/calendars', title: 'Calendarios', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN'] },
+  { href: '/planning-periods', title: 'Periodos', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN', 'ROLE_MANAGER'] },
+  { href: '/reports', title: 'Informes', roles: ['ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_SUPER_ADMIN'] },
+  { href: '/platform', title: 'Configuración', roles: ['ROLE_SUPER_ADMIN'] },
+  { href: '/api-keys', title: 'Claves', roles: ['ROLE_SUPER_ADMIN'] },
+  { href: '/profile', title: 'Perfil' }
+];
+
 export function canAccessNavigationItem(item: NavigationItem, roles: RoleName[]) {
   if (roles.includes('ROLE_SUPER_ADMIN')) {
     return true;
@@ -62,24 +89,42 @@ export function canAccessNavigationItem(item: NavigationItem, roles: RoleName[])
   return !item.roles || item.roles.some((role) => roles.includes(role));
 }
 
-export function getNavigationTitle(pathname: string) {
-  if (pathname === '/dashboard') return 'Inicio';
-  if (pathname.startsWith('/time-entries')) return 'Mi jornada';
-  if (pathname.startsWith('/my-calendar')) return 'Mi calendario';
-  if (pathname.startsWith('/schedule')) return 'Planificación';
-  if (pathname.startsWith('/shifts')) return 'Turnos';
-  if (pathname.startsWith('/employees')) return 'Empleados';
-  if (pathname.startsWith('/users')) return 'Cuentas de acceso';
-  if (pathname.startsWith('/vacations')) return 'Vacaciones';
-  if (pathname.startsWith('/permissions')) return 'Permisos';
-  if (pathname.startsWith('/incidents')) return 'Incidencias';
-  if (pathname.startsWith('/calendars')) return 'Calendarios';
-  if (pathname.startsWith('/work-locations')) return 'Centros de trabajo';
-  if (pathname.startsWith('/planning-periods')) return 'Periodos';
-  if (pathname.startsWith('/reports')) return 'Informes';
-  if (pathname.startsWith('/platform')) return 'Configuración';
-  if (pathname.startsWith('/companies')) return 'Empresas';
-  if (pathname.startsWith('/api-keys')) return 'Claves';
-  if (pathname.startsWith('/profile')) return 'Perfil';
+function matchesRoute(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function canAccessRoute(route: RouteDefinition, roles: RoleName[]) {
+  if (roles.includes('ROLE_SUPER_ADMIN')) {
+    return true;
+  }
+
+  return !route.roles || route.roles.some((role) => roles.includes(role));
+}
+
+export function getNavigationTitle(pathname: string, roles: RoleName[] = []) {
+  const route = routeDefinitions.find((entry) => matchesRoute(pathname, entry.href));
+
+  if (!route) {
+    return 'Victrium RH';
+  }
+
+  if (!canAccessRoute(route, roles)) {
+    return 'Victrium RH';
+  }
+
+  return route.title;
+}
+
+export function canAccessRoutePath(pathname: string, roles: RoleName[]) {
+  const route = routeDefinitions.find((entry) => matchesRoute(pathname, entry.href));
+
+  if (!route) {
+    return true;
+  }
+
+  return canAccessRoute(route, roles);
+}
+
+export function getPublicFallbackTitle() {
   return 'Victrium RH';
 }

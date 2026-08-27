@@ -45,6 +45,7 @@ export default function EmployeesPage() {
   const [sessionReady, setSessionReady] = useState(false);
   const roles = getEffectiveRoles(session);
   const canManage = roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN');
+  const accessDenied = Boolean(session) && !canManage;
   const roleOptions = useMemo(
     () =>
       roles.includes('ROLE_SUPER_ADMIN')
@@ -64,6 +65,10 @@ export default function EmployeesPage() {
     setSession(getStoredSession());
     setSessionReady(true);
   }, []);
+
+  if (accessDenied) {
+    return null;
+  }
 
   const selectedCompanyId = useMemo(
     () => (createCompanyId ? Number(createCompanyId) : session?.user.companyId ?? null),
@@ -122,7 +127,7 @@ export default function EmployeesPage() {
       return;
     }
     if (!canManage) {
-      router.replace('/forbidden');
+      router.replace('/dashboard');
       return;
     }
     const authToken = token;

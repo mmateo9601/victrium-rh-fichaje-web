@@ -61,6 +61,7 @@ export default function UsersPage() {
   const canAccess = roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN');
   const canManageGlobally = roles.includes('ROLE_SUPER_ADMIN');
   const fixedCompanyId = !canManageGlobally ? String(session?.user.companyId ?? '') : '';
+  const accessDenied = Boolean(session) && !canAccess;
   const [users, setUsers] = useState<PublicUser[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -79,6 +80,10 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  if (accessDenied) {
+    return null;
+  }
+
   useEffect(() => {
     const token = getAccessToken();
     if (!token) {
@@ -86,7 +91,7 @@ export default function UsersPage() {
       return;
     }
     if (!canAccess) {
-      router.replace('/forbidden');
+      router.replace('/dashboard');
       return;
     }
   }, [router, canAccess]);

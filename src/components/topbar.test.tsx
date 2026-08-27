@@ -77,6 +77,26 @@ describe('Topbar', () => {
     expect(screen.getByRole('link', { name: /empresas/i })).toHaveAttribute('href', '/companies');
   });
 
+  it('hides unauthorized route labels from the shell title', () => {
+    mocks.useStoredSession.mockReturnValue({
+      user: {
+        nombreEmpleado: 'Laura Empleado',
+        roles: ['ROLE_USER']
+      }
+    });
+    mocks.usePathname.mockReturnValue('/users');
+
+    render(
+      <Topbar>
+        <div>content</div>
+      </Topbar>
+    );
+
+    expect(screen.getByText('Victrium RH')).toBeInTheDocument();
+    expect(screen.queryByText(/cuentas de acceso/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /usuarios/i })).not.toBeInTheDocument();
+  });
+
   it('renders public routes without the app shell', () => {
     mocks.useStoredSession.mockReturnValue(null);
     mocks.usePathname.mockReturnValue('/login');

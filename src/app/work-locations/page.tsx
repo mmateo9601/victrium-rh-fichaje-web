@@ -16,6 +16,7 @@ export default function WorkLocationsPage() {
   const roles = useMemo(() => getEffectiveRoles(session), [session]);
   const canView = roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_RRHH' || role === 'ROLE_SUPER_ADMIN');
   const canManage = roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_SUPER_ADMIN');
+  const accessDenied = Boolean(session) && !canView;
   const [locations, setLocations] = useState<WorkLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -44,6 +45,10 @@ export default function WorkLocationsPage() {
     setCreateOpen(false);
   }
 
+  if (accessDenied) {
+    return null;
+  }
+
   useEffect(() => {
     const accessToken = getAccessToken();
     if (!accessToken) {
@@ -52,7 +57,7 @@ export default function WorkLocationsPage() {
     }
     const isSuperAdmin = roles.includes('ROLE_SUPER_ADMIN');
     if (!canView) {
-      router.replace('/forbidden');
+      router.replace('/dashboard');
       return;
     }
     const token = accessToken;

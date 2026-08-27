@@ -20,6 +20,7 @@ export default function CalendarsPage() {
   const session = useMemo(() => getStoredSession(), []);
   const roles = getEffectiveRoles(session);
   const canManage = roles.includes('ROLE_COMPANY_ADMIN') || roles.includes('ROLE_RRHH') || roles.includes('ROLE_SUPER_ADMIN');
+  const accessDenied = Boolean(session) && !canManage;
 
   const [calendars, setCalendars] = useState<CalendarListItem[]>([]);
   const [search, setSearch] = useState('');
@@ -37,6 +38,10 @@ export default function CalendarsPage() {
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  if (accessDenied) {
+    return null;
+  }
+
   function openCreate() {
     setCreateOpen(true);
   }
@@ -52,7 +57,7 @@ export default function CalendarsPage() {
       return;
     }
     if (!canManage) {
-      router.replace('/forbidden');
+      router.replace('/dashboard');
       return;
     }
     const authToken: string = token;

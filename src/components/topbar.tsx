@@ -185,7 +185,7 @@ export function Topbar({ children }: TopbarProps) {
               <span className="profile-chip__avatar">VR</span>
               <div>
                 <strong>Victrium RH</strong>
-                <small>Acceso restringido</small>
+                <small>Portal corporativo</small>
               </div>
             </div>
           )}
@@ -229,7 +229,7 @@ export function Topbar({ children }: TopbarProps) {
             </button>
             <div className="stack">
               <span className="app-topbar__eyebrow">Victrium RH</span>
-              <strong className="app-topbar__title">{getNavigationTitle(pathname)}</strong>
+              <strong className="app-topbar__title">{getNavigationTitle(pathname, roles)}</strong>
             </div>
           </div>
 

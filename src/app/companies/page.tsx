@@ -36,6 +36,7 @@ export default function CompaniesPage() {
   const roles = useMemo(() => getEffectiveRoles(session), [session]);
   const canManage = roles.some((role) => role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_SUPER_ADMIN');
   const canCreateCompany = roles.includes('ROLE_SUPER_ADMIN');
+  const accessDenied = Boolean(session) && !canManage;
 
   function beginEdit(company: Company) {
     setSelectedCompany(company);
@@ -76,6 +77,10 @@ export default function CompaniesPage() {
     setCreateOpen(false);
   }
 
+  if (accessDenied) {
+    return null;
+  }
+
   useEffect(() => {
     const token = getAccessToken();
     if (!token) {
@@ -83,7 +88,7 @@ export default function CompaniesPage() {
       return;
     }
     if (!canManage) {
-      router.replace('/forbidden');
+      router.replace('/dashboard');
       return;
     }
     const authToken = token;

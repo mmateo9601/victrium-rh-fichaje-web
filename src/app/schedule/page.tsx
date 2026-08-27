@@ -24,6 +24,7 @@ export default function SchedulePage() {
   const canAccess =
     session?.user.roles.some((role) => role === 'ROLE_RRHH' || role === 'ROLE_COMPANY_ADMIN' || role === 'ROLE_SUPER_ADMIN' || role === 'ROLE_MANAGER') ??
     false;
+  const accessDenied = Boolean(session) && !canAccess;
   const initialRange = useMemo(() => monthRange(new Date()), []);
   const [from, setFrom] = useState(initialRange.from);
   const [to, setTo] = useState(initialRange.to);
@@ -62,7 +63,7 @@ export default function SchedulePage() {
       return;
     }
     if (!canAccess) {
-      router.replace('/forbidden');
+      router.replace('/dashboard');
       return;
     }
     const token = accessToken;
@@ -100,6 +101,10 @@ export default function SchedulePage() {
 
     void load();
   }, [router, employeeId, from, shiftId, to, canAccess]);
+
+  if (accessDenied) {
+    return null;
+  }
 
   const scheduleEvents = useMemo(() => (schedule ? buildScheduleEvents(schedule, { showNonWorking: true }) : []), [schedule]);
 

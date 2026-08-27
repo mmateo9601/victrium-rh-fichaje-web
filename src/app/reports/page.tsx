@@ -14,6 +14,7 @@ export default function ReportsPage() {
   const session = useMemo(() => getStoredSession(), []);
   const roles = getEffectiveRoles(session);
   const canAccess = Boolean(roles.some((role) => ['ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH'].includes(role)));
+  const accessDenied = Boolean(session) && !canAccess;
   const [summary, setSummary] = useState<ReportsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +27,7 @@ export default function ReportsPage() {
     }
     const authToken = accessToken;
     if (!canAccess) {
-      router.replace('/forbidden');
+      router.replace('/dashboard');
       return;
     }
 
@@ -43,6 +44,10 @@ export default function ReportsPage() {
 
     void load();
   }, [router, canAccess]);
+
+  if (accessDenied) {
+    return null;
+  }
 
   if (loading) {
     return (

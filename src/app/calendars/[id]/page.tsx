@@ -21,6 +21,7 @@ export default function CalendarDetailPage() {
     roles.includes('ROLE_COMPANY_ADMIN') ||
     roles.includes('ROLE_RRHH') ||
     roles.includes('ROLE_SUPER_ADMIN');
+  const accessDenied = Boolean(session) && !canManage;
   const [calendar, setCalendar] = useState<Calendar | null>(null);
   const [name, setName] = useState('');
   const [year, setYear] = useState('');
@@ -41,6 +42,10 @@ export default function CalendarDetailPage() {
     setEditOpen(false);
   }
 
+  if (accessDenied) {
+    return null;
+  }
+
   useEffect(() => {
     const token = getAccessToken();
     if (!token) {
@@ -48,7 +53,7 @@ export default function CalendarDetailPage() {
       return;
     }
     if (!canManage) {
-      router.replace('/forbidden');
+      router.replace('/dashboard');
       return;
     }
     const authToken: string = token;

@@ -15,6 +15,7 @@ export default function PlanningPeriodsPage() {
   const session = useMemo(() => getStoredSession(), []);
   const roles = getEffectiveRoles(session);
   const canManage = roles.includes('ROLE_COMPANY_ADMIN') || roles.includes('ROLE_RRHH') || roles.includes('ROLE_SUPER_ADMIN');
+  const accessDenied = Boolean(session) && !canManage;
   const [periods, setPeriods] = useState<PlanningPeriod[]>([]);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<PlanningPeriodStatus | ''>('');
@@ -37,6 +38,10 @@ export default function PlanningPeriodsPage() {
     setCreateOpen(false);
   }
 
+  if (accessDenied) {
+    return null;
+  }
+
   useEffect(() => {
     const token = getAccessToken();
     if (!token) {
@@ -44,7 +49,7 @@ export default function PlanningPeriodsPage() {
       return;
     }
     if (!canManage) {
-      router.replace('/forbidden');
+      router.replace('/dashboard');
       return;
     }
     const authToken = token;
