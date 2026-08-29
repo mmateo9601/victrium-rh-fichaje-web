@@ -10,6 +10,7 @@ This folder contains the frontend-facing documentation for the current Victrium 
 - `ROLE_ACCESS_MATRIX.md` - role and scope rules used by the UI
 - `screenshots/` - visual captures of the main frontend flows
 - `RELEASE_CHECKLIST.md` - publication checklist before pushing to GitHub or deploying
+- `RELEASE_NOTES.md` - concise delivery summary for maintainers and reviewers
 
 ## Notes
 
