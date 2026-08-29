@@ -101,6 +101,7 @@ npm run api
 
 - [Frontend production env](docs/FRONTEND_PRODUCTION_ENV.md)
 - [Release checklist](docs/RELEASE_CHECKLIST.md)
+- [Visual gallery](docs/screenshots/README.md)
 
 ## Related Repository
 
