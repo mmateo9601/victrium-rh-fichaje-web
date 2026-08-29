@@ -1,44 +1,45 @@
 # victrium-rh-fichaje-web
 
-Frontend Next.js de `Victrium RH` para operar con `victrium-rh-fichaje-api`.
+Frontend corporativo en Next.js para `Victrium RH`.
 
-## Resumen
+## Overview
 
-- Next.js + React + TypeScript
+Aplicación web de acceso único para operación diaria, planificación, fichaje y administración de personas.
+
+## Stack
+
+- Next.js 15
+- React 19
+- TypeScript
 - App Router
-- Cliente de API tipado y generado localmente
-- Interfaz corporativa, responsive y sin Docker
-- Integración exclusiva con la API por `NEXT_PUBLIC_API_URL`
-- Roles soportados: `ROLE_SUPER_ADMIN`, `ROLE_COMPANY_ADMIN`, `ROLE_RRHH`, `ROLE_MANAGER`, `ROLE_USER`, `ROLE_AUDITOR`, `ROLE_WORKFORCE_REPRESENTATIVE`
+- Cliente API tipado y generado localmente
+- UI responsive con patrón corporativo
 
-## Requisitos
+## Requirements
 
 - Node.js 20 o superior
 - npm
 
-## Entorno
+## Environment
 
-1. Copia `.env.example` a `.env.local` para desarrollo.
-2. Configura la URL base de la API.
-3. En producción, inyecta la misma variable desde el hosting.
-
-Variable disponible:
+Copy `.env.example` to `.env.local` for local development and set:
 
 - `NEXT_PUBLIC_API_URL`
 
-Notas:
+Notes:
 
-- La ruta `/api/v1` la añade el cliente automáticamente.
-- `NEXT_PUBLIC_*` se embebe en el bundle en tiempo de build.
+- The frontend appends `/api/v1` automatically.
+- `NEXT_PUBLIC_*` variables are baked into the client bundle at build time.
+- Keep the production value aligned with the deployed API domain.
 
-## Desarrollo
+## Quick Start
 
 ```bash
 npm install
 npm run dev
 ```
 
-## Producción
+## Production
 
 ```bash
 npm ci
@@ -46,7 +47,7 @@ npm run build
 npm run start
 ```
 
-## Verificación
+## Quality Gates
 
 ```bash
 npm run lint
@@ -54,21 +55,38 @@ npm test
 npm run build
 ```
 
-## Cliente API
-
-Generación local del cliente tipado:
-
-```bash
-npm run api
-```
-
-Alias disponible:
+## API Client Generation
 
 ```bash
 npm run api:generate
 ```
 
-## Estructura principal
+Shortcut:
+
+```bash
+npm run api
+```
+
+## Main Routes
+
+- `/`
+- `/login`
+- `/dashboard`
+- `/time-entries`
+- `/my-calendar`
+- `/schedule`
+- `/shifts`
+- `/companies`
+- `/work-locations`
+- `/calendars`
+- `/planning-periods`
+- `/users`
+- `/employees`
+- `/vacations`
+- `/permissions`
+- `/incidents`
+
+## Project Structure
 
 - `src/app`
 - `src/components`
@@ -77,27 +95,19 @@ npm run api:generate
 - `src/styles`
 - `public`
 - `docs`
+- `scripts`
 
-## Páginas principales
-
-- `/`
-- `/login`
-- `/dashboard`
-- `/companies`
-- `/users`
-- `/employees`
-- `/employees/[id]`
-- `/vacations`
-- `/incidents`
-- `/incidents/[id]`
-- `/calendars`
-- `/calendars/[id]`
-
-## Documentación
+## Documentation
 
 - [Frontend production env](docs/FRONTEND_PRODUCTION_ENV.md)
+- [Release checklist](docs/RELEASE_CHECKLIST.md)
 
-## Notas de entrega
+## Related Repository
 
-- No contiene infraestructura Docker.
-- El diseño prioriza claridad, jerarquía visual y uso corporativo en escritorio y móvil.
+- API: [victrium-rh-fichaje-api](https://github.com/mmateo9601/victrium-rh-fichaje-api)
+
+## Publication Notes
+
+- No Docker artifacts are included in this repository.
+- No real credentials should be committed.
+- The repository is ready for GitHub with a clean README, reproducible local setup, and environment variable contract.

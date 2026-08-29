@@ -2,7 +2,7 @@
   "name": "victrium-rh-fichaje-web",
   "version": "0.1.0",
   "private": true,
-  "description": "Frontend Next.js para la migracion de Fichaje.",
+  "description": "Next.js frontend for the Victrium RH workforce management platform.",
   "engines": {
     "node": ">=20"
   },
